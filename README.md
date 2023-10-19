@@ -1,1 +1,1 @@
-# NerualComp
+# NeuralComp
