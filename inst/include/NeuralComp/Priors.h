@@ -78,8 +78,6 @@ inline double log_prior(const double& I_A_shape,
                         const double& sigma_A_shape,
                         const double& sigma_B_mean,
                         const double& sigma_B_shape,
-                        const double& delta_shape,
-                        const double& delta_rate,
                         arma::vec& theta){
   // I_A prior
   double l_prior =  R::dgamma(theta(0), I_A_shape, (1 / I_A_rate), true);
@@ -93,8 +91,17 @@ inline double log_prior(const double& I_A_shape,
   // sigma_B prior
   l_prior = l_prior + dinv_gauss(theta(3), sigma_B_mean, sigma_B_shape);
   
+  return l_prior;
+}
+
+// calculate the log prior for delta
+// delta_shape: shape parameter for delta
+// delta_rate: rate parameter for delta
+inline double log_prior_delta(const double& delta_shape,
+                              const double& delta_rate,
+                              arma::vec& theta){
   // delta prior
-  l_prior = l_prior +  R::dgamma(theta(4), delta_shape, (1 / delta_rate), true);
+  double l_prior = R::dgamma(theta(4), delta_shape, (1 / delta_rate), true);
   
   return l_prior;
 }

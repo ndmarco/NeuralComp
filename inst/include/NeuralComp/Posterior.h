@@ -89,12 +89,40 @@ inline double log_posterior(arma::field<arma::vec>& Labels,
                             const double& sigma_A_mean,
                             const double& sigma_A_shape,
                             const double& sigma_B_mean,
-                            const double& sigma_B_shape,
-                            const double& delta_shape,
-                            const double& delta_rate){
+                            const double& sigma_B_shape){
   double l_posterior = log_likelihood(Labels, theta, X_A, X_B, X_AB, n_A, n_B, n_AB) +
     log_prior(I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
-              sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, theta);
+              sigma_B_mean, sigma_B_shape, theta);
+  return l_posterior;
+}
+
+inline double log_posterior_delta(arma::field<arma::vec>& Labels,
+                                  arma::vec theta,
+                                  const arma::field<arma::vec>& X_A,
+                                  const arma::field<arma::vec>& X_B,
+                                  const arma::field<arma::vec>& X_AB,
+                                  const arma::vec& n_A,
+                                  const arma::vec& n_B,
+                                  const arma::vec& n_AB,
+                                  const double& delta_shape,
+                                  const double& delta_rate){
+  double l_posterior = log_likelihood(Labels, theta, X_A, X_B, X_AB, n_A, n_B, n_AB) +
+    log_prior_delta(delta_shape, delta_rate, theta);
+  return l_posterior;
+}
+
+inline double transformed_log_posterior_delta(arma::field<arma::vec>& Labels,
+                                              arma::vec theta,
+                                              const arma::field<arma::vec>& X_A,
+                                              const arma::field<arma::vec>& X_B,
+                                              const arma::field<arma::vec>& X_AB,
+                                              const arma::vec& n_A,
+                                              const arma::vec& n_B,
+                                              const arma::vec& n_AB,
+                                              const double& delta_shape,
+                                              const double& delta_rate){
+  double l_posterior = log_posterior_delta(Labels, transform_pars(theta), X_A, X_B, X_AB, n_A, n_B, n_AB,
+                                           delta_shape, delta_rate) + arma::accu(theta);
   return l_posterior;
 }
 
@@ -113,14 +141,11 @@ inline double transformed_log_posterior(arma::field<arma::vec>& Labels,
                                         const double& sigma_A_mean,
                                         const double& sigma_A_shape,
                                         const double& sigma_B_mean,
-                                        const double& sigma_B_shape,
-                                        const double& delta_shape,
-                                        const double& delta_rate){
+                                        const double& sigma_B_shape){
   double l_posterior = log_posterior(Labels, transform_pars(theta), X_A, X_B, X_AB,
                                      n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape,
                                      I_B_rate, sigma_A_mean, sigma_A_shape,
-                                     sigma_B_mean, sigma_B_shape, delta_shape,
-                                     delta_rate) + arma::accu(theta);
+                                     sigma_B_mean, sigma_B_shape) + arma::accu(theta);
   return l_posterior;
 }
 
@@ -141,13 +166,11 @@ inline arma::vec calc_gradient(arma::field<arma::vec>& Labels,
                                const double& sigma_A_shape,
                                const double& sigma_B_mean,
                                const double& sigma_B_shape,
-                               const double& delta_shape,
-                               const double& delta_rate,
                                const arma::vec& eps_step){
-  arma::vec grad(theta.n_elem, arma::fill::zeros);
+  arma::vec grad(theta.n_elem - 1, arma::fill::zeros);
   arma::vec theta_p_eps = theta;
   arma::vec theta_m_eps = theta;
-  for(int i = 0; i < theta.n_elem; i++){
+  for(int i = 0; i < theta.n_elem - 1; i++){
     theta_p_eps = theta;
     // f(x + e) in the i^th dimension
     theta_p_eps(i) = theta_p_eps(i) + eps_step(i);
@@ -158,14 +181,61 @@ inline arma::vec calc_gradient(arma::field<arma::vec>& Labels,
     grad(i) = (log_posterior(Labels, theta_p_eps, X_A, X_B, X_AB,
                n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape,
                I_B_rate, sigma_A_mean, sigma_A_shape,
-               sigma_B_mean, sigma_B_shape, delta_shape,
-               delta_rate) - log_posterior(Labels, theta_m_eps, X_A, X_B, X_AB,
-               n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape,
+               sigma_B_mean, sigma_B_shape) - log_posterior(Labels, theta_m_eps,
+               X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape,
                I_B_rate, sigma_A_mean, sigma_A_shape,
-               sigma_B_mean, sigma_B_shape, delta_shape,
-               delta_rate)) / (2 * eps_step(i));
+               sigma_B_mean, sigma_B_shape)) / (2 * eps_step(i));
     
   }
+  return grad;
+}
+
+// Calculate derivative of log_posterior with respect to delta on the original scale
+inline double calc_gradient_delta(arma::field<arma::vec>& Labels,
+                                     arma::vec theta,
+                                     const arma::field<arma::vec>& X_A,
+                                     const arma::field<arma::vec>& X_B,
+                                     const arma::field<arma::vec>& X_AB,
+                                     const arma::vec& n_A,
+                                     const arma::vec& n_B,
+                                     const arma::vec& n_AB,
+                                     const double& delta_shape,
+                                     const double& delta_rate,
+                                     const arma::vec& eps_step){
+  double deriv = 0;
+  arma::vec theta_p_eps = theta;
+  arma::vec theta_m_eps = theta;
+  theta_p_eps = theta;
+  // f(x + e) in the i^th dimension
+  theta_p_eps(4) = theta_p_eps(4) + eps_step(4);
+  theta_m_eps = theta;
+  // f(x - e) in the i^th dimension
+  theta_m_eps(4) = theta_m_eps(4) - eps_step(4);
+  // approximate gradient ((f(x + e) f(x - e))/ 2e)
+  deriv = (log_posterior_delta(Labels, theta_p_eps, X_A, X_B, X_AB,
+           n_A, n_B, n_AB, delta_shape, delta_rate) - 
+           log_posterior_delta(Labels, theta_m_eps, X_A, X_B, X_AB,
+           n_A, n_B, n_AB, delta_shape, delta_rate)) / (2 * eps_step(4));
+    
+  return deriv;
+}
+
+inline double trans_calc_gradient_delta(arma::field<arma::vec>& Labels,
+                                        arma::vec& theta,
+                                        const arma::field<arma::vec>& X_A,
+                                        const arma::field<arma::vec>& X_B,
+                                        const arma::field<arma::vec>& X_AB,
+                                        const arma::vec& n_A,
+                                        const arma::vec& n_B,
+                                        const arma::vec& n_AB,
+                                        const double& delta_shape,
+                                        const double& delta_rate,
+                                        const arma::vec& eps_step){
+  
+  double grad = calc_gradient_delta(Labels, transform_pars(theta), X_A, X_B, X_AB,
+                                    n_A, n_B, n_AB, delta_shape, delta_rate, 
+                                    eps_step) + 1;
+  
   return grad;
 }
 
@@ -186,14 +256,12 @@ inline arma::vec trans_calc_gradient(arma::field<arma::vec>& Labels,
                                      const double& sigma_A_shape,
                                      const double& sigma_B_mean,
                                      const double& sigma_B_shape,
-                                     const double& delta_shape,
-                                     const double& delta_rate,
                                      const arma::vec& eps_step){
   
   arma::vec grad = calc_gradient(Labels, transform_pars(theta), X_A, X_B, X_AB, n_A,
                                  n_B, n_AB, I_A_shape, I_A_rate, I_B_shape, I_B_rate,
                                  sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape,
-                                 delta_shape, delta_rate, eps_step);
+                                 eps_step);
   grad = grad + arma::ones(grad.n_elem);
   
   return(grad);

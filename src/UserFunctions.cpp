@@ -39,6 +39,7 @@ arma::mat HMC(arma::field<arma::vec> Labels,
               const arma::vec n_B,
               const arma::vec n_AB,
               int MCMC_iters,
+              int Warm_block = 500,
               Rcpp::Nullable<Rcpp::NumericVector> init_position = R_NilValue,
               int Leapfrog_steps = 10,
               const double I_A_shape = 40, 
@@ -52,27 +53,30 @@ arma::mat HMC(arma::field<arma::vec> Labels,
               const double delta_shape = 0.5,
               const double delta_rate = 0.1,
               Rcpp::Nullable<Rcpp::NumericVector> eps_step = R_NilValue,
-              Rcpp::Nullable<Rcpp::NumericVector> step_size =  R_NilValue){
+              double step_size =  0.001,
+              double step_size_delta =  0.00005,
+              Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat = R_NilValue){
   arma::vec init_position1;
   if(init_position.isNull()){
-    init_position1 = {40, 40, sqrt(40), sqrt(40), 0.001};
+    init_position1 = {50, 50, sqrt(50), sqrt(50), 0.001};
   }else{
-    Rcpp::NumericMatrix X_(init_position);
-    init_position1 = Rcpp::as<arma::mat>(X_);
+    Rcpp::NumericVector X_(init_position);
+    init_position1 = Rcpp::as<arma::vec>(X_);
   }
   arma::vec eps_step1;
   if(eps_step.isNull()){
     eps_step1 = {0.001, 0.001, 0.001, 0.001, 0.00005};
   }else{
-    Rcpp::NumericMatrix X_(eps_step);
-    eps_step1 = Rcpp::as<arma::mat>(X_);
+    Rcpp::NumericVector X_(eps_step);
+    eps_step1 = Rcpp::as<arma::vec>(X_);
   }
-  arma::vec step_size1;
-  if(step_size.isNull()){
-    step_size1 = {0.001, 0.001, 0.001, 0.001, 0.00005};
+  arma::mat Mass_mat1;
+  if(Mass_mat.isNull()){
+    arma::vec diag_elem = {1, 1, 1, 1};
+    Mass_mat1 = arma::diagmat(diag_elem);
   }else{
-    Rcpp::NumericMatrix X_(step_size);
-    step_size1 = Rcpp::as<arma::mat>(X_);
+    Rcpp::NumericMatrix X_(Mass_mat);
+    Mass_mat1 = Rcpp::as<arma::mat>(X_);
   }
   
   
@@ -80,11 +84,16 @@ arma::mat HMC(arma::field<arma::vec> Labels,
                                             MCMC_iters, Leapfrog_steps, I_A_shape, I_A_rate,
                                             I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
                                             sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-                                            eps_step1, step_size1);
+                                            eps_step1, step_size, step_size_delta, Mass_mat1, 
+                                            Warm_block);
    return theta;
    
 }
 
+//[[Rcpp::export]]
+arma::mat arma_cov_est(arma::mat X){
+  return arma::cov(X);
+}
 
 // //[[Rcpp::export]]
 // arma::vec trans_calc_gradient1(arma::field<arma::vec>& Labels,

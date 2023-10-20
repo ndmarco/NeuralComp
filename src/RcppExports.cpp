@@ -13,8 +13,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // HMC
-arma::mat HMC(arma::field<arma::vec> Labels, const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, int MCMC_iters, Rcpp::Nullable<Rcpp::NumericVector> init_position, int Leapfrog_steps, const double I_A_shape, const double I_A_rate, const double I_B_shape, const double I_B_rate, const double sigma_A_mean, const double sigma_A_shape, const double sigma_B_mean, const double sigma_B_shape, const double delta_shape, const double delta_rate, Rcpp::Nullable<Rcpp::NumericVector> eps_step, Rcpp::Nullable<Rcpp::NumericVector> step_size);
-RcppExport SEXP _NeuralComp_HMC(SEXP LabelsSEXP, SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP MCMC_itersSEXP, SEXP init_positionSEXP, SEXP Leapfrog_stepsSEXP, SEXP I_A_shapeSEXP, SEXP I_A_rateSEXP, SEXP I_B_shapeSEXP, SEXP I_B_rateSEXP, SEXP sigma_A_meanSEXP, SEXP sigma_A_shapeSEXP, SEXP sigma_B_meanSEXP, SEXP sigma_B_shapeSEXP, SEXP delta_shapeSEXP, SEXP delta_rateSEXP, SEXP eps_stepSEXP, SEXP step_sizeSEXP) {
+arma::mat HMC(arma::field<arma::vec> Labels, const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, int MCMC_iters, int Warm_block, Rcpp::Nullable<Rcpp::NumericVector> init_position, int Leapfrog_steps, const double I_A_shape, const double I_A_rate, const double I_B_shape, const double I_B_rate, const double sigma_A_mean, const double sigma_A_shape, const double sigma_B_mean, const double sigma_B_shape, const double delta_shape, const double delta_rate, Rcpp::Nullable<Rcpp::NumericVector> eps_step, double step_size, double step_size_delta, Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat);
+RcppExport SEXP _NeuralComp_HMC(SEXP LabelsSEXP, SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP MCMC_itersSEXP, SEXP Warm_blockSEXP, SEXP init_positionSEXP, SEXP Leapfrog_stepsSEXP, SEXP I_A_shapeSEXP, SEXP I_A_rateSEXP, SEXP I_B_shapeSEXP, SEXP I_B_rateSEXP, SEXP sigma_A_meanSEXP, SEXP sigma_A_shapeSEXP, SEXP sigma_B_meanSEXP, SEXP sigma_B_shapeSEXP, SEXP delta_shapeSEXP, SEXP delta_rateSEXP, SEXP eps_stepSEXP, SEXP step_sizeSEXP, SEXP step_size_deltaSEXP, SEXP Mass_matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,6 +26,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec >::type n_B(n_BSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type n_AB(n_ABSEXP);
     Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
+    Rcpp::traits::input_parameter< int >::type Warm_block(Warm_blockSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type init_position(init_positionSEXP);
     Rcpp::traits::input_parameter< int >::type Leapfrog_steps(Leapfrog_stepsSEXP);
     Rcpp::traits::input_parameter< const double >::type I_A_shape(I_A_shapeSEXP);
@@ -39,8 +40,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double >::type delta_shape(delta_shapeSEXP);
     Rcpp::traits::input_parameter< const double >::type delta_rate(delta_rateSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type eps_step(eps_stepSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type step_size(step_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(HMC(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, init_position, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step, step_size));
+    Rcpp::traits::input_parameter< double >::type step_size(step_sizeSEXP);
+    Rcpp::traits::input_parameter< double >::type step_size_delta(step_size_deltaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type Mass_mat(Mass_matSEXP);
+    rcpp_result_gen = Rcpp::wrap(HMC(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block, init_position, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step, step_size, step_size_delta, Mass_mat));
+    return rcpp_result_gen;
+END_RCPP
+}
+// arma_cov_est
+arma::mat arma_cov_est(arma::mat X);
+RcppExport SEXP _NeuralComp_arma_cov_est(SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(arma_cov_est(X));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -126,7 +140,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_NeuralComp_HMC", (DL_FUNC) &_NeuralComp_HMC, 22},
+    {"_NeuralComp_HMC", (DL_FUNC) &_NeuralComp_HMC, 25},
+    {"_NeuralComp_arma_cov_est", (DL_FUNC) &_NeuralComp_arma_cov_est, 1},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},
