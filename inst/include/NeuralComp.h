@@ -4,5 +4,6 @@
 #include "NeuralComp/HMC.h"
 #include "NeuralComp/Posterior.h"
 #include "NeuralComp/Priors.h"
+#include "NeuralComp/Labels.h"
 
 #endif
