@@ -139,21 +139,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// forward_pass1
-arma::mat forward_pass1(arma::vec& Labels, arma::vec& theta, const arma::vec& X_AB, double step_size, int num_evals);
-RcppExport SEXP _NeuralComp_forward_pass1(SEXP LabelsSEXP, SEXP thetaSEXP, SEXP X_ABSEXP, SEXP step_sizeSEXP, SEXP num_evalsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec& >::type Labels(LabelsSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type X_AB(X_ABSEXP);
-    Rcpp::traits::input_parameter< double >::type step_size(step_sizeSEXP);
-    Rcpp::traits::input_parameter< int >::type num_evals(num_evalsSEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_pass1(Labels, theta, X_AB, step_size, num_evals));
-    return rcpp_result_gen;
-END_RCPP
-}
 // backward_sim1
 arma::vec backward_sim1(arma::mat& Prob_mat, arma::vec& theta, const arma::vec& X_AB, double step_size, int num_evals);
 RcppExport SEXP _NeuralComp_backward_sim1(SEXP Prob_matSEXP, SEXP thetaSEXP, SEXP X_ABSEXP, SEXP step_sizeSEXP, SEXP num_evalsSEXP) {
@@ -321,7 +306,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_posterior_Z1", (DL_FUNC) &_NeuralComp_posterior_Z1, 5},
     {"_NeuralComp_Sampler", (DL_FUNC) &_NeuralComp_Sampler, 27},
     {"_NeuralComp_approx_trans_p", (DL_FUNC) &_NeuralComp_approx_trans_p, 3},
-    {"_NeuralComp_forward_pass1", (DL_FUNC) &_NeuralComp_forward_pass1, 5},
     {"_NeuralComp_backward_sim1", (DL_FUNC) &_NeuralComp_backward_sim1, 5},
     {"_NeuralComp_FFBS_labels", (DL_FUNC) &_NeuralComp_FFBS_labels, 7},
     {"_NeuralComp_calc_gradient1", (DL_FUNC) &_NeuralComp_calc_gradient1, 19},

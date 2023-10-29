@@ -204,14 +204,14 @@ arma::mat approx_trans_p(double step_size,
   return NeuralComp::approx_trans_prob(step_size, num_evals, theta);
 }
 
-//[[Rcpp::export]]
-arma::mat forward_pass1(arma::vec& Labels,
-                        arma::vec& theta,
-                        const arma::vec& X_AB,
-                        double step_size,
-                        int num_evals){
-  return NeuralComp::forward_pass(theta, X_AB, step_size, num_evals);
-}
+// //[[Rcpp::export]]
+// arma::mat forward_pass1(arma::vec& Labels,
+//                         arma::vec& theta,
+//                         const arma::vec& X_AB,
+//                         double step_size,
+//                         int num_evals){
+//   return NeuralComp::forward_pass(theta, X_AB, step_size, num_evals);
+// }
 
 //[[Rcpp::export]]
 arma::vec backward_sim1(arma::mat& Prob_mat,

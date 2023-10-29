@@ -228,27 +228,23 @@ inline double prob_transition(double label,
 
 inline arma::mat forward_pass(arma::vec& theta,
                               const arma::vec& X_AB,
-                              const double step_size,
-                              const int num_evals){
+                              arma::mat trans_prob_0,
+                              arma::mat trans_prob){
   arma::mat Prob_mat(X_AB.n_elem, 2, arma::fill::zeros);
   
   // Initialize probability of initial state in A or B
-  arma::vec theta_0 = theta;
-  theta_0(4) = 0;
-  arma::mat P_mat = approx_trans_prob(step_size, num_evals, theta_0);
-  Prob_mat(0,0) = P_mat(0,0);
-  Prob_mat(0,1) = P_mat(1,1);
+  Prob_mat(0,0) = trans_prob_0(0,0);
+  Prob_mat(0,1) = trans_prob_0(1,1);
   
   arma::vec prediction_step(2, arma::fill::zeros);
-  P_mat = approx_trans_prob(step_size, num_evals, theta);
   double numerator = 0.0;
   double denominator = 0.0;
   // Forward Pass
   for(int i = 1; i < X_AB.n_elem; i++){
     // Prediction
     prediction_step = arma::zeros(2);
-    prediction_step(0) = (P_mat(0, 0) * Prob_mat(i-1, 0)) + (P_mat(1, 0) * Prob_mat(i-1, 1));
-    prediction_step(1) = (P_mat(0, 1) * Prob_mat(i-1, 0)) + (P_mat(1, 1) * Prob_mat(i-1, 1));
+    prediction_step(0) = (trans_prob(0, 0) * Prob_mat(i-1, 0)) + (trans_prob(1, 0) * Prob_mat(i-1, 1));
+    prediction_step(1) = (trans_prob(0, 1) * Prob_mat(i-1, 0)) + (trans_prob(1, 1) * Prob_mat(i-1, 1));
     
     // Update
     numerator = prediction_step(0) * prob_labels(0, X_AB, theta, i);
@@ -391,8 +387,12 @@ inline void FFBS_step(arma::field<arma::vec>& Labels,
   double prob_current1 = 0;
   double prob_accept = 0;
   arma::vec theta_exp = arma::exp(theta);
+  arma::vec theta_0 = theta_exp;
+  theta_0(4) = 0;
+  arma::mat trans_prob_0 = approx_trans_prob(step_size, num_evals, theta_0);
+  arma::mat trans_prob = approx_trans_prob(step_size, num_evals, theta_exp);
   for(int i = 0; i < n_AB.n_elem; i++){
-    arma::mat Prob_mat = forward_pass(theta_exp, X_AB(i, 0), step_size, num_evals);
+    arma::mat Prob_mat = forward_pass(theta_exp, X_AB(i, 0), trans_prob_0, trans_prob);
     arma::vec proposed_labels = backward_sim(Prob_mat, theta_exp, X_AB(i, 0), prob_propose);
     prob_current1 = prob_current(Labels(i, iter), Prob_mat, theta_exp, X_AB(i,0));
     prob_accept = posterior_Labels(proposed_labels, X_AB(i,0), theta_exp, prior_p_labels) + prob_current1 -

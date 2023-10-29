@@ -388,6 +388,7 @@ inline Rcpp::List Total_sampler(const arma::field<arma::vec> X_A,
     }
     Labels_iter(i,0) = arma::zeros(n_AB(i));
   }
+  arma::vec theta_exp;
  
   //Rcpp::Rcout << "Made it 2";
   for(int i = 1; i < Warm_block; i++){
@@ -403,7 +404,8 @@ inline Rcpp::List Total_sampler(const arma::field<arma::vec> X_A,
       Labels_iter(j,0) = Labels(j, i);
     }
   
-    llik = log_likelihood(Labels_iter, theta_ph, X_A, X_B, X_AB, n_A, n_B, n_AB);
+    theta_exp = arma::exp(theta_ph);
+    llik = log_likelihood(Labels_iter, theta_exp, X_A, X_B, X_AB, n_A, n_B, n_AB);
     Rcpp::Rcout << llik;
     HMC_step(Labels_iter, theta_ph, X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_shape, 
              I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
@@ -435,16 +437,16 @@ inline Rcpp::List Total_sampler(const arma::field<arma::vec> X_A,
       }
       
       // adjust step size for delta
-      prop_accept_10_delta = arma::accu(vec_accept_delta.subvec(i-9, i))/ 10;
-      if(prop_accept_10_delta  <= 0.1){
-        step_size_delta = step_size_delta * 0.1;
-      }else if(prop_accept_10_delta <= 0.3){
-        step_size_delta = step_size_delta * 0.5;
-      }else if(prop_accept_10_delta <= 0.6){
-        step_size_delta = step_size_delta * 0.8;
-      }else if(prop_accept_10_delta > 0.85){
-        step_size_delta = step_size_delta * 1.1;
-      }
+      // prop_accept_10_delta = arma::accu(vec_accept_delta.subvec(i-9, i))/ 10;
+      // if(prop_accept_10_delta  <= 0.1){
+      //   step_size_delta = step_size_delta * 0.1;
+      // }else if(prop_accept_10_delta <= 0.3){
+      //   step_size_delta = step_size_delta * 0.5;
+      // }else if(prop_accept_10_delta <= 0.6){
+      //   step_size_delta = step_size_delta * 0.8;
+      // }else if(prop_accept_10_delta > 0.85){
+      //   step_size_delta = step_size_delta * 1.1;
+      // }
     }
   }
   

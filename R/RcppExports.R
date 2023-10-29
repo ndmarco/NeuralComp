@@ -53,10 +53,6 @@ approx_trans_p <- function(step_size, num_evals, theta) {
     .Call('_NeuralComp_approx_trans_p', PACKAGE = 'NeuralComp', step_size, num_evals, theta)
 }
 
-forward_pass1 <- function(Labels, theta, X_AB, step_size, num_evals) {
-    .Call('_NeuralComp_forward_pass1', PACKAGE = 'NeuralComp', Labels, theta, X_AB, step_size, num_evals)
-}
-
 backward_sim1 <- function(Prob_mat, theta, X_AB, step_size, num_evals) {
     .Call('_NeuralComp_backward_sim1', PACKAGE = 'NeuralComp', Prob_mat, theta, X_AB, step_size, num_evals)
 }
