@@ -380,6 +380,7 @@ inline Rcpp::List Total_sampler(const arma::field<arma::vec> X_A,
   arma::field<arma::vec> Labels(n_AB.n_elem, MCMC_iters + Warm_block);
   arma::field<arma::vec> Labels_iter(n_AB.n_elem, 1);
   double llik = 0;
+  int accept_num = 0;
   // Use initial starting position
   //Rcpp::Rcout << "Made it";
   for(int i = 0; i < n_AB.n_elem; i++){
@@ -413,7 +414,7 @@ inline Rcpp::List Total_sampler(const arma::field<arma::vec> X_A,
              eps_step, Mass_mat, step_size, step_size_delta, Leapfrog_steps,
              vec_accept(i), vec_accept_delta(i));
     theta.row(i) = theta_ph.t();
-    FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, prior_p_labels);
+    //FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, prior_p_labels, accept_num);
     
     //sample_labels_step(Labels, i, X_AB, n_AB, theta_ph);
     if((i+1) < Warm_block + MCMC_iters){
@@ -466,7 +467,7 @@ inline Rcpp::List Total_sampler(const arma::field<arma::vec> X_A,
              eps_step, Mass_mat, step_size, step_size_delta, Leapfrog_steps, 
              vec_accept(i), vec_accept_delta(i));
     theta.row(i) = theta_ph.t();
-    FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, prior_p_labels);
+    //FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, prior_p_labels, accept_num);
     if((i+1) < Warm_block + MCMC_iters){
       theta.row(i+1) = theta.row(i);
       for(int j = 0; j < n_AB.n_elem; j++){
@@ -474,7 +475,7 @@ inline Rcpp::List Total_sampler(const arma::field<arma::vec> X_A,
       }
     }
   }
-  
+  Rcpp::Rcout << accept_num;
   Rcpp::List params = Rcpp::List::create(Rcpp::Named("theta", arma::exp(theta)),
                                          Rcpp::Named("labels", Labels));
   

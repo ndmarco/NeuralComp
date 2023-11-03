@@ -218,6 +218,74 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rinv_gauss1
+double rinv_gauss1(double mean, double shape);
+RcppExport SEXP _NeuralComp_rinv_gauss1(SEXP meanSEXP, SEXP shapeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< double >::type shape(shapeSEXP);
+    rcpp_result_gen = Rcpp::wrap(rinv_gauss1(mean, shape));
+    return rcpp_result_gen;
+END_RCPP
+}
+// r_multinomial
+arma::vec r_multinomial(arma::vec prob);
+RcppExport SEXP _NeuralComp_r_multinomial(SEXP probSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type prob(probSEXP);
+    rcpp_result_gen = Rcpp::wrap(r_multinomial(prob));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FFBS_ensemble
+Rcpp::List FFBS_ensemble(const arma::field<arma::vec>& X_AB, const arma::vec& n_AB, arma::vec theta, int MCMC_iters, const double step_size, const int num_evals, double delta_proposal_mean, double delta_proposal_shape, int M_proposal, const double delta_shape, const double delta_rate);
+RcppExport SEXP _NeuralComp_FFBS_ensemble(SEXP X_ABSEXP, SEXP n_ABSEXP, SEXP thetaSEXP, SEXP MCMC_itersSEXP, SEXP step_sizeSEXP, SEXP num_evalsSEXP, SEXP delta_proposal_meanSEXP, SEXP delta_proposal_shapeSEXP, SEXP M_proposalSEXP, SEXP delta_shapeSEXP, SEXP delta_rateSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::field<arma::vec>& >::type X_AB(X_ABSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type n_AB(n_ABSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
+    Rcpp::traits::input_parameter< const double >::type step_size(step_sizeSEXP);
+    Rcpp::traits::input_parameter< const int >::type num_evals(num_evalsSEXP);
+    Rcpp::traits::input_parameter< double >::type delta_proposal_mean(delta_proposal_meanSEXP);
+    Rcpp::traits::input_parameter< double >::type delta_proposal_shape(delta_proposal_shapeSEXP);
+    Rcpp::traits::input_parameter< int >::type M_proposal(M_proposalSEXP);
+    Rcpp::traits::input_parameter< const double >::type delta_shape(delta_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type delta_rate(delta_rateSEXP);
+    rcpp_result_gen = Rcpp::wrap(FFBS_ensemble(X_AB, n_AB, theta, MCMC_iters, step_size, num_evals, delta_proposal_mean, delta_proposal_shape, M_proposal, delta_shape, delta_rate));
+    return rcpp_result_gen;
+END_RCPP
+}
+// prior_Labels1
+arma::field<arma::vec> prior_Labels1(const arma::vec& n_AB, arma::mat trans_prob_0, arma::mat trans_prob);
+RcppExport SEXP _NeuralComp_prior_Labels1(SEXP n_ABSEXP, SEXP trans_prob_0SEXP, SEXP trans_probSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type n_AB(n_ABSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type trans_prob_0(trans_prob_0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type trans_prob(trans_probSEXP);
+    rcpp_result_gen = Rcpp::wrap(prior_Labels1(n_AB, trans_prob_0, trans_prob));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calc_log_sum1
+double calc_log_sum1(arma::vec x);
+RcppExport SEXP _NeuralComp_calc_log_sum1(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_log_sum1(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpparma_hello_world
 arma::mat rcpparma_hello_world();
 RcppExport SEXP _NeuralComp_rcpparma_hello_world() {
@@ -310,6 +378,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_FFBS_labels", (DL_FUNC) &_NeuralComp_FFBS_labels, 7},
     {"_NeuralComp_calc_gradient1", (DL_FUNC) &_NeuralComp_calc_gradient1, 19},
     {"_NeuralComp_log_likelihood1", (DL_FUNC) &_NeuralComp_log_likelihood1, 8},
+    {"_NeuralComp_rinv_gauss1", (DL_FUNC) &_NeuralComp_rinv_gauss1, 2},
+    {"_NeuralComp_r_multinomial", (DL_FUNC) &_NeuralComp_r_multinomial, 1},
+    {"_NeuralComp_FFBS_ensemble", (DL_FUNC) &_NeuralComp_FFBS_ensemble, 11},
+    {"_NeuralComp_prior_Labels1", (DL_FUNC) &_NeuralComp_prior_Labels1, 3},
+    {"_NeuralComp_calc_log_sum1", (DL_FUNC) &_NeuralComp_calc_log_sum1, 1},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},

@@ -239,7 +239,7 @@ arma::field<arma::vec> FFBS_labels(const arma::field<arma::vec>& X_AB,
   }
   
   arma::field<arma::vec> Labels = NeuralComp::FFBS(X_AB, init_position, n_AB, theta, step_size, 
-                                                   num_evals, prior_p_labels, MCMC_iters);
+                                                   num_evals, MCMC_iters);
   return Labels;
 }
 
@@ -387,6 +387,75 @@ double log_likelihood1(arma::field<arma::vec>& Labels,
     }
   }
   return l_likelihood;
+}
+
+//[[Rcpp::export]]
+double rinv_gauss1(double mean,
+                   double shape){
+  return NeuralComp::rinv_gauss(mean, shape);
+}
+
+//[[Rcpp::export]]
+arma::vec r_multinomial(arma::vec prob){
+  return NeuralComp::rmutlinomial(prob);
+}
+
+
+//[[Rcpp::export]]
+Rcpp::List FFBS_ensemble(const arma::field<arma::vec>& X_AB,
+                         const arma::vec& n_AB,
+                         arma::vec theta,
+                         int MCMC_iters,
+                         const double step_size = 0.0001,
+                         const int num_evals = 10000,
+                         double delta_proposal_mean = 0.1,
+                         double delta_proposal_shape = 0.05,
+                         int M_proposal = 10,
+                         const double delta_shape= 0.5,
+                         const double delta_rate = 0.1){
+  arma::field<arma::vec> Labels(n_AB.n_elem, MCMC_iters);
+  // Use initial starting position
+  for(int j = 0; j < MCMC_iters; j++){
+    for(int i = 0; i < n_AB.n_elem; i++){
+      Labels(i, j) = arma::zeros(n_AB(i));
+    }
+  }
+  arma::mat thetas(MCMC_iters, theta.n_elem, arma::fill::zeros);
+  thetas.row(0) = theta.t();
+  thetas.row(1) = theta.t();
+  arma::vec theta_i(theta.n_elem, arma::fill::zeros);
+  for(int i = 1; i < MCMC_iters; i++){
+    theta_i = thetas.row(i).t();
+    NeuralComp::FFBS_ensemble_step(Labels, i, X_AB, n_AB, theta_i, step_size,
+                                   num_evals, delta_proposal_mean, delta_proposal_shape,
+                                   M_proposal, delta_shape, delta_rate);
+    if((i % 25) == 0){
+      Rcpp::Rcout << "Iteration " << i;
+    }
+    
+    thetas.row(i) = theta_i.t();
+    if((i + 1) < MCMC_iters){
+      thetas.row(i + 1) = thetas.row(i);
+      for(int j = 0; j < n_AB.n_elem; j++){
+        Labels(j, i + 1) = Labels(j, i);
+      }
+    }
+  }
+  Rcpp::List params = Rcpp::List::create(Rcpp::Named("theta", arma::exp(thetas)),
+                                         Rcpp::Named("labels", Labels));
+  return params;
+}
+
+//[[Rcpp::export]]
+arma::field<arma::vec> prior_Labels1(const arma::vec& n_AB,
+                                     arma::mat trans_prob_0,
+                                     arma::mat trans_prob){
+  return NeuralComp::prior_Labels(n_AB, trans_prob_0, trans_prob);
+}
+
+//[[Rcpp::export]]
+double calc_log_sum1(arma::vec x){
+  return NeuralComp::calc_log_sum(x);
 }
 // 
 // //[[Rcpp::export]]

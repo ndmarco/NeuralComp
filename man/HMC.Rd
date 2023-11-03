@@ -13,20 +13,23 @@ HMC(
   n_B,
   n_AB,
   MCMC_iters,
+  Warm_block = 500L,
   init_position = NULL,
   Leapfrog_steps = 10L,
   I_A_shape = 40,
   I_A_rate = 1,
   I_B_shape = 40,
   I_B_rate = 1,
-  sigma_A_mean,
+  sigma_A_mean = 6.32,
   sigma_A_shape = 1,
-  sigma_B_mean,
+  sigma_B_mean = 6.32,
   sigma_B_shape = 1,
   delta_shape = 0.5,
   delta_rate = 0.1,
   eps_step = NULL,
-  step_size = NULL
+  step_size = 0.001,
+  step_size_delta = 5e-05,
+  Mass_mat = NULL
 )
 }
 \arguments{

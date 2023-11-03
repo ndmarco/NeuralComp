@@ -69,6 +69,26 @@ log_likelihood1 <- function(Labels, theta, X_A, X_B, X_AB, n_A, n_B, n_AB) {
     .Call('_NeuralComp_log_likelihood1', PACKAGE = 'NeuralComp', Labels, theta, X_A, X_B, X_AB, n_A, n_B, n_AB)
 }
 
+rinv_gauss1 <- function(mean, shape) {
+    .Call('_NeuralComp_rinv_gauss1', PACKAGE = 'NeuralComp', mean, shape)
+}
+
+r_multinomial <- function(prob) {
+    .Call('_NeuralComp_r_multinomial', PACKAGE = 'NeuralComp', prob)
+}
+
+FFBS_ensemble <- function(X_AB, n_AB, theta, MCMC_iters, step_size = 0.0001, num_evals = 10000L, delta_proposal_mean = 0.05, delta_proposal_shape = 0.05, M_proposal = 10L, delta_shape = 0.5, delta_rate = 0.1) {
+    .Call('_NeuralComp_FFBS_ensemble', PACKAGE = 'NeuralComp', X_AB, n_AB, theta, MCMC_iters, step_size, num_evals, delta_proposal_mean, delta_proposal_shape, M_proposal, delta_shape, delta_rate)
+}
+
+prior_Labels1 <- function(n_AB, trans_prob_0, trans_prob) {
+    .Call('_NeuralComp_prior_Labels1', PACKAGE = 'NeuralComp', n_AB, trans_prob_0, trans_prob)
+}
+
+calc_log_sum1 <- function(x) {
+    .Call('_NeuralComp_calc_log_sum1', PACKAGE = 'NeuralComp', x)
+}
+
 rcpparma_hello_world <- function() {
     .Call('_NeuralComp_rcpparma_hello_world', PACKAGE = 'NeuralComp')
 }

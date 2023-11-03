@@ -57,6 +57,35 @@ inline double pinv_gauss(const double x,
   return lcdf;
 }
 
+// return sample from inverse gaussian
+inline double rinv_gauss(const double mean,
+                         const double shape){
+  double nu = R::rnorm(0,1);
+  double y = nu * nu;
+  double x = mean + ((mean * mean * y) / (2 * shape)) - ((mean / (2 * shape)) * sqrt(4 * mean * shape * y + (mean * mean * y * y)));
+  double z = R::runif(0,1);
+  double val = (mean * mean) / x;
+  if(z <= (mean / (mean + x))){
+    val = x;
+  }
+  return val;
+}
+
+inline arma::vec rmutlinomial(const arma::vec& prob){
+  arma::vec output = arma::zeros(prob.n_elem);
+  int S = 1;
+  double rho = 1;
+  for(int i = 0; i < (prob.n_elem - 1); i++){
+    if(rho != 0){
+      output(i) = R::rbinom(S, prob(i) / rho);
+    }
+    S = S - output(i);
+    rho = rho - prob(i);
+  }
+  output(prob.n_elem - 1) = S;
+  return output;
+}
+
 
 // calculate the log prior
 // I_A_shape: shape parameter for I_A
