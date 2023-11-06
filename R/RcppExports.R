@@ -49,6 +49,10 @@ Sampler <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block = 500
     .Call('_NeuralComp_Sampler', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block, init_position, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step, step_size, step_size_delta, step_size_labels, num_evals, prior_p_labels, Mass_mat)
 }
 
+Mixed_Sampler <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block = 500L, init_position = NULL, Leapfrog_steps = 10L, I_A_shape = 40, I_A_rate = 1, I_B_shape = 40, I_B_rate = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, delta_shape = 0.5, delta_rate = 0.1, eps_step = NULL, step_size = 0.001, step_size_delta = 0.00002, step_size_labels = 0.0001, num_evals = 10000L, delta_proposal_param = 0.05, M_proposal = 10L, n_Ensambler_sampler = 5L, Mass_mat = NULL) {
+    .Call('_NeuralComp_Mixed_Sampler', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block, init_position, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step, step_size, step_size_delta, step_size_labels, num_evals, delta_proposal_param, M_proposal, n_Ensambler_sampler, Mass_mat)
+}
+
 approx_trans_p <- function(step_size, num_evals, theta) {
     .Call('_NeuralComp_approx_trans_p', PACKAGE = 'NeuralComp', step_size, num_evals, theta)
 }
@@ -77,8 +81,8 @@ r_multinomial <- function(prob) {
     .Call('_NeuralComp_r_multinomial', PACKAGE = 'NeuralComp', prob)
 }
 
-FFBS_ensemble <- function(X_AB, n_AB, theta, MCMC_iters, step_size = 0.0001, num_evals = 10000L, delta_proposal_mean = 0.05, delta_proposal_shape = 0.05, M_proposal = 10L, delta_shape = 0.5, delta_rate = 0.1) {
-    .Call('_NeuralComp_FFBS_ensemble', PACKAGE = 'NeuralComp', X_AB, n_AB, theta, MCMC_iters, step_size, num_evals, delta_proposal_mean, delta_proposal_shape, M_proposal, delta_shape, delta_rate)
+FFBS_ensemble <- function(X_AB, n_AB, theta, MCMC_iters, step_size = 0.0001, num_evals = 10000L, delta_proposal_param = 0.05, M_proposal = 10L, delta_shape = 0.5, delta_rate = 0.1) {
+    .Call('_NeuralComp_FFBS_ensemble', PACKAGE = 'NeuralComp', X_AB, n_AB, theta, MCMC_iters, step_size, num_evals, delta_proposal_param, M_proposal, delta_shape, delta_rate)
 }
 
 prior_Labels1 <- function(n_AB, trans_prob_0, trans_prob) {
