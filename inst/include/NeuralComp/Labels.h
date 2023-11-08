@@ -451,6 +451,17 @@ inline double calc_log_sum(arma::vec x){
   return output;
 }
 
+inline double log_prop_q(double delta,
+                         double delta_proposal_mean,
+                         double delta_proposal_sd,
+                         const double& delta_shape,
+                         const double& delta_rate,
+                         double alpha){
+  double l_prob = alpha * R::dgamma(delta, delta_shape, (1 / delta_rate), false);
+  l_prob = l_prob + alpha * R::dlnorm(delta, delta_proposal_mean, delta_proposal_sd, false);
+  return std::log(l_prob);
+}
+
 inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
                                int iter,
                                const arma::field<arma::vec>& X_AB,
@@ -458,7 +469,9 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
                                arma::vec& theta,
                                const double step_size,
                                const int num_evals,
-                               double delta_proposal_param,
+                               double delta_proposal_mean,
+                               double delta_proposal_sd,
+                               const double alpha,
                                int M_proposal,
                                const double& delta_shape,
                                const double& delta_rate){
@@ -473,9 +486,14 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
   arma::vec delta_ensemble = arma::zeros(M_proposal);
   // Set initial positions of delta ensemble
   delta_ensemble(0) = theta_exp(4);
-  delta_ensemble(1) = theta_exp(4);
-  for(int i = 2; i < M_proposal; i++){
-    delta_ensemble(i) = R::rexp(delta_proposal_param);
+  //delta_ensemble(1) = theta_exp(4);
+  for(int i = 1; i < M_proposal; i++){
+    if(R::runif(0,1) < alpha){
+      delta_ensemble(i) = R::rgamma(delta_shape, (1 / delta_rate));
+    }else{
+      delta_ensemble(i) = R::rlnorm(delta_proposal_mean, delta_proposal_sd);
+    }
+    
   }
   
   // Set first position of Labels to previous position
@@ -506,7 +524,8 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
     }
     f_delta_L(k) = posterior_Labels_delta(Labels_ensembles_ph, X_AB,
             n_AB, theta_j, prior_labels_ph, delta_shape, delta_rate) - 
-              R::dexp(delta_ensemble(k), delta_proposal_param, true);
+              log_prop_q(delta_ensemble(k), delta_proposal_mean, delta_proposal_sd,
+                         delta_shape, delta_rate, alpha);
   }
   f_delta(0) = calc_log_sum(f_delta_L);
   q_L(0) = prob_propose;
@@ -531,7 +550,8 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
       
       f_delta_L(k) = posterior_Labels_delta(Labels_ensembles_ph, X_AB,
                 n_AB, theta_j, prior_labels_ph, delta_shape, delta_rate) - 
-                 R::dexp(delta_ensemble(k), delta_proposal_param, true);
+                  log_prop_q(delta_ensemble(k), delta_proposal_mean, delta_proposal_sd,
+                             delta_shape, delta_rate, alpha);
     }
     f_delta(j) = calc_log_sum(f_delta_L);
     
@@ -550,6 +570,7 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
   // Update Labels
   for(int i = 0; i < draw.n_elem; i++){
     if(draw(i) == 1){
+      Rcpp::Rcout << probs(i);
       for(int j = 0; j < n_AB.n_elem; j++){
         Labels(j, iter) = Labels_ensembles(j, i);
       }
@@ -567,7 +588,8 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
     theta_j(4) = delta_ensemble(j);
     w_delta(j) = posterior_Labels_delta(Labels_ensembles_ph, X_AB,
                           n_AB, theta_j, prior_labels_ph, delta_shape, delta_rate) - 
-                            R::dexp(delta_ensemble(j), delta_proposal_param, true);
+                            log_prop_q(delta_ensemble(j), delta_proposal_mean, delta_proposal_sd,
+                                       delta_shape, delta_rate, alpha);
   }
   probs = arma::zeros(M_proposal);
   for(int i = 0; i < M_proposal; i++){

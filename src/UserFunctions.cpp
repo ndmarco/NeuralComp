@@ -205,7 +205,8 @@ Rcpp::List Mixed_Sampler(const arma::field<arma::vec> X_A,
                          const arma::vec n_B,
                          const arma::vec n_AB,
                          int MCMC_iters,
-                         int Warm_block = 500,
+                         int Warm_block1 = 200,
+                         int Warm_block2 = 300,
                          Rcpp::Nullable<Rcpp::NumericVector> init_position = R_NilValue,
                          int Leapfrog_steps = 10,
                          const double I_A_shape = 40, 
@@ -223,7 +224,10 @@ Rcpp::List Mixed_Sampler(const arma::field<arma::vec> X_A,
                          double step_size_delta =  0.00002,
                          const double& step_size_labels = 0.0001,
                          const int& num_evals = 10000,
-                         double delta_proposal_param = 0.05,
+                         double delta_proposal_mean = -3,
+                         double delta_proposal_sd = 0.3,
+                         double alpha = 0.2,
+                         int delta_adaption_block = 100,
                          int M_proposal = 10,
                          int n_Ensambler_sampler = 5,
                          Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat = R_NilValue){
@@ -256,9 +260,10 @@ Rcpp::List Mixed_Sampler(const arma::field<arma::vec> X_A,
                                                I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
                                                sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
                                                eps_step1, step_size, step_size_delta, step_size_labels,
-                                               num_evals, delta_proposal_param,
+                                               num_evals, delta_proposal_mean, delta_proposal_sd, 
+                                               alpha, delta_adaption_block,
                                                M_proposal, n_Ensambler_sampler, Mass_mat1, 
-                                               Warm_block);
+                                               Warm_block1, Warm_block2);
   return param;
   
 }
@@ -474,10 +479,12 @@ Rcpp::List FFBS_ensemble(const arma::field<arma::vec>& X_AB,
                          int MCMC_iters,
                          const double step_size = 0.0001,
                          const int num_evals = 10000,
-                         double delta_proposal_param = 0.05,
+                         double delta_proposal_mean = -3,
+                         double delta_proposal_sd = 0.5,
                          int M_proposal = 10,
                          const double delta_shape= 0.5,
-                         const double delta_rate = 0.1){
+                         const double delta_rate = 0.1,
+                         const double alpha = 0.2){
   arma::field<arma::vec> Labels(n_AB.n_elem, MCMC_iters);
   // Use initial starting position
   for(int j = 0; j < MCMC_iters; j++){
@@ -492,7 +499,7 @@ Rcpp::List FFBS_ensemble(const arma::field<arma::vec>& X_AB,
   for(int i = 1; i < MCMC_iters; i++){
     theta_i = thetas.row(i).t();
     NeuralComp::FFBS_ensemble_step(Labels, i, X_AB, n_AB, theta_i, step_size,
-                                   num_evals, delta_proposal_param,
+                                   num_evals, delta_proposal_mean, delta_proposal_sd, alpha, 
                                    M_proposal, delta_shape, delta_rate);
     if((i % 25) == 0){
       Rcpp::Rcout << "Iteration " << i;
