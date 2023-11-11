@@ -182,6 +182,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// forward_pass1
+arma::mat forward_pass1(arma::vec& theta, const arma::vec& X_AB, double step_size, int num_evals);
+RcppExport SEXP _NeuralComp_forward_pass1(SEXP thetaSEXP, SEXP X_ABSEXP, SEXP step_sizeSEXP, SEXP num_evalsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type X_AB(X_ABSEXP);
+    Rcpp::traits::input_parameter< double >::type step_size(step_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type num_evals(num_evalsSEXP);
+    rcpp_result_gen = Rcpp::wrap(forward_pass1(theta, X_AB, step_size, num_evals));
+    return rcpp_result_gen;
+END_RCPP
+}
 // backward_sim1
 arma::vec backward_sim1(arma::mat& Prob_mat, arma::vec& theta, const arma::vec& X_AB, double step_size, int num_evals);
 RcppExport SEXP _NeuralComp_backward_sim1(SEXP Prob_matSEXP, SEXP thetaSEXP, SEXP X_ABSEXP, SEXP step_sizeSEXP, SEXP num_evalsSEXP) {
@@ -198,8 +212,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // FFBS_labels
-arma::field<arma::vec> FFBS_labels(const arma::field<arma::vec>& X_AB, const arma::vec& n_AB, arma::vec& theta, double step_size, int num_evals, double prior_p_labels, int MCMC_iters);
-RcppExport SEXP _NeuralComp_FFBS_labels(SEXP X_ABSEXP, SEXP n_ABSEXP, SEXP thetaSEXP, SEXP step_sizeSEXP, SEXP num_evalsSEXP, SEXP prior_p_labelsSEXP, SEXP MCMC_itersSEXP) {
+arma::field<arma::vec> FFBS_labels(const arma::field<arma::vec>& X_AB, const arma::vec& n_AB, arma::vec& theta, double step_size, int num_evals, int MCMC_iters);
+RcppExport SEXP _NeuralComp_FFBS_labels(SEXP X_ABSEXP, SEXP n_ABSEXP, SEXP thetaSEXP, SEXP step_sizeSEXP, SEXP num_evalsSEXP, SEXP MCMC_itersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -208,9 +222,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< double >::type step_size(step_sizeSEXP);
     Rcpp::traits::input_parameter< int >::type num_evals(num_evalsSEXP);
-    Rcpp::traits::input_parameter< double >::type prior_p_labels(prior_p_labelsSEXP);
     Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
-    rcpp_result_gen = Rcpp::wrap(FFBS_labels(X_AB, n_AB, theta, step_size, num_evals, prior_p_labels, MCMC_iters));
+    rcpp_result_gen = Rcpp::wrap(FFBS_labels(X_AB, n_AB, theta, step_size, num_evals, MCMC_iters));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -330,6 +343,34 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// posterior_Labels1
+double posterior_Labels1(arma::vec& Labels, const arma::vec& X_AB, arma::vec& theta);
+RcppExport SEXP _NeuralComp_posterior_Labels1(SEXP LabelsSEXP, SEXP X_ABSEXP, SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type Labels(LabelsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type X_AB(X_ABSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(posterior_Labels1(Labels, X_AB, theta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// prob_transition1
+double prob_transition1(double label, double label_next, const arma::vec& X_AB, arma::vec& theta, int spike_num);
+RcppExport SEXP _NeuralComp_prob_transition1(SEXP labelSEXP, SEXP label_nextSEXP, SEXP X_ABSEXP, SEXP thetaSEXP, SEXP spike_numSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type label(labelSEXP);
+    Rcpp::traits::input_parameter< double >::type label_next(label_nextSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type X_AB(X_ABSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< int >::type spike_num(spike_numSEXP);
+    rcpp_result_gen = Rcpp::wrap(prob_transition1(label, label_next, X_AB, theta, spike_num));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpparma_hello_world
 arma::mat rcpparma_hello_world();
 RcppExport SEXP _NeuralComp_rcpparma_hello_world() {
@@ -419,8 +460,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_Sampler", (DL_FUNC) &_NeuralComp_Sampler, 27},
     {"_NeuralComp_Mixed_Sampler", (DL_FUNC) &_NeuralComp_Mixed_Sampler, 33},
     {"_NeuralComp_approx_trans_p", (DL_FUNC) &_NeuralComp_approx_trans_p, 3},
+    {"_NeuralComp_forward_pass1", (DL_FUNC) &_NeuralComp_forward_pass1, 4},
     {"_NeuralComp_backward_sim1", (DL_FUNC) &_NeuralComp_backward_sim1, 5},
-    {"_NeuralComp_FFBS_labels", (DL_FUNC) &_NeuralComp_FFBS_labels, 7},
+    {"_NeuralComp_FFBS_labels", (DL_FUNC) &_NeuralComp_FFBS_labels, 6},
     {"_NeuralComp_calc_gradient1", (DL_FUNC) &_NeuralComp_calc_gradient1, 19},
     {"_NeuralComp_log_likelihood1", (DL_FUNC) &_NeuralComp_log_likelihood1, 8},
     {"_NeuralComp_rinv_gauss1", (DL_FUNC) &_NeuralComp_rinv_gauss1, 2},
@@ -428,6 +470,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_FFBS_ensemble", (DL_FUNC) &_NeuralComp_FFBS_ensemble, 12},
     {"_NeuralComp_prior_Labels1", (DL_FUNC) &_NeuralComp_prior_Labels1, 3},
     {"_NeuralComp_calc_log_sum1", (DL_FUNC) &_NeuralComp_calc_log_sum1, 1},
+    {"_NeuralComp_posterior_Labels1", (DL_FUNC) &_NeuralComp_posterior_Labels1, 3},
+    {"_NeuralComp_prob_transition1", (DL_FUNC) &_NeuralComp_prob_transition1, 5},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},

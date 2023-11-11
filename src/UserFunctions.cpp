@@ -224,7 +224,7 @@ Rcpp::List Mixed_Sampler(const arma::field<arma::vec> X_A,
                          double step_size_delta =  0.00002,
                          const double& step_size_labels = 0.0001,
                          const int& num_evals = 10000,
-                         double delta_proposal_mean = -3,
+                         double delta_proposal_mean = -2,
                          double delta_proposal_sd = 0.3,
                          double alpha = 0.2,
                          int delta_adaption_block = 100,
@@ -275,14 +275,18 @@ arma::mat approx_trans_p(double step_size,
   return NeuralComp::approx_trans_prob(step_size, num_evals, theta);
 }
 
-// //[[Rcpp::export]]
-// arma::mat forward_pass1(arma::vec& Labels,
-//                         arma::vec& theta,
-//                         const arma::vec& X_AB,
-//                         double step_size,
-//                         int num_evals){
-//   return NeuralComp::forward_pass(theta, X_AB, step_size, num_evals);
-// }
+//[[Rcpp::export]]
+arma::mat forward_pass1(arma::vec& theta,
+                        const arma::vec& X_AB,
+                        double step_size,
+                        int num_evals){
+  arma::vec theta_exp = arma::exp(theta);
+  arma::vec theta_0 = theta_exp;
+  theta_0(4) = 0;
+  arma::mat trans_prob_0 = NeuralComp::approx_trans_prob(step_size, num_evals, theta_0);
+  arma::mat trans_prob = NeuralComp::approx_trans_prob(step_size, num_evals, theta_exp);
+  return NeuralComp::forward_pass(theta_exp, X_AB);
+}
 
 //[[Rcpp::export]]
 arma::vec backward_sim1(arma::mat& Prob_mat,
@@ -291,7 +295,8 @@ arma::vec backward_sim1(arma::mat& Prob_mat,
                         double step_size,
                         int num_evals){
   double prob_propose = 0;
-  arma::vec ph = NeuralComp::backward_sim(Prob_mat, theta, X_AB, prob_propose);
+  arma::vec theta_exp = arma::exp(theta);
+  arma::vec ph = NeuralComp::backward_sim(Prob_mat, theta_exp, X_AB, prob_propose);
   Rcpp::Rcout << prob_propose;
   return ph;
 }
@@ -302,7 +307,6 @@ arma::field<arma::vec> FFBS_labels(const arma::field<arma::vec>& X_AB,
                                    arma::vec& theta,
                                    double step_size,
                                    int num_evals,
-                                   double prior_p_labels,
                                    int MCMC_iters){
   arma::field<arma::vec> init_position(n_AB.n_elem, 1);
   for(int i = 0; i < n_AB.n_elem; i++){
@@ -479,7 +483,7 @@ Rcpp::List FFBS_ensemble(const arma::field<arma::vec>& X_AB,
                          int MCMC_iters,
                          const double step_size = 0.0001,
                          const int num_evals = 10000,
-                         double delta_proposal_mean = -3,
+                         double delta_proposal_mean = -2,
                          double delta_proposal_sd = 0.5,
                          int M_proposal = 10,
                          const double delta_shape= 0.5,
@@ -529,6 +533,23 @@ arma::field<arma::vec> prior_Labels1(const arma::vec& n_AB,
 double calc_log_sum1(arma::vec x){
   return NeuralComp::calc_log_sum(x);
 }
+
+//[[Rcpp::export]]
+double posterior_Labels1(arma::vec& Labels,
+                         const arma::vec& X_AB,
+                         arma::vec &theta){
+  return NeuralComp::posterior_Labels(Labels, X_AB, theta);
+}
+
+//[[Rcpp::export]]
+double prob_transition1(double label,
+                        double label_next,
+                        const arma::vec& X_AB,
+                        arma::vec& theta,
+                        int spike_num){
+  return NeuralComp::prob_transition(label, label_next, X_AB, theta, spike_num);
+}
+
 // 
 // //[[Rcpp::export]]
 // double pinv_gauss1(double x,

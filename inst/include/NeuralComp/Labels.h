@@ -175,26 +175,11 @@ inline arma::mat approx_trans_prob(double step_size,
       dinv_gauss(eval(i) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2))) * step_size;
   }
   
-  P_mat(0,0) = (P_mat(0,0) + (1 - P_mat(0,1))) / 2;
+  P_mat(0,0) = P_mat(0,0) / (P_mat(0,0) + P_mat(0,1)) ;
   P_mat(0,1) = 1 - P_mat(0,0);
-  P_mat(1,0) = (P_mat(1,0) + (1 - P_mat(1,1))) / 2;
+  P_mat(1,0) = P_mat(1,0) / (P_mat(1,0) + P_mat(1,1));
   P_mat(1,1) = 1 - P_mat(1,0);
   return P_mat;
-}
-
-inline double prob_labels(double Labels,
-                          const arma::vec& X_AB,
-                          arma::vec& theta,
-                          int spike_num){
-  double log_p = 0;
-  
-  if(Labels == 0){
-    log_p = dinv_gauss(X_AB(spike_num), (1 / theta(0)), pow((1 / theta(2)), 2));
-  }else{
-    log_p = dinv_gauss(X_AB(spike_num), (1 / theta(1)), pow((1 / theta(3)), 2));
-  }
-  
-  return std::exp(log_p);
 }
 
 inline double prob_transition(double label,
@@ -225,30 +210,39 @@ inline double prob_transition(double label,
   return std::exp(log_p);
 }
 
+inline double update_prob(double Labels,
+                          const arma::vec& X_AB,
+                          arma::vec& theta,
+                          int spike_num,
+                          arma::vec Prob_prev){
+  
+  double p_prev_A = Prob_prev(0) * prob_transition(0, Labels, X_AB, theta, spike_num);
+  double p_prev_B = Prob_prev(1) * prob_transition(1, Labels, X_AB, theta, spike_num);
+  
+  double p = p_prev_A + p_prev_B;
+
+  return p;
+}
 
 inline arma::mat forward_pass(arma::vec& theta,
-                              const arma::vec& X_AB,
-                              arma::mat trans_prob_0,
-                              arma::mat trans_prob){
+                              const arma::vec& X_AB){
   arma::mat Prob_mat(X_AB.n_elem, 2, arma::fill::zeros);
   
   // Initialize probability of initial state in A or B
-  Prob_mat(0,0) = trans_prob_0(0,0);
-  Prob_mat(0,1) = trans_prob_0(1,1);
+  Prob_mat(0,0) = std::exp(pinv_gauss(X_AB(0), (1 / theta(1)), pow((1 / theta(3)), 2)) +
+    dinv_gauss(X_AB(0), (1 / theta(0)), pow((1 / theta(2)), 2)));;
+  Prob_mat(0,1) = std::exp(pinv_gauss(X_AB(0), (1 / theta(0)), pow((1 / theta(2)), 2)) +
+    dinv_gauss(X_AB(0), (1 / theta(1)), pow((1 / theta(3)), 2)));
+  Prob_mat(0,0) = Prob_mat(0,0) / (Prob_mat(0,0) + Prob_mat(0,1));
+  Prob_mat(0,1) =  1 - Prob_mat(0,0);
   
-  arma::vec prediction_step(2, arma::fill::zeros);
   double numerator = 0.0;
   double denominator = 0.0;
   // Forward Pass
   for(int i = 1; i < X_AB.n_elem; i++){
-    // Prediction
-    prediction_step = arma::zeros(2);
-    prediction_step(0) = (trans_prob(0, 0) * Prob_mat(i-1, 0)) + (trans_prob(1, 0) * Prob_mat(i-1, 1));
-    prediction_step(1) = (trans_prob(0, 1) * Prob_mat(i-1, 0)) + (trans_prob(1, 1) * Prob_mat(i-1, 1));
     
-    // Update
-    numerator = prediction_step(0) * prob_labels(0, X_AB, theta, i);
-    denominator = numerator + prediction_step(1) * prob_labels(1, X_AB, theta, i);
+    numerator = update_prob(0, X_AB, theta, i, Prob_mat.row(i-1).t());
+    denominator = numerator + update_prob(1, X_AB, theta, i, Prob_mat.row(i-1).t());
     Prob_mat(i, 0) = numerator / denominator;
     Prob_mat(i, 1) = 1 - Prob_mat(i, 0);
   }
@@ -283,6 +277,7 @@ inline arma::vec backward_sim(arma::mat& Prob_mat,
       numerator = Prob_mat(i,0) * prob_transition(0,1, X_AB, theta, i+1);
       denominator = numerator + Prob_mat(i,1) * prob_transition(1,1, X_AB, theta, i+1);
     }
+    
     prob_accept_A = numerator / denominator;
     if(R::runif(0,1) < prob_accept_A){
       prop_labels(i) = 0;
@@ -348,14 +343,11 @@ inline arma::field<arma::vec> prior_Labels(const arma::vec& n_AB,
 
 inline double posterior_Labels(arma::vec& Labels,
                                const arma::vec& X_AB,
-                               arma::vec &theta,
-                               const arma::vec& prior_p_labels){
+                               arma::vec &theta){
   double posterior = 0;
   for(int j = 0; j < X_AB.n_elem; j++){
     if(Labels(j) == 0){
       // label is A
-      // incorporate prior
-      posterior = posterior + std::log(1 - prior_p_labels(j));
       if(j != 0){
         if(Labels(j-1) == 0){
           // Condition if spike has not switched (still in A)
@@ -372,8 +364,6 @@ inline double posterior_Labels(arma::vec& Labels,
       }
     }else{
       // label is B
-      // incorporate prior
-      posterior = posterior + std::log(prior_p_labels(j));
       if(j != 0){
         if(Labels(j-1) == 1){
           // Condition if spike has not switched (still in A)
@@ -394,16 +384,26 @@ inline double posterior_Labels(arma::vec& Labels,
   return posterior;
 }
 
+inline double calc_log_sum(arma::vec x){
+  double max_val = x.max();
+  
+  double inner_sum = 0;
+  for(int i = 0; i < x.n_elem; i++){
+    inner_sum = inner_sum + std::exp(x(i) - max_val);
+  }
+  double output = max_val + std::log(inner_sum);
+  return output;
+}
+
 inline double posterior_Labels_delta(arma::field<arma::vec>& Labels,
                                      const arma::field<arma::vec>& X_AB,
                                      const arma::vec& n_AB,
                                      arma::vec& theta,
-                                     arma::field<arma::vec>& prior_labels,
                                      const double& delta_shape,
                                      const double& delta_rate){
   double posterior = 0;
   for(int i = 0; i < n_AB.n_elem; i++){
-    posterior = posterior + posterior_Labels(Labels(i,0), X_AB(i,0), theta, prior_labels(i,0));
+    posterior = posterior + posterior_Labels(Labels(i,0), X_AB(i,0), theta);
   }
   posterior = posterior + log_prior_delta(delta_shape, delta_rate, theta);
   return posterior;
@@ -426,13 +426,16 @@ inline void FFBS_step(arma::field<arma::vec>& Labels,
   arma::mat trans_prob_0 = approx_trans_prob(step_size, num_evals, theta_0);
   arma::mat trans_prob = approx_trans_prob(step_size, num_evals, theta_exp);
   arma::field<arma::vec> prior_p_labels = prior_Labels(n_AB, trans_prob_0, trans_prob);
+  arma::vec ph2 = arma::zeros(2);
   for(int i = 0; i < n_AB.n_elem; i++){
-    arma::mat Prob_mat = forward_pass(theta_exp, X_AB(i, 0), trans_prob_0, trans_prob);
+    arma::mat Prob_mat = forward_pass(theta_exp, X_AB(i, 0));
     arma::vec proposed_labels = backward_sim(Prob_mat, theta_exp, X_AB(i, 0), prob_propose);
     prob_current1 = prob_current(Labels(i, iter), Prob_mat, theta_exp, X_AB(i,0));
-    prob_accept = posterior_Labels(proposed_labels, X_AB(i,0), theta_exp, prior_p_labels(i,0)) + prob_current1 -
-      posterior_Labels(Labels(i, iter), X_AB(i,0), theta_exp, prior_p_labels(i,0)) - prob_propose;
     
+    ph2(0) = posterior_Labels(proposed_labels, X_AB(i,0), theta_exp) - prob_propose;
+    ph2(1) = posterior_Labels(Labels(i, iter), X_AB(i,0), theta_exp) - prob_current1;
+    prob_accept = ph2(0) - calc_log_sum(ph2);
+
     if(std::log(R::runif(0,1)) < prob_accept){
       accept_num = accept_num + 1;
       Labels(i, iter) = proposed_labels;
@@ -440,16 +443,6 @@ inline void FFBS_step(arma::field<arma::vec>& Labels,
   }
 }
 
-inline double calc_log_sum(arma::vec x){
-  double max_val = x.max();
-  
-  double inner_sum = 0;
-  for(int i = 0; i < x.n_elem; i++){
-      inner_sum = inner_sum + std::exp(x(i) - max_val);
-  }
-  double output = max_val + std::log(inner_sum);
-  return output;
-}
 
 inline double log_prop_q(double delta,
                          double delta_proposal_mean,
@@ -511,19 +504,18 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
   // for delta 0
   trans_prob = approx_trans_prob(step_size, num_evals, theta_j);
   for(int i = 0; i < n_AB.n_elem; i++){
-    arma::mat Prob_mat = forward_pass(theta_j, X_AB(i, 0), trans_prob_0, trans_prob);
+    arma::mat Prob_mat = forward_pass(theta_j, X_AB(i, 0));
     prob_propose = prob_propose + prob_current(Labels_ensembles(i, 0), Prob_mat,
                                                theta_j, X_AB(i,0));
   }
   for(int k = 0; k < M_proposal; k++){
     theta_j(4) = delta_ensemble(k);
     trans_prob = approx_trans_prob(step_size, num_evals, theta_j);
-    prior_labels_ph = prior_Labels(n_AB, trans_prob_0, trans_prob);
     for(int i = 0; i < n_AB.n_elem; i++){
       Labels_ensembles_ph(i,0) = Labels_ensembles(i,0);
     }
     f_delta_L(k) = posterior_Labels_delta(Labels_ensembles_ph, X_AB,
-            n_AB, theta_j, prior_labels_ph, delta_shape, delta_rate) - 
+            n_AB, theta_j, delta_shape, delta_rate) - 
               log_prop_q(delta_ensemble(k), delta_proposal_mean, delta_proposal_sd,
                          delta_shape, delta_rate, alpha);
   }
@@ -537,7 +529,7 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
     theta_j(4) = delta_ensemble(j);
     trans_prob = approx_trans_prob(step_size, num_evals, theta_j);
     for(int i = 0; i < n_AB.n_elem; i++){
-      arma::mat Prob_mat = forward_pass(theta_j, X_AB(i, 0), trans_prob_0, trans_prob);
+      arma::mat Prob_mat = forward_pass(theta_j, X_AB(i, 0));
       Labels_ensembles(i,j) = backward_sim(Prob_mat, theta_j, X_AB(i, 0), prob_propose);
     }
     for(int i = 0; i < n_AB.n_elem; i++){
@@ -546,10 +538,9 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
     for(int k = 0; k < M_proposal; k++){
       theta_j(4) = delta_ensemble(k);
       trans_prob = approx_trans_prob(step_size, num_evals, theta_j);
-      prior_labels_ph = prior_Labels(n_AB, trans_prob_0, trans_prob);
       
       f_delta_L(k) = posterior_Labels_delta(Labels_ensembles_ph, X_AB,
-                n_AB, theta_j, prior_labels_ph, delta_shape, delta_rate) - 
+                n_AB, theta_j, delta_shape, delta_rate) - 
                   log_prop_q(delta_ensemble(k), delta_proposal_mean, delta_proposal_sd,
                              delta_shape, delta_rate, alpha);
     }
@@ -564,13 +555,12 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
   for(int i = 0; i < M_proposal; i++){
     probs(i) = exp(w_L(i) - calc_log_sum(w_L));
   }
-  
+  // Rcpp::Rcout << probs << "\n";
   arma::vec draw = rmutlinomial(probs);
   
   // Update Labels
   for(int i = 0; i < draw.n_elem; i++){
     if(draw(i) == 1){
-      Rcpp::Rcout << probs(i);
       for(int j = 0; j < n_AB.n_elem; j++){
         Labels(j, iter) = Labels_ensembles(j, i);
       }
@@ -587,7 +577,7 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
   for(int j = 0; j < M_proposal; j++){
     theta_j(4) = delta_ensemble(j);
     w_delta(j) = posterior_Labels_delta(Labels_ensembles_ph, X_AB,
-                          n_AB, theta_j, prior_labels_ph, delta_shape, delta_rate) - 
+                          n_AB, theta_j, delta_shape, delta_rate) - 
                             log_prop_q(delta_ensemble(j), delta_proposal_mean, delta_proposal_sd,
                                        delta_shape, delta_rate, alpha);
   }
@@ -597,6 +587,357 @@ inline void FFBS_ensemble_step(arma::field<arma::vec>& Labels,
   }
   draw = rmutlinomial(probs);
   // Update Labels
+  for(int i = 0; i < draw.n_elem; i++){
+    if(draw(i) == 1){
+      theta(4) = std::log(delta_ensemble(i));
+    }
+  }
+
+}
+
+inline arma::mat calc_transition_deltas(double step_size,
+                                        int num_evals,
+                                        arma::vec theta,
+                                        arma::vec delta,
+                                        double delta_proposal_mean,
+                                        double delta_proposal_sd,
+                                        const double& delta_shape,
+                                        const double& delta_rate,
+                                        const double alpha){
+  arma::field<arma::mat> trans_prob(delta.n_elem, 1);
+  arma::vec theta_j = theta;
+  arma::mat output = arma::zeros(2,2);
+  for(int i = 0; i < delta.n_elem; i++){
+    theta_j(4) = delta(i);
+    trans_prob(i,0) = approx_trans_prob(step_size, num_evals, theta_j);
+    output = output + (trans_prob(i,0) / std::exp(log_prop_q(delta(i), 
+                                 delta_proposal_mean, delta_proposal_sd,
+                                 delta_shape, delta_rate, alpha)));
+  }
+  double ph = 0;
+  ph = output(0,0) + output(0,1);
+  output(0,0) = (output(0,0) / ph);
+  output(0,1) = (output(0,1) / ph);
+  
+  ph = output(1,0) + output(1,1);
+  output(1,0) = (output(1,0) / ph);
+  output(1,1) = (output(1,1) / ph);
+  return output;
+}
+inline double update_prob_delta_int(double Labels,
+                                    const arma::vec& X_AB,
+                                    arma::vec& theta,
+                                    arma::vec& delta,
+                                    int spike_num,
+                                    arma::vec Prob_prev,
+                                    double delta_proposal_mean,
+                                    double delta_proposal_sd,
+                                    const double& delta_shape,
+                                    const double& delta_rate,
+                                    const double alpha){
+  arma::vec theta_i = theta;
+  double ph = 0;
+  for(int i = 0; i < delta.n_elem; i++){
+    theta_i(4) = delta(i);
+    ph = ph + (prob_transition(0, Labels, X_AB, theta_i, spike_num) / std::exp(log_prop_q(delta(i), delta_proposal_mean, delta_proposal_sd,
+                                                         delta_shape, delta_rate, alpha)));
+  }
+  double p_prev_A =  Prob_prev(0) * ph;
+  
+  ph = 0;
+  for(int i = 0; i < delta.n_elem; i++){
+    theta_i(4) = delta(i);
+    ph = ph + (prob_transition(1, Labels, X_AB, theta_i, spike_num) / std::exp(log_prop_q(delta(i), delta_proposal_mean, delta_proposal_sd,
+                                                                               delta_shape, delta_rate, alpha)));
+  }
+  double p_prev_B =  Prob_prev(1) * ph;
+  
+  double p = p_prev_A + p_prev_B;
+  
+  return p;
+}
+
+inline arma::mat forward_filtration_delta_int(arma::vec& theta,
+                                              arma::vec& delta,
+                                              const arma::vec& X_AB,
+                                              double delta_proposal_mean,
+                                              double delta_proposal_sd,
+                                              const double& delta_shape,
+                                              const double& delta_rate,
+                                              const double alpha){
+  arma::mat Prob_mat(X_AB.n_elem, 2, arma::fill::zeros);
+
+  // Initialize probability of initial state in A or B
+  Prob_mat(0,0) = std::exp(pinv_gauss(X_AB(0), (1 / theta(1)), pow((1 / theta(3)), 2)) +
+    dinv_gauss(X_AB(0), (1 / theta(0)), pow((1 / theta(2)), 2)));;
+  Prob_mat(0,1) = std::exp(pinv_gauss(X_AB(0), (1 / theta(0)), pow((1 / theta(2)), 2)) +
+    dinv_gauss(X_AB(0), (1 / theta(1)), pow((1 / theta(3)), 2)));
+  Prob_mat(0,0) = Prob_mat(0,0) / (Prob_mat(0,0) + Prob_mat(0,1));
+  Prob_mat(0,1) =  1 - Prob_mat(0,0);
+
+  double numerator = 0.0;
+  double denominator = 0.0;
+  // Forward Pass
+  for(int i = 1; i < X_AB.n_elem; i++){
+    numerator = update_prob_delta_int(0, X_AB, theta, delta, i, Prob_mat.row(i-1).t(), 
+                                      delta_proposal_mean, delta_proposal_sd,
+                                      delta_shape, delta_rate, alpha);
+    denominator = numerator + update_prob_delta_int(1, X_AB, theta, delta, i, Prob_mat.row(i-1).t(),
+                                                    delta_proposal_mean, delta_proposal_sd,
+                                                    delta_shape, delta_rate, alpha);
+    Prob_mat(i, 0) = numerator / denominator;
+    Prob_mat(i, 1) = 1 - Prob_mat(i, 0);
+  }
+
+  return Prob_mat;
+}
+
+inline arma::vec backward_sim_delta_int(arma::mat& Prob_mat,
+                                        arma::vec& delta,
+                                        arma::vec& theta,
+                                        const arma::vec& X_AB,
+                                        double& prob_propose,
+                                        double delta_proposal_mean,
+                                        double delta_proposal_sd,
+                                        const double& delta_shape,
+                                        const double& delta_rate,
+                                        const double alpha){
+  arma::vec prop_labels(X_AB.n_elem, arma::fill::zeros);
+  
+  if(R::runif(0,1) < Prob_mat(X_AB.n_elem - 1,0)){
+    prop_labels(X_AB.n_elem - 1) = 0;
+    prob_propose = std::log(Prob_mat(X_AB.n_elem - 1,0));
+  }else{
+    prop_labels(X_AB.n_elem - 1) = 1;
+    prob_propose = std::log(1 - Prob_mat(X_AB.n_elem - 1,0));
+  }
+  
+  double numerator = 0;
+  double denominator = 0;
+  double prob_accept_A = 0;
+  double ph = 0;
+  arma::vec theta_j = theta;
+  for(int i = X_AB.n_elem - 2; i > -1; i--){
+    if(prop_labels(i + 1) == 0){
+      ph = 0;
+      for(int j = 0; j < delta.n_elem; j++){
+        theta_j(4) = delta(j);
+        ph = ph + (prob_transition(0,0, X_AB, theta_j, i+1) / std::exp(log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,
+                                                                      delta_shape, delta_rate, alpha)));
+      }
+      numerator = Prob_mat(i,0) * ph;
+      
+      ph = 0;
+      for(int j = 0; j < delta.n_elem; j++){
+        theta_j(4) = delta(j);
+        ph = ph + (prob_transition(1,0, X_AB, theta_j, i+1) / std::exp(log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,
+                                                                       delta_shape, delta_rate, alpha)));
+      }
+      denominator = numerator + Prob_mat(i,1) * ph;
+    }else{
+      ph = 0;
+      for(int j = 0; j < delta.n_elem; j++){
+        theta_j(4) = delta(j);
+        ph = ph + (prob_transition(0,1, X_AB, theta_j, i+1) / std::exp(log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,
+                                                                       delta_shape, delta_rate, alpha)));
+      }
+      numerator = Prob_mat(i,0) * ph;
+      
+      ph = 0;
+      for(int j = 0; j < delta.n_elem; j++){
+        theta_j(4) = delta(j);
+        ph = ph + (prob_transition(1,1, X_AB, theta_j, i+1) / std::exp(log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,
+                                                                       delta_shape, delta_rate, alpha)));
+      }
+      denominator = numerator + Prob_mat(i,1) * ph;
+    }
+    
+    prob_accept_A = numerator / denominator;
+    if(R::runif(0,1) < prob_accept_A){
+      prop_labels(i) = 0;
+      prob_propose = prob_propose + std::log(prob_accept_A);
+    }else{
+      prop_labels(i) = 1;
+      prob_propose = prob_propose + std::log(1 - prob_accept_A);
+    }
+  }
+  
+  return prop_labels;
+}
+
+inline double prob_current_delta_int(arma::vec& Labels,
+                                     arma::mat& Prob_mat,
+                                     arma::vec& delta,
+                                     arma::vec& theta,
+                                     const arma::vec& X_AB,
+                                     double delta_proposal_mean,
+                                     double delta_proposal_sd,
+                                     const double& delta_shape,
+                                     const double& delta_rate,
+                                     const double alpha){
+  double prob_state = 0;
+  if(Labels(Labels.n_elem - 1) == 0){
+    prob_state = std::log(Prob_mat(X_AB.n_elem - 1,0));
+  }else{
+    prob_state = std::log(1 - Prob_mat(X_AB.n_elem - 1,0));
+  }
+  
+  double numerator = 0;
+  double denominator = 0;
+  double prob_accept_A = 0;
+  double ph = 0;
+  arma::vec theta_j = theta;
+  for(int i = X_AB.n_elem - 2; i > -1; i--){
+    if(Labels(i + 1) == 0){
+      ph = 0;
+      for(int j = 0; j < delta.n_elem; j++){
+        theta_j(4) = delta(j);
+        ph = ph + (prob_transition(0,0, X_AB, theta_j, i+1) / std::exp(log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,
+                                                                       delta_shape, delta_rate, alpha)));
+      }
+      numerator = Prob_mat(i,0) * ph;
+      
+      ph = 0;
+      for(int j = 0; j < delta.n_elem; j++){
+        theta_j(4) = delta(j);
+        ph = ph + (prob_transition(1,0, X_AB, theta_j, i+1) / std::exp(log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,
+                                                                       delta_shape, delta_rate, alpha)));
+      }
+      denominator = numerator + Prob_mat(i,1) * ph;
+    }else{
+      ph = 0;
+      for(int j = 0; j < delta.n_elem; j++){
+        theta_j(4) = delta(j);
+        ph = ph + (prob_transition(0,1, X_AB, theta_j, i+1) / std::exp(log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,
+                                                                       delta_shape, delta_rate, alpha)));
+      }
+      numerator = Prob_mat(i,0) * ph;
+      
+      ph = 0;
+      for(int j = 0; j < delta.n_elem; j++){
+        theta_j(4) = delta(j);
+        ph = ph + (prob_transition(1,1, X_AB, theta_j, i+1) / std::exp(log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,
+                                                                       delta_shape, delta_rate, alpha)));
+      }
+      denominator = numerator + Prob_mat(i,1) * ph;
+    }
+    
+    prob_accept_A = numerator / denominator;
+    if(Labels(i) == 0){
+      prob_state = prob_state + std::log(prob_accept_A);
+    }else{
+      prob_state = prob_state + std::log(1 - prob_accept_A);
+    }
+  }
+  
+  return prob_state;
+}
+
+inline double posterior_Labels_delta_int(arma::vec& Labels,
+                                         const arma::vec& X_AB,
+                                         arma::vec& delta,
+                                         arma::vec& theta,
+                                         double delta_proposal_mean,
+                                         double delta_proposal_sd,
+                                         const double& delta_shape,
+                                         const double& delta_rate,
+                                         const double& alpha){
+  double posterior = 0;
+  double ph = 0;
+  arma::vec ph1 = arma::zeros(delta.n_elem);
+  arma::vec theta_j = theta;
+  for(int j = 0; j < delta.n_elem; j++){
+    theta_j(4) = delta(j);
+    ph1(j) = posterior_Labels(Labels, X_AB, theta_j) - 
+      log_prop_q(delta(j), delta_proposal_mean, delta_proposal_sd,delta_shape, delta_rate, alpha);
+  }
+  posterior =  calc_log_sum(ph1);
+  return posterior;
+}
+
+inline void FFBS_ensemble_step1(arma::field<arma::vec>& Labels,
+                                int iter,
+                                const arma::field<arma::vec>& X_AB,
+                                const arma::vec& n_AB,
+                                arma::vec& theta,
+                                const double step_size,
+                                const int num_evals,
+                                double delta_proposal_mean,
+                                double delta_proposal_sd,
+                                const double alpha,
+                                int M_proposal,
+                                const double& delta_shape,
+                                const double& delta_rate){
+  double prob_propose = 0;
+  double prob_current1 = 0;
+  double prob_accept = 0;
+  
+  arma::field<arma::vec> Labels_ensembles_ph(n_AB.n_elem, 1);
+  arma::vec theta_exp = arma::exp(theta);
+  arma::vec theta_0 = theta_exp;
+  theta_0(4) = 0;
+  arma::vec delta_ensemble = arma::zeros(M_proposal);
+  // Set initial positions of delta ensemble
+  delta_ensemble(0) = theta_exp(4);
+  //delta_ensemble(1) = theta_exp(4);
+  for(int i = 1; i < M_proposal; i++){
+    if(R::runif(0,1) < alpha){
+      delta_ensemble(i) = R::rgamma(delta_shape, (1 / delta_rate));
+    }else{
+      delta_ensemble(i) = R::rlnorm(delta_proposal_mean, delta_proposal_sd);
+    }
+  }
+  arma::vec ph2 = arma::zeros(2);
+  // Start sampling the labels
+
+  for(int i = 0; i < n_AB.n_elem; i++){
+    arma::mat Prob_mat = forward_filtration_delta_int(theta_exp, delta_ensemble, X_AB(i, 0), delta_proposal_mean, delta_proposal_sd,
+                                                      delta_shape, delta_rate, alpha);
+    
+    arma::vec proposed_labels = backward_sim_delta_int(Prob_mat, delta_ensemble, theta_exp, X_AB(i, 0),
+                                                       prob_propose, delta_proposal_mean, delta_proposal_sd,
+                                                       delta_shape, delta_rate, alpha);
+    if(i == 60){
+      Rcpp::Rcout << proposed_labels;
+    }
+    prob_current1 = prob_current_delta_int(Labels(i, iter), Prob_mat, delta_ensemble, theta_exp, X_AB(i,0),
+                                           delta_proposal_mean, delta_proposal_sd,
+                                           delta_shape, delta_rate, alpha);
+    ph2(0) = posterior_Labels_delta_int(proposed_labels, X_AB(i,0), delta_ensemble,
+       theta_exp, delta_proposal_mean, delta_proposal_sd, 
+       delta_shape, delta_rate, alpha) - prob_propose;
+    ph2(1) = posterior_Labels_delta_int(Labels(i, iter), X_AB(i,0), delta_ensemble,
+        theta_exp,  delta_proposal_mean, delta_proposal_sd,
+        delta_shape, delta_rate, alpha) - prob_current1;
+    prob_accept = ph2(0) - calc_log_sum(ph2);
+    // Rcpp::Rcout << prob_accept << "\n";
+    if(std::log(R::runif(0,1)) < prob_accept){
+      Labels(i, iter) = proposed_labels;
+    }
+  }
+
+  // Update delta
+  arma::vec f_delta = arma::zeros(M_proposal);
+  arma::vec w_delta = arma::zeros(M_proposal);
+  arma::vec theta_j = theta_exp;
+  for(int i = 0; i < n_AB.n_elem; i++){
+    Labels_ensembles_ph(i,0) = Labels(i, iter);
+  }
+  for(int j = 0; j < M_proposal; j++){
+    theta_j(4) = delta_ensemble(j);
+    w_delta(j) = posterior_Labels_delta(Labels_ensembles_ph, X_AB,
+            n_AB, theta_j, delta_shape, delta_rate) -
+              log_prop_q(delta_ensemble(j), delta_proposal_mean, delta_proposal_sd,
+                         delta_shape, delta_rate, alpha);
+  }
+
+  arma::vec probs = arma::zeros(M_proposal);
+  for(int i = 0; i < M_proposal; i++){
+    probs(i) = exp(w_delta(i) - calc_log_sum(w_delta));
+  }
+
+  arma::vec draw = rmutlinomial(probs);
+  // Update delta
   for(int i = 0; i < draw.n_elem; i++){
     if(draw(i) == 1){
       theta(4) = std::log(delta_ensemble(i));
@@ -658,9 +999,9 @@ inline arma::field<arma::vec> FFBS(const arma::field<arma::vec>& X_AB,
     }
   }
   int accept_num = 0;
-  
+
   for(int i = 1; i < MCMC_iters; i++){
-    //FFBS_step(Labels, i, X_AB, n_AB, theta, step_size, num_evals, prior_p_labels, accept_num);
+    FFBS_step(Labels, i, X_AB, n_AB, theta, step_size, num_evals, accept_num);
     if((i + 1) < MCMC_iters){
       for(int j = 0; j < X_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
