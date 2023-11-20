@@ -76,7 +76,7 @@ inline arma::vec rmutlinomial(const arma::vec& prob){
   int S = 1;
   double rho = 1;
   for(int i = 0; i < (prob.n_elem - 1); i++){
-    if(rho != 0){
+    if(rho > 0){
       output(i) = R::rbinom(S, prob(i) / rho);
     }
     S = S - output(i);

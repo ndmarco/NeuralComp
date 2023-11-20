@@ -558,7 +558,7 @@ inline Rcpp::List Mixed_sampler(const arma::field<arma::vec> X_A,
              vec_accept(i));
     theta.row(i) = theta_ph.t();
     // Rcpp::Rcout << "delta = " << theta_ph(4);
-    FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, accept_num);
+    // FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, accept_num);
     if((i % n_Ensambler_sampler) == 0){
       FFBS_ensemble_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels,
                          num_evals, delta_proposal_mean, delta_proposal_sd, alpha,
@@ -673,12 +673,225 @@ inline Rcpp::List Mixed_sampler(const arma::field<arma::vec> X_A,
              eps_step, Mass_mat, step_size, step_size_delta, Leapfrog_steps, 
              vec_accept(i));
     theta.row(i) = theta_ph.t();
-    FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, accept_num);
-    if((i % n_Ensambler_sampler) == 0){
+    // FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, accept_num);
+    // if((i % n_Ensambler_sampler) == 0){
     FFBS_ensemble_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels,
                         num_evals, delta_proposal_meani, delta_proposal_sdi, alpha,
                         M_proposal, delta_shape, delta_rate);
+    // }
+    theta.row(i) = theta_ph.t();
+    if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
+      theta.row(i+1) = theta.row(i);
+      for(int j = 0; j < n_AB.n_elem; j++){
+        Labels(j, i + 1) = Labels(j, i);
+      }
     }
+  }
+  Rcpp::Rcout << accept_num;
+  Rcpp::List params = Rcpp::List::create(Rcpp::Named("theta", arma::exp(theta)),
+                                         Rcpp::Named("labels", Labels));
+  
+  return params;
+}
+
+inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
+                                    const arma::field<arma::vec> X_B,
+                                    const arma::field<arma::vec> X_AB,
+                                    const arma::vec n_A,
+                                    const arma::vec n_B,
+                                    const arma::vec n_AB,
+                                    const arma::vec init_position,
+                                    int MCMC_iters,
+                                    int Leapfrog_steps,
+                                    const double I_A_shape, 
+                                    const double I_A_rate,
+                                    const double I_B_shape,
+                                    const double I_B_rate,
+                                    const double sigma_A_mean,
+                                    const double sigma_A_shape,
+                                    const double sigma_B_mean,
+                                    const double sigma_B_shape,
+                                    const double delta_shape,
+                                    const double delta_rate,
+                                    const arma::vec eps_step,
+                                    double& step_size,
+                                    double& step_size_delta,
+                                    const double& step_size_labels,
+                                    const int& num_evals,
+                                    double delta_proposal_mean,
+                                    double delta_proposal_sd,
+                                    const double alpha,
+                                    int delta_adaption_block,
+                                    int M_proposal,
+                                    int n_Ensambler_sampler,
+                                    arma::mat& Mass_mat,
+                                    int Warm_block1,
+                                    int Warm_block2){
+  arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, init_position.n_elem, arma::fill::ones);
+  theta.row(0) = arma::log(init_position.t());
+  theta.row(1) = arma::log(init_position.t());
+  arma::vec theta_ph(init_position.n_elem);
+  arma::vec vec_accept(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
+  arma::vec l_lik(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
+  //arma::vec vec_accept_delta(MCMC_iters + Warm_block, arma::fill::zeros);
+  double prop_accept_10 = 0;
+  arma::field<arma::vec> Labels(n_AB.n_elem, MCMC_iters + Warm_block1 + Warm_block2);
+  arma::field<arma::vec> Labels_iter(n_AB.n_elem, 1);
+  double llik = 0;
+  int accept_num = 0;
+  // Use initial starting position
+  for(int i = 0; i < n_AB.n_elem; i++){
+    for(int j = 0; j < MCMC_iters + Warm_block1 + Warm_block2; j++){
+      Labels(i, j) = arma::zeros(n_AB(i));
+    }
+    Labels_iter(i,0) = arma::zeros(n_AB(i));
+  }
+  arma::vec theta_exp;
+  
+  for(int i = 1; i < Warm_block1; i++){
+    if((i % 25) == 0){
+      Rcpp::Rcout << "Warm Up Block 1, Iteration = " << i << "\n";
+      Rcpp::Rcout << "Log-likelihood = " << arma::accu(l_lik.subvec(i-25, i)) / 26 << "\n";
+      //Rcpp::Rcout << "Prob_accept (delta)= " << arma::accu(vec_accept_delta.subvec(i-25, i)) / 26 << "\n";
+      Rcpp::Rcout << "Prob_accept = " << arma::accu(vec_accept.subvec(i-25, i)) / 26 << "\n";
+      //Rcpp::Rcout << "Step Size (delta)  = " << step_size_delta<< "\n";
+      Rcpp::Rcout << "Step Size = " << step_size << "\n" << "\n";
+    }
+    theta_ph = theta.row(i).t();
+    for(int j = 0; j < n_AB.n_elem; j++){
+      Labels_iter(j,0) = Labels(j, i);
+    }
+    
+    theta_exp = arma::exp(theta_ph);
+    l_lik(i) = log_likelihood(Labels_iter, theta_exp, X_A, X_B, X_AB, n_A, n_B, n_AB);
+    HMC_step(Labels_iter, theta_ph, X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_shape, 
+             I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
+             sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+             eps_step, Mass_mat, step_size, step_size_delta, Leapfrog_steps,
+             vec_accept(i));
+    theta.row(i) = theta_ph.t();
+    // Rcpp::Rcout << "delta = " << theta_ph(4);
+    // FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, accept_num);
+    if((i % n_Ensambler_sampler) == 0){
+      FFBS_ensemble_step1(Labels, i, X_AB, n_AB, theta_ph, step_size_labels,
+                         num_evals, delta_proposal_mean, delta_proposal_sd, alpha,
+                         M_proposal, delta_shape, delta_rate);
+    }
+    // Rcpp::Rcout << " delta_aft = " << theta_ph1(4) << "\n";
+    theta.row(i) = theta_ph.t();
+    if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
+      theta.row(i+1) = theta.row(i);
+      for(int j = 0; j < n_AB.n_elem; j++){
+        Labels(j, i + 1) = Labels(j, i);
+      }
+    }
+    //Rcpp::Rcout << "Made it 4";
+    if((i % 10) == 0){
+      // adjust step size for I_A, I_B, sigma_A, sigma_B
+      prop_accept_10 = arma::accu(vec_accept.subvec(i-9, i))/ 10;
+      if(prop_accept_10  <= 0.1){
+        step_size = step_size * 0.1;
+      }else if(prop_accept_10 <= 0.3){
+        step_size = step_size * 0.5;
+      }else if(prop_accept_10 <= 0.6){
+        step_size = step_size * 0.8;
+      }else if(prop_accept_10 > 0.85){
+        step_size = step_size * 1.5;
+      }
+      
+    }
+  }
+  double delta_proposal_meani = arma::mean(theta.col(4).subvec(Warm_block1 - delta_adaption_block, Warm_block1 - 1));
+  double delta_proposal_sdi = arma::stddev(theta.col(4).subvec(Warm_block1 - delta_adaption_block, Warm_block1 - 1));
+  // Rcpp::Rcout << "mean = " << delta_proposal_mean1 << " sd = " << delta_proposal_sd1;
+  
+  for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
+    if((i % delta_adaption_block) == 0){
+      delta_proposal_meani = arma::mean(theta.col(4).subvec(i - delta_adaption_block, i - 1));
+      delta_proposal_sdi = arma::stddev(theta.col(4).subvec(i - delta_adaption_block, i - 1));
+      if(delta_proposal_sdi == 0.00){
+        delta_proposal_sdi = 0.05;
+      }
+    }
+    if((i % 50) == 0){
+      Rcpp::Rcout << "Warm Up Block 2,  Iteration = " << i << "\n";
+      //Rcpp::Rcout << "Prob_accept (delta)= " << arma::accu(vec_accept_delta.subvec(i-25, i)) / 26 << "\n";
+      Rcpp::Rcout << "Log-likelihood = " << arma::accu(l_lik.subvec(i-50, i)) / 51 << "\n";
+      Rcpp::Rcout << "(mu, sigma) = (" << delta_proposal_meani << ", " << delta_proposal_sdi << ") \n"; 
+      Rcpp::Rcout << "Prob_accept = " << arma::accu(vec_accept.subvec(i-50, i)) / 51 << "\n";
+      //Rcpp::Rcout << "Step Size (delta)  = " << step_size_delta<< "\n";
+      Rcpp::Rcout << "Step Size = " << step_size << "\n" << "\n";
+      
+    }
+    theta_ph = theta.row(i).t();
+    for(int j = 0; j < n_AB.n_elem; j++){
+      Labels_iter(j,0) = Labels(j, i);
+    }
+    
+    theta_exp = arma::exp(theta_ph);
+    l_lik(i) = log_likelihood(Labels_iter, theta_exp, X_A, X_B, X_AB, n_A, n_B, n_AB);
+    HMC_step(Labels_iter, theta_ph, X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_shape, 
+             I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
+             sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+             eps_step, Mass_mat, step_size, step_size_delta, Leapfrog_steps, 
+             vec_accept(i));
+    theta.row(i) = theta_ph.t();
+    //FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, accept_num);
+    // if((i % n_Ensambler_sampler) == 0){
+    FFBS_ensemble_step1(Labels, i, X_AB, n_AB, theta_ph, step_size_labels,
+                        num_evals, delta_proposal_meani, delta_proposal_sdi, alpha,
+                        M_proposal, delta_shape, delta_rate);
+    // }
+    theta.row(i) = theta_ph.t();
+    
+    if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
+      theta.row(i+1) = theta.row(i);
+      for(int j = 0; j < n_AB.n_elem; j++){
+        Labels(j, i + 1) = Labels(j, i);
+      }
+    }
+    
+    if((i % 10) == 0){
+      // adjust step size for I_A, I_B, sigma_A, sigma_B
+      prop_accept_10 = arma::accu(vec_accept.subvec(i-9, i))/ 10;
+      if(prop_accept_10  <= 0.1){
+        step_size = step_size * 0.1;
+      }else if(prop_accept_10 <= 0.3){
+        step_size = step_size * 0.5;
+      }else if(prop_accept_10 <= 0.6){
+        step_size = step_size * 0.8;
+      }else if(prop_accept_10 > 0.85){
+        step_size = step_size * 1.5;
+      }
+      
+    }
+  }
+  
+  for(int i =  Warm_block1 + Warm_block2; i <  Warm_block1 + Warm_block2 + MCMC_iters; i++){
+    if((i % 50) == 0){
+      Rcpp::Rcout << "Iteration = " << i << "\n";
+      Rcpp::Rcout << "Log-likelihood = " << arma::accu(l_lik.subvec(i-50, i)) / 51 << "\n";
+      Rcpp::Rcout << "Prob_accept = " << arma::accu(vec_accept.subvec(i-50, i)) / 51 << "\n" << "\n";
+      
+    }
+    theta_ph = theta.row(i).t();
+    for(int j = 0; j < n_AB.n_elem; j++){
+      Labels_iter(j,0) = Labels(j, i);
+    }
+    theta_exp = arma::exp(theta_ph);
+    l_lik(i) = log_likelihood(Labels_iter, theta_exp, X_A, X_B, X_AB, n_A, n_B, n_AB);
+    HMC_step(Labels_iter, theta_ph, X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_shape, 
+             I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
+             sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+             eps_step, Mass_mat, step_size, step_size_delta, Leapfrog_steps, 
+             vec_accept(i));
+    theta.row(i) = theta_ph.t();
+    //FFBS_step(Labels, i, X_AB, n_AB, theta_ph, step_size_labels, num_evals, accept_num);
+    // if((i % n_Ensambler_sampler) == 0){
+      FFBS_ensemble_step1(Labels, i, X_AB, n_AB, theta_ph, step_size_labels,
+                          num_evals, delta_proposal_meani, delta_proposal_sdi, alpha,
+                          M_proposal, delta_shape, delta_rate);
+    // }
     theta.row(i) = theta_ph.t();
     if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
       theta.row(i+1) = theta.row(i);

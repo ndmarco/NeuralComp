@@ -169,6 +169,49 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Mixed_Sampler_int
+Rcpp::List Mixed_Sampler_int(const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, int MCMC_iters, int Warm_block1, int Warm_block2, Rcpp::Nullable<Rcpp::NumericVector> init_position, int Leapfrog_steps, const double I_A_shape, const double I_A_rate, const double I_B_shape, const double I_B_rate, const double sigma_A_mean, const double sigma_A_shape, const double sigma_B_mean, const double sigma_B_shape, const double delta_shape, const double delta_rate, Rcpp::Nullable<Rcpp::NumericVector> eps_step, double step_size, double step_size_delta, const double& step_size_labels, const int& num_evals, double delta_proposal_mean, double delta_proposal_sd, double alpha, int delta_adaption_block, int M_proposal, int n_Ensambler_sampler, Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat);
+RcppExport SEXP _NeuralComp_Mixed_Sampler_int(SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP MCMC_itersSEXP, SEXP Warm_block1SEXP, SEXP Warm_block2SEXP, SEXP init_positionSEXP, SEXP Leapfrog_stepsSEXP, SEXP I_A_shapeSEXP, SEXP I_A_rateSEXP, SEXP I_B_shapeSEXP, SEXP I_B_rateSEXP, SEXP sigma_A_meanSEXP, SEXP sigma_A_shapeSEXP, SEXP sigma_B_meanSEXP, SEXP sigma_B_shapeSEXP, SEXP delta_shapeSEXP, SEXP delta_rateSEXP, SEXP eps_stepSEXP, SEXP step_sizeSEXP, SEXP step_size_deltaSEXP, SEXP step_size_labelsSEXP, SEXP num_evalsSEXP, SEXP delta_proposal_meanSEXP, SEXP delta_proposal_sdSEXP, SEXP alphaSEXP, SEXP delta_adaption_blockSEXP, SEXP M_proposalSEXP, SEXP n_Ensambler_samplerSEXP, SEXP Mass_matSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_A(X_ASEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_B(X_BSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_AB(X_ABSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_A(n_ASEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_B(n_BSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_AB(n_ABSEXP);
+    Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
+    Rcpp::traits::input_parameter< int >::type Warm_block1(Warm_block1SEXP);
+    Rcpp::traits::input_parameter< int >::type Warm_block2(Warm_block2SEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type init_position(init_positionSEXP);
+    Rcpp::traits::input_parameter< int >::type Leapfrog_steps(Leapfrog_stepsSEXP);
+    Rcpp::traits::input_parameter< const double >::type I_A_shape(I_A_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type I_A_rate(I_A_rateSEXP);
+    Rcpp::traits::input_parameter< const double >::type I_B_shape(I_B_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type I_B_rate(I_B_rateSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_A_mean(sigma_A_meanSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_A_shape(sigma_A_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_B_mean(sigma_B_meanSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_B_shape(sigma_B_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type delta_shape(delta_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type delta_rate(delta_rateSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type eps_step(eps_stepSEXP);
+    Rcpp::traits::input_parameter< double >::type step_size(step_sizeSEXP);
+    Rcpp::traits::input_parameter< double >::type step_size_delta(step_size_deltaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type step_size_labels(step_size_labelsSEXP);
+    Rcpp::traits::input_parameter< const int& >::type num_evals(num_evalsSEXP);
+    Rcpp::traits::input_parameter< double >::type delta_proposal_mean(delta_proposal_meanSEXP);
+    Rcpp::traits::input_parameter< double >::type delta_proposal_sd(delta_proposal_sdSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< int >::type delta_adaption_block(delta_adaption_blockSEXP);
+    Rcpp::traits::input_parameter< int >::type M_proposal(M_proposalSEXP);
+    Rcpp::traits::input_parameter< int >::type n_Ensambler_sampler(n_Ensambler_samplerSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type Mass_mat(Mass_matSEXP);
+    rcpp_result_gen = Rcpp::wrap(Mixed_Sampler_int(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block1, Warm_block2, init_position, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step, step_size, step_size_delta, step_size_labels, num_evals, delta_proposal_mean, delta_proposal_sd, alpha, delta_adaption_block, M_proposal, n_Ensambler_sampler, Mass_mat));
+    return rcpp_result_gen;
+END_RCPP
+}
 // approx_trans_p
 arma::mat approx_trans_p(double step_size, int num_evals, arma::vec& theta);
 RcppExport SEXP _NeuralComp_approx_trans_p(SEXP step_sizeSEXP, SEXP num_evalsSEXP, SEXP thetaSEXP) {
@@ -459,6 +502,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_posterior_Z1", (DL_FUNC) &_NeuralComp_posterior_Z1, 5},
     {"_NeuralComp_Sampler", (DL_FUNC) &_NeuralComp_Sampler, 27},
     {"_NeuralComp_Mixed_Sampler", (DL_FUNC) &_NeuralComp_Mixed_Sampler, 33},
+    {"_NeuralComp_Mixed_Sampler_int", (DL_FUNC) &_NeuralComp_Mixed_Sampler_int, 33},
     {"_NeuralComp_approx_trans_p", (DL_FUNC) &_NeuralComp_approx_trans_p, 3},
     {"_NeuralComp_forward_pass1", (DL_FUNC) &_NeuralComp_forward_pass1, 4},
     {"_NeuralComp_backward_sim1", (DL_FUNC) &_NeuralComp_backward_sim1, 5},
