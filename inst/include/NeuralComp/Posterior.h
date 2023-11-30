@@ -4,9 +4,80 @@
 #include <RcppArmadillo.h>
 #include <cmath>
 #include "Priors.h"
+#include <splines2Armadillo.h>
 
 namespace NeuralComp {
-
+inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
+                                arma::vec& theta,
+                                arma::vec& basis_coef_A,
+                                arma::vec& basis_coef_B,
+                                const arma::field<arma::mat>& basis_funct_A,
+                                const arma::field<arma::mat>& basis_funct_B,
+                                const arma::field<arma::mat>& basis_funct_AB,
+                                const arma::field<arma::vec>& X_A,
+                                const arma::field<arma::vec>& X_B,
+                                const arma::field<arma::vec>& X_AB,
+                                const arma::vec& n_A,
+                                const arma::vec& n_B,
+                                const arma::vec& n_AB){
+  double l_likelihood = 0;
+  // Calculate log-likelihood for A trials
+  for(int i = 0; i < n_A.n_elem; i++){
+    for(int j = 0; j < n_A(i); j++){
+      l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / std::exp(arma::dot(basis_funct_A(i,0).row(j), basis_coef_A))),
+                                               pow((1 / theta(0)), 2));
+    }
+  }
+  
+  // Calculate log-likelihood for B trials
+  for(int i = 0; i < n_B.n_elem; i++){
+    for(int j = 0; j < n_B(i); j++){
+      l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / std::exp(arma::dot(basis_funct_B(i,0).row(j), basis_coef_B))),
+                                                   pow((1 / theta(1)), 2));
+    }
+  }
+  
+  // calculate log-likelihood for AB trials
+  for(int i = 0; i < n_AB.n_elem; i++){
+    for(int j = 0; j < n_AB(i); j++){
+      if(Labels(i,0)(j) == 0){
+        // label is A
+        if(j != 0){
+          if(Labels(i,0)(j-1) == 0){
+            // Condition if spike has not switched (still in A)
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))),
+                                                     pow((1 / theta(1)), 2)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+          }else{
+            // Condition if spike has switched from B to A
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+          }
+        }else{
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+        }
+      }else{
+        // label is B
+        if(j != 0){
+          if(Labels(i,0)(j-1) == 1){
+            // Condition if spike has not switched (still in A)
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+          }else{
+            // Condition if spike has switched from B to A
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+          }
+        }else{
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+        }
+      }
+    }
+  }
+  return l_likelihood;
+}
 // transform the parameters into an unbounded space
 // theta: (I_A, I_B, sigma_A, sigma_B, delta)
 inline double log_likelihood(arma::field<arma::vec>& Labels,

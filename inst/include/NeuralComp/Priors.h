@@ -3,6 +3,8 @@
 
 #include <RcppArmadillo.h>
 #include <cmath>
+#include <RcppDist.h>
+#include <mvnorm.h>
 
 namespace NeuralComp {
 
@@ -85,6 +87,66 @@ inline arma::vec rmutlinomial(const arma::vec& prob){
   output(prob.n_elem - 1) = S;
   return output;
 }
+
+// Calculate multivariate normal logpdf using precision matrix
+inline double lpdf_mvnorm(const arma::vec x,
+                          const arma::vec mu,
+                          const arma::mat Precision){
+  double lpdf = - ((x.n_elem / 2) * std::log(2 * arma::datum::pi)  - log_det_sympd(Precision)) - 
+    (0.5 * arma::dot((x - mu), Precision * (x - mu)));
+}  
+
+// calculate the log prior
+// I_A_shape: shape parameter for I_A
+// I_A_rate: rate parameter for I_A
+// I_B_shape: shape parameter for I_B
+// I_B_rate: rate parameter for I_B
+// sigma_A_mean: mean parameter for sigma_A
+// sigma_A_shape: shape parameter for sigma_A
+// sigma_B_mean: mean parameter for sigma_B
+// sigma_B_shape: shape parameter for sigma_B
+// delta_shape: shape parameter for delta
+// delta_rate: rate parameter for delta
+// theta: (I_A, I_B, sigma_A, sigma_B, delta)
+inline double log_prior_TI(const double& mu_A, 
+                           const double& mu_B,
+                           const double& I_A_sigma_sq,
+                           const double& I_B_sigma_sq,
+                           const double& sigma_A_mean,
+                           const double& sigma_A_shape,
+                           const double& sigma_B_mean,
+                           const double& sigma_B_shape,
+                           arma::vec& theta,
+                           arma::vec& basis_coef_A,
+                           arma::vec& basis_coef_B){
+  
+  arma::mat P_mat(basis_coef_A.n_elem, basis_coef_A.n_elem, arma::fill::zeros);
+  P_mat.zeros();
+  for(int j = 0; j < P_mat.n_rows; j++){
+    P_mat(0,0) = 1;
+    if(j > 0){
+      P_mat(j,j) = 2;
+      P_mat(j-1,j) = -1;
+      P_mat(j,j-1) = -1;
+    }
+    P_mat(P_mat.n_rows - 1, P_mat.n_rows - 1) = 1;
+  }
+  
+  // I_A prior
+  double l_prior =  lpdf_mvnorm(basis_coef_A, mu_A * arma::ones(P_mat.n_rows), P_mat / I_A_sigma_sq);
+  
+  // I_B prior
+  l_prior = l_prior + lpdf_mvnorm(basis_coef_B, mu_B * arma::ones(P_mat.n_rows),  P_mat / I_B_sigma_sq);
+  
+  // sigma_A prior
+  l_prior = l_prior + dinv_gauss(theta(2), sigma_A_mean, sigma_A_shape);
+  
+  // sigma_B prior
+  l_prior = l_prior + dinv_gauss(theta(3), sigma_B_mean, sigma_B_shape);
+  
+  return l_prior;
+}
+
 
 
 // calculate the log prior
