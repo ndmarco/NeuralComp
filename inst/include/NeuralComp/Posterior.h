@@ -167,6 +167,35 @@ inline double log_posterior(arma::field<arma::vec>& Labels,
   return l_posterior;
 }
 
+inline double log_posterior_TI(arma::field<arma::vec>& Labels,
+                               arma::vec theta,
+                               arma::vec& basis_coef_A,
+                               arma::vec& basis_coef_B,
+                               const arma::field<arma::mat>& basis_funct_A,
+                               const arma::field<arma::mat>& basis_funct_B,
+                               const arma::field<arma::mat>& basis_funct_AB,
+                               const arma::field<arma::vec>& X_A,
+                               const arma::field<arma::vec>& X_B,
+                               const arma::field<arma::vec>& X_AB,
+                               const arma::vec& n_A,
+                               const arma::vec& n_B,
+                               const arma::vec& n_AB,
+                               const double& mu_A, 
+                               const double& mu_B,
+                               const double& I_A_sigma_sq,
+                               const double& I_B_sigma_sq,
+                               const double& sigma_A_mean,
+                               const double& sigma_A_shape,
+                               const double& sigma_B_mean,
+                               const double& sigma_B_shape){
+  double l_posterior = log_likelihood_TI(Labels, theta, basis_coef_A, basis_coef_B,
+                                         basis_funct_A, basis_funct_B, basis_funct_AB,
+                                         X_A, X_B, X_AB, n_A, n_B, n_AB) +
+    log_prior_TI(mu_A, mu_B, I_A_sigma_sq, I_B_sigma_sq, sigma_A_mean, sigma_A_shape,
+                 sigma_B_mean, sigma_B_shape, theta, basis_coef_A, basis_coef_B);
+  return l_posterior;
+}
+
 inline double log_posterior_delta(arma::field<arma::vec>& Labels,
                                   arma::vec theta,
                                   const arma::field<arma::vec>& X_A,
@@ -193,7 +222,7 @@ inline double transformed_log_posterior_delta(arma::field<arma::vec>& Labels,
                                               const double& delta_shape,
                                               const double& delta_rate){
   double l_posterior = log_posterior_delta(Labels, transform_pars(theta), X_A, X_B, X_AB, n_A, n_B, n_AB,
-                                           delta_shape, delta_rate) + arma::accu(theta);
+                                           delta_shape, delta_rate) + theta(4);
   return l_posterior;
 }
 
@@ -216,7 +245,7 @@ inline double transformed_log_posterior(arma::field<arma::vec>& Labels,
   double l_posterior = log_posterior(Labels, transform_pars(theta), X_A, X_B, X_AB,
                                      n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape,
                                      I_B_rate, sigma_A_mean, sigma_A_shape,
-                                     sigma_B_mean, sigma_B_shape) + arma::accu(theta);
+                                     sigma_B_mean, sigma_B_shape) + arma::accu(theta.subvec(0,3));
   return l_posterior;
 }
 
@@ -263,16 +292,16 @@ inline arma::vec calc_gradient(arma::field<arma::vec>& Labels,
 
 // Calculate derivative of log_posterior with respect to delta on the original scale
 inline double calc_gradient_delta(arma::field<arma::vec>& Labels,
-                                     arma::vec theta,
-                                     const arma::field<arma::vec>& X_A,
-                                     const arma::field<arma::vec>& X_B,
-                                     const arma::field<arma::vec>& X_AB,
-                                     const arma::vec& n_A,
-                                     const arma::vec& n_B,
-                                     const arma::vec& n_AB,
-                                     const double& delta_shape,
-                                     const double& delta_rate,
-                                     const arma::vec& eps_step){
+                                  arma::vec theta,
+                                  const arma::field<arma::vec>& X_A,
+                                  const arma::field<arma::vec>& X_B,
+                                  const arma::field<arma::vec>& X_AB,
+                                  const arma::vec& n_A,
+                                  const arma::vec& n_B,
+                                  const arma::vec& n_AB,
+                                  const double& delta_shape,
+                                  const double& delta_rate,
+                                  const arma::vec& eps_step){
   double deriv = 0;
   arma::vec theta_p_eps = theta;
   arma::vec theta_m_eps = theta;

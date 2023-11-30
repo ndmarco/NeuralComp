@@ -94,6 +94,7 @@ inline double lpdf_mvnorm(const arma::vec x,
                           const arma::mat Precision){
   double lpdf = - ((x.n_elem / 2) * std::log(2 * arma::datum::pi)  - log_det_sympd(Precision)) - 
     (0.5 * arma::dot((x - mu), Precision * (x - mu)));
+  return lpdf;
 }  
 
 // calculate the log prior
