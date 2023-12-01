@@ -2,6 +2,9 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' HMC sampler for competition model
+NULL
+
+#' HMC sampler for competition model
 #' 
 #' @name HMC
 #' @param Labels List of vectors containing labels containing membership of spike for AB trials
@@ -30,6 +33,10 @@
 #' @export
 HMC <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block = 500L, init_position = NULL, Leapfrog_steps = 10L, I_A_shape = 40, I_A_rate = 1, I_B_shape = 40, I_B_rate = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, delta_shape = 0.5, delta_rate = 0.1, eps_step = NULL, step_size = 0.001, step_size_delta = 0.00005, Mass_mat = NULL) {
     .Call('_NeuralComp_HMC', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block, init_position, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step, step_size, step_size_delta, Mass_mat)
+}
+
+HMC_TI <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block = 500L, Leapfrog_steps = 10L, I_A_shape = 40, I_A_rate = 1, I_B_shape = 40, I_B_rate = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, alpha = 0.1, beta = 0.1, mu_prior_mean = 50, mu_prior_var = 100, eps_step = 0.001, step_size = 0.001, step_size_delta = 0.00005) {
+    .Call('_NeuralComp_HMC_TI', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean, mu_prior_var, eps_step, step_size, step_size_delta)
 }
 
 #' MH sampler for labels

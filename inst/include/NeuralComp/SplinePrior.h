@@ -10,8 +10,8 @@ namespace NeuralComp {
 inline void update_mu(const arma::vec& basis_coef,
                       const arma::mat& P_mat,
                       const double I_sigma_sq,
-                      arma::double mu_prior_mean,
-                      arma::double mu_prior_var,
+                      const double mu_prior_mean,
+                      const double mu_prior_var,
                       int iter,
                       arma::vec& mu){
   double B = (1 / mu_prior_var) + (arma::dot(arma::ones(P_mat.n_rows), P_mat * arma::ones(P_mat.n_rows)) / I_sigma_sq);
@@ -34,3 +34,6 @@ inline void update_I_sigma(const arma::vec& basis_coef,
 }
 
 }
+
+
+#endif

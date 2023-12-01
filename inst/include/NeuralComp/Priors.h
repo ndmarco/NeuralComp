@@ -92,7 +92,7 @@ inline arma::vec rmutlinomial(const arma::vec& prob){
 inline double lpdf_mvnorm(const arma::vec x,
                           const arma::vec mu,
                           const arma::mat Precision){
-  double lpdf = - ((x.n_elem / 2) * std::log(2 * arma::datum::pi)  - log_det_sympd(Precision)) - 
+  double lpdf = - ((x.n_elem / 2) * (std::log(2 * arma::datum::pi)  - log_det_sympd(Precision))) - 
     (0.5 * arma::dot((x - mu), Precision * (x - mu)));
   return lpdf;
 }  
@@ -117,33 +117,24 @@ inline double log_prior_TI(const double& mu_A,
                            const double& sigma_A_shape,
                            const double& sigma_B_mean,
                            const double& sigma_B_shape,
+                           const arma::mat P_mat,
                            arma::vec& theta,
                            arma::vec& basis_coef_A,
                            arma::vec& basis_coef_B){
   
-  arma::mat P_mat(basis_coef_A.n_elem, basis_coef_A.n_elem, arma::fill::zeros);
-  P_mat.zeros();
-  for(int j = 0; j < P_mat.n_rows; j++){
-    P_mat(0,0) = 1;
-    if(j > 0){
-      P_mat(j,j) = 2;
-      P_mat(j-1,j) = -1;
-      P_mat(j,j-1) = -1;
-    }
-    P_mat(P_mat.n_rows - 1, P_mat.n_rows - 1) = 1;
-  }
+  
   
   // I_A prior
-  double l_prior =  lpdf_mvnorm(basis_coef_A, mu_A * arma::ones(P_mat.n_rows), P_mat / I_A_sigma_sq);
+  double l_prior =  ((0.5 / I_A_sigma_sq) * arma::dot((basis_coef_A - mu_A * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_A - mu_A * arma::ones(P_mat.n_rows))));
   
   // I_B prior
-  l_prior = l_prior + lpdf_mvnorm(basis_coef_B, mu_B * arma::ones(P_mat.n_rows),  P_mat / I_B_sigma_sq);
+  l_prior = l_prior + ((0.5 / I_B_sigma_sq) * arma::dot((basis_coef_B - mu_B * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_B - mu_B * arma::ones(P_mat.n_rows))));
   
   // sigma_A prior
-  l_prior = l_prior + dinv_gauss(theta(2), sigma_A_mean, sigma_A_shape);
+  l_prior = l_prior + dinv_gauss(theta(0), sigma_A_mean, sigma_A_shape);
   
   // sigma_B prior
-  l_prior = l_prior + dinv_gauss(theta(3), sigma_B_mean, sigma_B_shape);
+  l_prior = l_prior + dinv_gauss(theta(1), sigma_B_mean, sigma_B_shape);
   
   return l_prior;
 }

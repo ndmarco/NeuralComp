@@ -1,7 +1,7 @@
 #include <RcppArmadillo.h>
 #include <cmath>
 #include <NeuralComp.h>
-
+#include <splines2Armadillo.h>
 
 //' HMC sampler for competition model
 //' 
@@ -87,9 +87,118 @@ arma::mat HMC(arma::field<arma::vec> Labels,
                                             eps_step1, step_size, step_size_delta, Mass_mat1, 
                                             Warm_block);
    return theta;
-   
 }
 
+//' HMC sampler for competition model
+ //' 
+ //' @name HMC
+ //' @param Labels List of vectors containing labels containing membership of spike for AB trials
+ //' @param X_A List of vectors containing ISIs for A trials
+ //' @param X_B List of vectors containing ISIs for B trials
+ //' @param X_AB List of vectors containing ISIs for AB trials
+ //' @param n_A Vector containing number of spikes per trial for A stimulus trials
+ //' @param n_B Vector containing number of spikes per trial for B stimulus trials
+ //' @param n_AB Vector containing number of spikes per trial for AB stimulus trials
+ //' @param MCMC_iters Integer containing number of HMC iterations
+ //' @param init_position Vector containing starting position for HMC
+ //' @param Leapfrog_steps Integer containing number of leapfrog steps for approximating the Hamiltonian dynamics
+ //' @param I_A_shape Double containing shape parameter for prior distribution on I_A
+ //' @param I_A_rate Double containing rate parameter for prior distribution on I_A
+ //' @param I_B_shape Double containing shape parameter for prior distribution on I_B
+ //' @param I_B_rate Double containing rate parameter for prior distribution on I_B
+ //' @param sigma_A_mean Double containing mean parameter for prior distribution on sigma_A
+ //' @param sigma_A_shape Double containing shape parameter for prior distribution on sigma_A
+ //' @param sigma_B_mean Double containing mean parameter for prior distribution on sigma_B
+ //' @param sigma_B_shape Double containing shape parameter for prior distribution on sigma_B
+ //' @param delta_shape Double containing shape parameter for prior distribution on delta
+ //' @param delta_rate Double containing rate parameter for prior distribution on delta
+ //' @param eps_step Vector containing step size for approximating gradient
+ //' @param step_size Vector containing step size for leapfrog integrator
+ //' 
+ //' @export
+ //[[Rcpp::export]]
+Rcpp::List HMC_TI(arma::field<arma::vec> Labels,
+                  const arma::field<arma::vec> X_A,
+                  const arma::field<arma::vec> X_B,
+                  const arma::field<arma::vec> X_AB,
+                  const arma::vec n_A,
+                  const arma::vec n_B,
+                  const arma::vec n_AB,
+                  int MCMC_iters,
+                  const int basis_degree,
+                  const arma::vec boundary_knots,
+                  const arma::vec internal_knots,
+                  int Warm_block = 500,
+                  int Leapfrog_steps = 10,
+                  const double I_A_shape = 40, 
+                  const double I_A_rate = 1,
+                  const double I_B_shape = 40,
+                  const double I_B_rate = 1,
+                  const double sigma_A_mean = 6.32,
+                  const double sigma_A_shape = 1,
+                  const double sigma_B_mean = 6.32,
+                  const double sigma_B_shape = 1,
+                  const double alpha = 0.1,
+                  const double beta = 0.1,
+                  const double mu_prior_mean = 50,
+                  const double mu_prior_var = 100,
+                  const double eps_step = 0.001,
+                  double step_size =  0.001,
+                  double step_size_delta =  0.00005){
+   //Create B-splines
+   splines2::BSpline bspline;
+   // Make spline basis for A functions
+   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+   for(int i = 0; i < n_A.n_elem; i++){
+     arma::vec time = X_A(i,0);
+     for(int j = 1; j < n_A(i); j++){
+       time(j) = arma::accu(X_A(i,0).subvec(0,j));
+     }
+     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                 boundary_knots);
+     // Get Basis matrix
+     arma::mat bspline_mat{bspline.basis(true)};
+     basis_funct_A(i,0) = bspline_mat;
+   }
+   
+   // Make spline basis for B functions
+   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+   for(int i = 0; i < n_B.n_elem; i++){
+     arma::vec time = X_B(i,0);
+     for(int j = 1; j < n_B(i); j++){
+       time(j) = arma::accu(X_B(i,0).subvec(0,j));
+     }
+     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                 boundary_knots);
+     // Get Basis matrix
+     arma::mat bspline_mat{bspline.basis(true)};
+     basis_funct_B(i,0) = bspline_mat;
+   }
+   
+   // Make spline basis for AB functions
+   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+   for(int i = 0; i < n_AB.n_elem; i++){
+     arma::vec time = X_AB(i,0);
+     for(int j = 1; j < n_AB(i); j++){
+       time(j) = arma::accu(X_AB(i,0).subvec(0,j));
+     }
+     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                 boundary_knots);
+     // Get Basis matrix
+     arma::mat bspline_mat{bspline.basis(true)};
+     basis_funct_AB(i,0) = bspline_mat;
+   }
+   
+   
+   
+   Rcpp::List output = NeuralComp::HMC_sampler_TI(Labels, basis_funct_A, basis_funct_B, basis_funct_AB,
+                                                  X_A, X_B, X_AB, n_A, n_B, n_AB,
+                                                  MCMC_iters, Leapfrog_steps, sigma_A_mean, sigma_A_shape,
+                                                  sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean,
+                                                  mu_prior_var, eps_step, step_size, Warm_block);
+   return output;
+   
+ }
 
 //' MH sampler for labels
  //[[Rcpp::export]]

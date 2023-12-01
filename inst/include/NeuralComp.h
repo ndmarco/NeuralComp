@@ -5,5 +5,6 @@
 #include "NeuralComp/Posterior.h"
 #include "NeuralComp/Priors.h"
 #include "NeuralComp/Labels.h"
+#include "NeuralComp/SplinePrior.h"
 
 #endif
