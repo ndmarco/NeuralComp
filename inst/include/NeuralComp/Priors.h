@@ -125,10 +125,10 @@ inline double log_prior_TI(const double& mu_A,
   
   
   // I_A prior
-  double l_prior =  ((0.5 / I_A_sigma_sq) * arma::dot((basis_coef_A - mu_A * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_A - mu_A * arma::ones(P_mat.n_rows))));
+  double l_prior =  -((0.5 / I_A_sigma_sq) * arma::dot((basis_coef_A - mu_A * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_A - mu_A * arma::ones(P_mat.n_rows))));
   
   // I_B prior
-  l_prior = l_prior + ((0.5 / I_B_sigma_sq) * arma::dot((basis_coef_B - mu_B * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_B - mu_B * arma::ones(P_mat.n_rows))));
+  l_prior = l_prior - ((0.5 / I_B_sigma_sq) * arma::dot((basis_coef_B - mu_B * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_B - mu_B * arma::ones(P_mat.n_rows))));
   
   // sigma_A prior
   l_prior = l_prior + dinv_gauss(theta(0), sigma_A_mean, sigma_A_shape);

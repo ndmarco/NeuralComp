@@ -16,7 +16,7 @@ inline void update_mu(const arma::vec& basis_coef,
                       arma::vec& mu){
   double B = (1 / mu_prior_var) + (arma::dot(arma::ones(P_mat.n_rows), P_mat * arma::ones(P_mat.n_rows)) / I_sigma_sq);
   double b = (mu_prior_mean / mu_prior_var) + (arma::dot(arma::ones(P_mat.n_rows), P_mat * basis_coef) / I_sigma_sq);
-  mu(iter) = R::rnorm(B * b, std::sqrt(1 / B));
+  mu(iter) = R::rnorm(b / B, std::sqrt(1 / B));
    
 }
 
