@@ -99,6 +99,40 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// HMC_FR
+Rcpp::List HMC_FR(arma::field<arma::vec> Labels, const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, int MCMC_iters, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, int Warm_block, int Leapfrog_steps, const double sigma_A_mean, const double sigma_A_shape, const double sigma_B_mean, const double sigma_B_shape, const double alpha, const double beta, const double mu_prior_mean, const double mu_prior_var, const double eps_step, double step_size_sigma, double step_size_FR);
+RcppExport SEXP _NeuralComp_HMC_FR(SEXP LabelsSEXP, SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP MCMC_itersSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP Warm_blockSEXP, SEXP Leapfrog_stepsSEXP, SEXP sigma_A_meanSEXP, SEXP sigma_A_shapeSEXP, SEXP sigma_B_meanSEXP, SEXP sigma_B_shapeSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP mu_prior_meanSEXP, SEXP mu_prior_varSEXP, SEXP eps_stepSEXP, SEXP step_size_sigmaSEXP, SEXP step_size_FRSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::field<arma::vec> >::type Labels(LabelsSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_A(X_ASEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_B(X_BSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_AB(X_ABSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_A(n_ASEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_B(n_BSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_AB(n_ABSEXP);
+    Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
+    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
+    Rcpp::traits::input_parameter< int >::type Warm_block(Warm_blockSEXP);
+    Rcpp::traits::input_parameter< int >::type Leapfrog_steps(Leapfrog_stepsSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_A_mean(sigma_A_meanSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_A_shape(sigma_A_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_B_mean(sigma_B_meanSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_B_shape(sigma_B_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const double >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const double >::type mu_prior_mean(mu_prior_meanSEXP);
+    Rcpp::traits::input_parameter< const double >::type mu_prior_var(mu_prior_varSEXP);
+    Rcpp::traits::input_parameter< const double >::type eps_step(eps_stepSEXP);
+    Rcpp::traits::input_parameter< double >::type step_size_sigma(step_size_sigmaSEXP);
+    Rcpp::traits::input_parameter< double >::type step_size_FR(step_size_FRSEXP);
+    rcpp_result_gen = Rcpp::wrap(HMC_FR(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block, Leapfrog_steps, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean, mu_prior_var, eps_step, step_size_sigma, step_size_FR));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Sample_Labels
 arma::field<arma::vec> Sample_Labels(const arma::field<arma::vec> X_AB, const arma::vec n_AB, int MCMC_iters, arma::vec theta);
 RcppExport SEXP _NeuralComp_Sample_Labels(SEXP X_ABSEXP, SEXP n_ABSEXP, SEXP MCMC_itersSEXP, SEXP thetaSEXP) {
@@ -551,6 +585,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_HMC", (DL_FUNC) &_NeuralComp_HMC, 25},
     {"_NeuralComp_FR_CI", (DL_FUNC) &_NeuralComp_FR_CI, 8},
     {"_NeuralComp_HMC_TI", (DL_FUNC) &_NeuralComp_HMC_TI, 24},
+    {"_NeuralComp_HMC_FR", (DL_FUNC) &_NeuralComp_HMC_FR, 24},
     {"_NeuralComp_Sample_Labels", (DL_FUNC) &_NeuralComp_Sample_Labels, 4},
     {"_NeuralComp_GetTraceLabels", (DL_FUNC) &_NeuralComp_GetTraceLabels, 3},
     {"_NeuralComp_posterior_Z1", (DL_FUNC) &_NeuralComp_posterior_Z1, 5},

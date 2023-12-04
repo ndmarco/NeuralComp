@@ -139,6 +139,63 @@ inline double log_prior_TI(const double& mu_A,
   return l_prior;
 }
 
+// calculate the log prior
+// I_A_shape: shape parameter for I_A
+// I_A_rate: rate parameter for I_A
+// I_B_shape: shape parameter for I_B
+// I_B_rate: rate parameter for I_B
+// sigma_A_mean: mean parameter for sigma_A
+// sigma_A_shape: shape parameter for sigma_A
+// sigma_B_mean: mean parameter for sigma_B
+// sigma_B_shape: shape parameter for sigma_B
+// delta_shape: shape parameter for delta
+// delta_rate: rate parameter for delta
+// theta: (I_A, I_B, sigma_A, sigma_B, delta)
+inline double log_prior_FR(const double& mu_A, 
+                           const double& mu_B,
+                           const double& I_A_sigma_sq,
+                           const double& I_B_sigma_sq,
+                           const arma::mat P_mat,
+                           arma::vec& basis_coef_A,
+                           arma::vec& basis_coef_B){
+  
+  
+  
+  // I_A prior
+  double l_prior =  -((0.5 / I_A_sigma_sq) * arma::dot((basis_coef_A - mu_A * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_A - mu_A * arma::ones(P_mat.n_rows))));
+  
+  // I_B prior
+  l_prior = l_prior - ((0.5 / I_B_sigma_sq) * arma::dot((basis_coef_B - mu_B * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_B - mu_B * arma::ones(P_mat.n_rows))));
+  
+  return l_prior;
+}
+
+// calculate the log prior
+// I_A_shape: shape parameter for I_A
+// I_A_rate: rate parameter for I_A
+// I_B_shape: shape parameter for I_B
+// I_B_rate: rate parameter for I_B
+// sigma_A_mean: mean parameter for sigma_A
+// sigma_A_shape: shape parameter for sigma_A
+// sigma_B_mean: mean parameter for sigma_B
+// sigma_B_shape: shape parameter for sigma_B
+// delta_shape: shape parameter for delta
+// delta_rate: rate parameter for delta
+// theta: (I_A, I_B, sigma_A, sigma_B, delta)
+inline double log_prior_sigma(const double& sigma_A_mean,
+                              const double& sigma_A_shape,
+                              const double& sigma_B_mean,
+                              const double& sigma_B_shape,
+                              arma::vec& theta){
+  
+  // sigma_A prior
+  double  l_prior = dinv_gauss(theta(0), sigma_A_mean, sigma_A_shape);
+  
+  // sigma_B prior
+  l_prior = l_prior + dinv_gauss(theta(1), sigma_B_mean, sigma_B_shape);
+  
+  return l_prior;
+}
 
 
 // calculate the log prior

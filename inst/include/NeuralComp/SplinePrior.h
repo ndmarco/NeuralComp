@@ -27,7 +27,7 @@ inline void update_I_sigma(const arma::vec& basis_coef,
                            const double beta,
                            int iter,
                            arma::vec& I_sigma){
-  double a = alpha + (P_mat.n_cols / 2);
+  double a = alpha + ((P_mat.n_cols - 1) / 2);
   double b = beta + (0.5 * arma::dot((basis_coef - mu * arma::ones(P_mat.n_rows)), P_mat * (basis_coef - mu * arma::ones(P_mat.n_rows))));
   I_sigma(iter) = 1 / R::rgamma(a, 1/b);
   

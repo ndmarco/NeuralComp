@@ -187,10 +187,10 @@ Rcpp::List HMC_TI(arma::field<arma::vec> Labels,
                   const double sigma_A_shape = 1,
                   const double sigma_B_mean = 6.32,
                   const double sigma_B_shape = 1,
-                  const double alpha = 0.1,
-                  const double beta = 0.1,
-                  const double mu_prior_mean = 50,
-                  const double mu_prior_var = 100,
+                  const double alpha = 1,
+                  const double beta = 0.005,
+                  const double mu_prior_mean = 4,
+                  const double mu_prior_var = 1,
                   const double eps_step = 0.001,
                   double step_size =  0.001,
                   double step_size_delta =  0.00005){
@@ -248,6 +248,86 @@ Rcpp::List HMC_TI(arma::field<arma::vec> Labels,
    return output;
    
  }
+
+//[[Rcpp::export]]
+Rcpp::List HMC_FR(arma::field<arma::vec> Labels,
+                  const arma::field<arma::vec> X_A,
+                  const arma::field<arma::vec> X_B,
+                  const arma::field<arma::vec> X_AB,
+                  const arma::vec n_A,
+                  const arma::vec n_B,
+                  const arma::vec n_AB,
+                  int MCMC_iters,
+                  const int basis_degree,
+                  const arma::vec boundary_knots,
+                  const arma::vec internal_knots,
+                  int Warm_block = 500,
+                  int Leapfrog_steps = 10,
+                  const double sigma_A_mean = 6.32,
+                  const double sigma_A_shape = 1,
+                  const double sigma_B_mean = 6.32,
+                  const double sigma_B_shape = 1,
+                  const double alpha = 0.1,
+                  const double beta = 0.1,
+                  const double mu_prior_mean = 4,
+                  const double mu_prior_var = 0.1,
+                  const double eps_step = 0.001,
+                  double step_size_sigma =  0.001,
+                  double step_size_FR =  0.1){
+  //Create B-splines
+  splines2::BSpline bspline;
+  // Make spline basis for A functions
+  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+  for(int i = 0; i < n_A.n_elem; i++){
+    arma::vec time = arma::zeros(n_A(i));
+    for(int j = 1; j < n_A(i); j++){
+      time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_A(i,0) = bspline_mat;
+  }
+  
+  // Make spline basis for B functions
+  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+  for(int i = 0; i < n_B.n_elem; i++){
+    arma::vec time = arma::zeros(n_B(i));
+    for(int j = 1; j < n_B(i); j++){
+      time(j) = arma::accu(X_B(i,0).subvec(0,j));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_B(i,0) = bspline_mat;
+  }
+  
+  // Make spline basis for AB functions
+  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+  for(int i = 0; i < n_AB.n_elem; i++){
+    arma::vec time = arma::zeros(n_AB(i));
+    for(int j = 1; j < n_AB(i); j++){
+      time(j) = arma::accu(X_AB(i,0).subvec(0,j));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_AB(i,0) = bspline_mat;
+  }
+  
+  
+  
+  Rcpp::List output = NeuralComp::HMC_sampler_FR(Labels, basis_funct_A, basis_funct_B, basis_funct_AB,
+                                                 X_A, X_B, X_AB, n_A, n_B, n_AB,
+                                                 MCMC_iters, Leapfrog_steps, sigma_A_mean, sigma_A_shape,
+                                                 sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean,
+                                                 mu_prior_var, eps_step, step_size_FR, step_size_sigma, Warm_block);
+  return output;
+  
+}
 
 //' MH sampler for labels
  //[[Rcpp::export]]
