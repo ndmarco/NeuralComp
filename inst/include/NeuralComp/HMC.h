@@ -104,6 +104,7 @@ inline void leapfrog_step_FR(arma::field<arma::vec>& Labels,
                              const arma::mat P_mat,
                              const double& eps_step,
                              double& step_size,
+                             arma::mat& Mass_mat,
                              arma::vec& position,
                              arma::vec& momentum){
   arma::vec position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
@@ -116,7 +117,8 @@ inline void leapfrog_step_FR(arma::field<arma::vec>& Labels,
                            n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq,
                            P_mat, eps_step);
   
-  position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) = position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) + step_size * momentum_i;
+  position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) = position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) + 
+    step_size * arma::solve(Mass_mat, momentum_i);
   position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
@@ -148,6 +150,7 @@ inline void leapfrog_step_theta(arma::field<arma::vec>& Labels,
                                 const double& sigma_B_shape,
                                 const double& eps_step,
                                 double& step_size,
+                                arma::mat& Mass_mat,
                                 arma::vec& position,
                                 arma::vec& momentum){
   arma::vec position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
@@ -161,7 +164,8 @@ inline void leapfrog_step_theta(arma::field<arma::vec>& Labels,
                               sigma_A_mean, sigma_A_shape, 
                               sigma_B_mean, sigma_B_shape, eps_step);
   
-  position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) + step_size * momentum_i;
+  position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) + 
+    step_size * arma::solve(Mass_mat, momentum_i);
   position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
@@ -286,6 +290,7 @@ inline void leapfrog_FR(arma::field<arma::vec>& Labels,
                         const arma::mat P_mat,
                         const double& eps_step,
                         double& step_size,
+                        arma::mat& Mass_mat,
                         arma::vec& position,
                         arma::vec& momentum,
                         arma::vec& prop_position,
@@ -296,7 +301,7 @@ inline void leapfrog_FR(arma::field<arma::vec>& Labels,
   for(int i = 0; i < Leapfrog_steps; i++){
     leapfrog_step_FR(Labels, basis_funct_A, basis_funct_B, basis_funct_AB, X_A, 
                      X_B, X_AB, n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq,
-                     P_mat, eps_step, step_size, prop_position, prop_momentum);
+                     P_mat, eps_step, step_size, Mass_mat, prop_position, prop_momentum);
   }
 }
 
@@ -320,6 +325,7 @@ inline void leapfrog_theta(arma::field<arma::vec>& Labels,
                            const double& sigma_B_shape,
                            const double& eps_step,
                            double& step_size,
+                           arma::mat& Mass_mat,
                            arma::vec& position,
                            arma::vec& momentum,
                            arma::vec& prop_position,
@@ -332,7 +338,7 @@ inline void leapfrog_theta(arma::field<arma::vec>& Labels,
                         X_B, X_AB, n_A, n_B, n_AB,
                         sigma_A_mean, I_A_shape, I_A_rate, I_B_shape, I_B_rate,
                         sigma_A_shape, sigma_B_mean, sigma_B_shape,
-                        eps_step, step_size, prop_position, prop_momentum);
+                        eps_step, step_size, Mass_mat, prop_position, prop_momentum);
   }
 }
 
@@ -462,7 +468,8 @@ inline double lprob_accept_FR(arma::vec& prop_position,
                               const arma::vec& n_AB,
                               const double& I_A_sigma_sq,
                               const double& I_B_sigma_sq,
-                              const arma::mat P_mat){
+                              const arma::mat P_mat,
+                              arma::mat& Mass_mat){
   arma::vec position_theta = prop_position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef_A = prop_position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   arma::vec position_basis_coef_B = prop_position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
@@ -474,7 +481,7 @@ inline double lprob_accept_FR(arma::vec& prop_position,
                                                   I_A_sigma_sq, I_B_sigma_sq, 
                                                   P_mat);
   
-  lp_accept = lp_accept + 0.5 * arma::dot(prop_momentum, prop_momentum);
+  lp_accept = lp_accept + 0.5 * arma::dot(arma::solve(Mass_mat, prop_momentum), prop_momentum);
   
   position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
@@ -485,7 +492,7 @@ inline double lprob_accept_FR(arma::vec& prop_position,
                                                        basis_funct_B, basis_funct_AB, X_A, X_B, X_AB,
                                                        n_A, n_B, n_AB, I_A_sigma_sq, 
                                                        I_B_sigma_sq, P_mat);
-  lp_accept = lp_accept - 0.5 * arma::dot(momentum, momentum);
+  lp_accept = lp_accept - 0.5 * arma::dot(arma::solve(Mass_mat, momentum), momentum);
   return lp_accept;
 }
 
@@ -510,7 +517,8 @@ inline double lprob_accept_theta(arma::vec& prop_position,
                                  const double& sigma_A_mean,
                                  const double& sigma_A_shape,
                                  const double& sigma_B_mean,
-                                 const double& sigma_B_shape){
+                                 const double& sigma_B_shape,
+                                 arma::mat& Mass_mat){
   arma::vec position_theta = prop_position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef_A = prop_position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   arma::vec position_basis_coef_B = prop_position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
@@ -523,7 +531,7 @@ inline double lprob_accept_theta(arma::vec& prop_position,
                                                      sigma_A_mean, sigma_A_shape,
                                                      sigma_B_mean, sigma_B_shape);
   
-  lp_accept = lp_accept + 0.5 * arma::dot(prop_momentum, prop_momentum);
+  lp_accept = lp_accept + 0.5 * arma::dot(arma::solve(Mass_mat, prop_momentum), prop_momentum);
   
   position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
@@ -535,7 +543,7 @@ inline double lprob_accept_theta(arma::vec& prop_position,
                                                           n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape, I_B_rate,
                                                           sigma_A_mean, sigma_A_shape,
                                                           sigma_B_mean, sigma_B_shape);
-  lp_accept = lp_accept - 0.5 * arma::dot(momentum, momentum);
+  lp_accept = lp_accept - 0.5 * arma::dot(arma::solve(Mass_mat, momentum), momentum);
   return lp_accept;
 }
 
@@ -694,10 +702,11 @@ inline void HMC_step_FR(arma::field<arma::vec>& Labels,
                         const arma::mat P_mat,
                         const double& eps_step,
                         double& step_size,
+                        arma::mat& Mass_mat,
                         int Leapfrog_steps,
                         double& num_accept){
   // Sample for I_A, I_B, sigma_A, sigma_B
-  arma::vec momentum = Rcpp::rnorm(basis_coef_A.n_elem + basis_coef_B.n_elem, 0, 1);
+  arma::vec momentum = arma::mvnrnd(arma::zeros(basis_coef_A.n_elem + basis_coef_B.n_elem), Mass_mat);
   arma::vec prop_position = arma::zeros(basis_coef_A.n_elem + basis_coef_B.n_elem + theta.n_elem);
   prop_position.subvec(0, basis_coef_A.n_elem -1) = basis_coef_A;
   prop_position.subvec(basis_coef_A.n_elem, basis_coef_B.n_elem + basis_coef_A.n_elem - 1) = basis_coef_B;
@@ -705,12 +714,12 @@ inline void HMC_step_FR(arma::field<arma::vec>& Labels,
   arma::vec position = prop_position;
   arma::vec prop_momentum = momentum;
   leapfrog_FR(Labels, basis_funct_A, basis_funct_B, basis_funct_AB, X_A, X_B, X_AB,
-              n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, P_mat, eps_step, step_size, 
+              n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, P_mat, eps_step, step_size, Mass_mat,
               position, momentum, prop_position, prop_momentum, Leapfrog_steps);
   double accept = lprob_accept_FR(prop_position, prop_momentum, position, momentum,
                                   Labels, basis_funct_A, basis_funct_B, basis_funct_AB,
                                   X_A, X_B, X_AB, n_A, n_B, n_AB,
-                                  I_A_sigma_sq, I_B_sigma_sq, P_mat);
+                                  I_A_sigma_sq, I_B_sigma_sq, P_mat, Mass_mat);
   
   if(std::log(R::runif(0,1)) < accept){
     num_accept = 1;
@@ -745,10 +754,11 @@ inline void HMC_step_theta(arma::field<arma::vec>& Labels,
                            const double& sigma_B_shape,
                            const double& eps_step,
                            double& step_size,
+                           arma::mat& Mass_mat,
                            int Leapfrog_steps,
                            double& num_accept){
   // Sample for I_A, I_B, sigma_A, sigma_B
-  arma::vec momentum = Rcpp::rnorm(theta.n_elem - 1, 0, 1);
+  arma::vec momentum = arma::mvnrnd(arma::zeros(theta.n_elem - 1), Mass_mat);
   arma::vec prop_position = arma::zeros(basis_coef_A.n_elem + basis_coef_B.n_elem + theta.n_elem);
   prop_position.subvec(0, basis_coef_A.n_elem -1) = basis_coef_A;
   prop_position.subvec(basis_coef_A.n_elem, basis_coef_B.n_elem + basis_coef_A.n_elem - 1) = basis_coef_B;
@@ -758,14 +768,14 @@ inline void HMC_step_theta(arma::field<arma::vec>& Labels,
   leapfrog_theta(Labels, basis_funct_A, basis_funct_B, basis_funct_AB, X_A, X_B, X_AB,
                  n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape, I_B_rate,
                  sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape,
-                 eps_step, step_size, position, momentum, prop_position, prop_momentum,
-                 Leapfrog_steps);
+                 eps_step, step_size, Mass_mat, position, momentum, prop_position,
+                 prop_momentum, Leapfrog_steps);
   
   double accept = lprob_accept_theta(prop_position, prop_momentum, position, momentum,
                                      Labels, basis_funct_A, basis_funct_B, basis_funct_AB,
                                      X_A, X_B, X_AB, n_A, n_B, n_AB,
                                      I_A_shape, I_A_rate, I_B_shape, I_B_rate,
-                                     sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape);
+                                     sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, Mass_mat);
   if(std::log(R::runif(0,1)) < accept){
     num_accept = 1;
     theta = prop_position.subvec(basis_coef_B.n_elem + basis_coef_A.n_elem, prop_position.n_elem - 1);
@@ -1067,33 +1077,34 @@ inline Rcpp::List HMC_sampler_FR(arma::field<arma::vec> Labels,
                                  const double sigma_B_shape,
                                  const double alpha,
                                  const double beta,
-                                 const double mu_prior_mean,
-                                 const double mu_prior_var,
                                  const double eps_step,
                                  double& step_size_FR,
-                                 double& step_size_sigma,
-                                 int Warm_block){
-  arma::mat theta(MCMC_iters + Warm_block, 5, arma::fill::ones);
-  arma::mat basis_coef_A(MCMC_iters + Warm_block, basis_funct_A(0,0).n_cols, arma::fill::zeros);
-  arma::mat basis_coef_B(MCMC_iters + Warm_block, basis_funct_B(0,0).n_cols, arma::fill::zeros);
-  arma::vec I_A_sigma_sq(MCMC_iters + Warm_block, arma::fill::ones);
-  arma::vec I_B_sigma_sq(MCMC_iters + Warm_block, arma::fill::ones);
+                                 double& step_size_theta,
+                                 int Warm_block1,
+                                 int Warm_block2){
+  arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 5, arma::fill::ones);
+  arma::mat basis_coef_A(MCMC_iters + Warm_block1 + Warm_block2, basis_funct_A(0,0).n_cols, arma::fill::zeros);
+  arma::mat basis_coef_B(MCMC_iters + Warm_block1 + Warm_block2, basis_funct_B(0,0).n_cols, arma::fill::zeros);
+  arma::vec I_A_sigma_sq(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
+  arma::vec I_B_sigma_sq(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
   I_A_sigma_sq = I_A_sigma_sq;
   I_B_sigma_sq = I_B_sigma_sq;
   arma::vec init_position(5, arma::fill::ones);
-  init_position(0) = mu_prior_mean;
-  init_position(1) = mu_prior_mean;
-  init_position(2) = std::sqrt(mu_prior_mean);
-  init_position(3) = std::sqrt(mu_prior_mean);
+  init_position(0) = I_A_shape / I_A_rate;
+  init_position(1) = I_B_shape / I_B_rate;
+  init_position(2) = std::sqrt(I_A_shape / I_A_rate);
+  init_position(3) = std::sqrt(I_B_shape / I_B_rate);
   init_position(4) = 0.08;
   theta.row(0) = arma::log(init_position.t());
   theta.row(1) = arma::log(init_position.t());
   arma::vec theta_ph(init_position.n_elem);
   arma::vec basis_coef_A_ph = basis_coef_A.row(0).t();
   arma::vec basis_coef_B_ph = basis_coef_B.row(0).t();
-  arma::vec vec_accept_FR(MCMC_iters + Warm_block, arma::fill::zeros);
-  arma::vec vec_accept_sigma(MCMC_iters + Warm_block, arma::fill::zeros);
+  arma::vec vec_accept_FR(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
+  arma::vec vec_accept_sigma(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::mat P_mat(basis_coef_A.n_cols, basis_coef_A.n_cols, arma::fill::zeros);
+  arma::mat Mass_mat_theta = arma::diagmat(arma::ones(theta.n_cols-1));
+  arma::mat Mass_mat_basis = arma::diagmat(arma::ones(basis_coef_A.n_cols + basis_coef_B.n_cols));
   double prop_accept_10 = 0;
   double prop_accept_10_sigma = 0;
   P_mat.zeros();
@@ -1110,12 +1121,12 @@ inline Rcpp::List HMC_sampler_FR(arma::field<arma::vec> Labels,
   arma::vec theta_exp;
   arma::vec Basis_A_exp;
   arma::vec Basis_B_exp;
-  for(int i = 1; i < Warm_block; i++){
+  for(int i = 1; i < Warm_block1; i++){
     if((i % 25) == 0){
       Rcpp::Rcout << "Warm Up Block Iteration = " << i << "\n";
       Rcpp::Rcout << "Prob_accept FR= " << arma::accu(vec_accept_FR.subvec(i-25, i)) / 26 << "\n";
       Rcpp::Rcout << "Prob_accept sigma= " << arma::accu(vec_accept_sigma.subvec(i-25, i)) / 26 << "\n";
-      Rcpp::Rcout << "Step Size sigma =" << step_size_sigma << "\n";
+      Rcpp::Rcout << "Step Size theta =" << step_size_theta << "\n";
       Rcpp::Rcout << "Step Size FR =" << step_size_FR << "\n" << "\n";
     }
     theta_ph = theta.row(i).t();
@@ -1125,12 +1136,12 @@ inline Rcpp::List HMC_sampler_FR(arma::field<arma::vec> Labels,
     HMC_step_FR(Labels, theta_ph, basis_coef_A_ph, basis_coef_B_ph, basis_funct_A,
                 basis_funct_B, basis_funct_AB, X_A, X_B, X_AB, n_A, n_B, n_AB, 
                 I_A_sigma_sq(i), I_B_sigma_sq(i),
-                P_mat, eps_step, step_size_FR, Leapfrog_steps, vec_accept_FR(i));
+                P_mat, eps_step, step_size_FR, Mass_mat_basis, Leapfrog_steps, vec_accept_FR(i));
     HMC_step_theta(Labels, theta_ph, basis_coef_A_ph, basis_coef_B_ph, basis_funct_A,
                    basis_funct_B, basis_funct_AB, X_A, X_B, X_AB, n_A, n_B, n_AB, 
                    I_A_shape, I_A_rate, I_B_shape, I_B_rate,
                    sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape,
-                   eps_step, step_size_sigma, Leapfrog_steps, vec_accept_sigma(i));
+                   eps_step, step_size_theta, Mass_mat_theta, Leapfrog_steps, vec_accept_sigma(i));
     theta_exp = transform_pars(theta_ph);
     
     
@@ -1145,7 +1156,7 @@ inline Rcpp::List HMC_sampler_FR(arma::field<arma::vec> Labels,
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
     basis_coef_B.row(i) = basis_coef_B_ph.t();
-    if((i+1) < Warm_block + MCMC_iters){
+    if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
       theta.row(i + 1) = theta.row(i);
       basis_coef_A.row(i + 1) = basis_coef_A.row(i);
       basis_coef_B.row(i + 1) = basis_coef_B.row(i);
@@ -1168,18 +1179,97 @@ inline Rcpp::List HMC_sampler_FR(arma::field<arma::vec> Labels,
       // adjust step size for I_A, I_B, sigma_A, sigma_B
       prop_accept_10_sigma = arma::accu(vec_accept_sigma.subvec(i-9, i))/ 10;
       if(prop_accept_10_sigma  <= 0.1){
-        step_size_sigma = step_size_sigma * 0.1;
+        step_size_theta = step_size_theta * 0.1;
       }else if(prop_accept_10_sigma <= 0.3){
-        step_size_sigma = step_size_sigma * 0.5;
+        step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_sigma <= 0.6){
-        step_size_sigma = step_size_sigma * 0.8;
+        step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_sigma > 0.85){
-        step_size_sigma = step_size_sigma * 1.5;
+        step_size_theta = step_size_theta * 1.5;
+      }
+    }
+  }
+  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)));
+  Rcpp::Rcout << " Mass_mat_theta " << Mass_mat_theta;
+  arma::mat ph_basis = arma::zeros(std::ceil(0.5 *Warm_block1), basis_coef_A.n_cols + basis_coef_B.n_cols);
+  ph_basis.submat(0, 0, std::ceil(0.5 *Warm_block1) - 1, basis_coef_A.n_cols-1) = basis_coef_A.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0, 
+                  Warm_block1 -1, basis_coef_A.n_cols - 1);
+  ph_basis.submat(0, basis_coef_A.n_cols, std::ceil(0.5 *Warm_block1) - 1, basis_coef_A.n_cols + basis_coef_B.n_cols - 1) = basis_coef_B.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0, 
+                  Warm_block1 -1, basis_coef_B.n_cols - 1);
+  // Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis));
+  // step_size_theta = step_size_theta / (arma::trace(Mass_mat_theta) / theta.n_cols -1);
+  // step_size_FR = step_size_FR / (arma::trace(Mass_mat_basis) / basis_coef_A.n_cols + basis_coef_B.n_cols);
+  // Rcpp::Rcout << " Mass_mat_basis " << Mass_mat_theta;
+  for(int i = Warm_block1; i < Warm_block1 + Warm_block2; i++){
+    if((i % 25) == 0){
+      Rcpp::Rcout << "Warm Up Block Iteration = " << i << "\n";
+      Rcpp::Rcout << "Prob_accept FR= " << arma::accu(vec_accept_FR.subvec(i-25, i)) / 26 << "\n";
+      Rcpp::Rcout << "Prob_accept sigma= " << arma::accu(vec_accept_sigma.subvec(i-25, i)) / 26 << "\n";
+      Rcpp::Rcout << "Step Size theta =" << step_size_theta << "\n";
+      Rcpp::Rcout << "Step Size FR =" << step_size_FR << "\n" << "\n";
+    }
+    theta_ph = theta.row(i).t();
+    basis_coef_A_ph = basis_coef_A.row(i).t();
+    basis_coef_B_ph = basis_coef_B.row(i).t();
+    
+    HMC_step_FR(Labels, theta_ph, basis_coef_A_ph, basis_coef_B_ph, basis_funct_A,
+                basis_funct_B, basis_funct_AB, X_A, X_B, X_AB, n_A, n_B, n_AB, 
+                I_A_sigma_sq(i), I_B_sigma_sq(i),
+                P_mat, eps_step, step_size_FR, Mass_mat_basis, Leapfrog_steps, vec_accept_FR(i));
+    HMC_step_theta(Labels, theta_ph, basis_coef_A_ph, basis_coef_B_ph, basis_funct_A,
+                   basis_funct_B, basis_funct_AB, X_A, X_B, X_AB, n_A, n_B, n_AB, 
+                   I_A_shape, I_A_rate, I_B_shape, I_B_rate,
+                   sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape,
+                   eps_step, step_size_theta, Mass_mat_theta, Leapfrog_steps, vec_accept_sigma(i));
+    theta_exp = transform_pars(theta_ph);
+    
+    
+    // update sigma hyperparameters
+    update_I_sigma(basis_coef_A_ph, P_mat, 0, alpha, beta, i, I_A_sigma_sq);
+    update_I_sigma(basis_coef_B_ph, P_mat, 0, alpha, beta, i, I_B_sigma_sq);
+    
+    Rcpp::Rcout << " log_lik = " << log_likelihood_TI(Labels, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
+                                           basis_funct_A, basis_funct_B, basis_funct_AB,
+                                           X_A, X_B, X_AB, n_A, n_B, n_AB);
+    
+    theta.row(i) = theta_ph.t();
+    basis_coef_A.row(i) = basis_coef_A_ph.t();
+    basis_coef_B.row(i) = basis_coef_B_ph.t();
+    if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
+      theta.row(i + 1) = theta.row(i);
+      basis_coef_A.row(i + 1) = basis_coef_A.row(i);
+      basis_coef_B.row(i + 1) = basis_coef_B.row(i);
+      I_A_sigma_sq(i + 1) = I_A_sigma_sq(i);
+      I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
+    }
+    if((i % 10) == 0){
+      // adjust step size for I_A, I_B, sigma_A, sigma_B
+      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-9, i))/ 10;
+      if(prop_accept_10  <= 0.1){
+        step_size_FR = step_size_FR * 0.1;
+      }else if(prop_accept_10 <= 0.3){
+        step_size_FR = step_size_FR * 0.5;
+      }else if(prop_accept_10 <= 0.6){
+        step_size_FR = step_size_FR * 0.8;
+      }else if(prop_accept_10 > 0.85){
+        step_size_FR = step_size_FR * 1.5;
+      }
+      
+      // adjust step size for I_A, I_B, sigma_A, sigma_B
+      prop_accept_10_sigma = arma::accu(vec_accept_sigma.subvec(i-9, i))/ 10;
+      if(prop_accept_10_sigma  <= 0.1){
+        step_size_theta = step_size_theta * 0.1;
+      }else if(prop_accept_10_sigma <= 0.3){
+        step_size_theta = step_size_theta * 0.5;
+      }else if(prop_accept_10_sigma <= 0.6){
+        step_size_theta = step_size_theta * 0.8;
+      }else if(prop_accept_10_sigma > 0.85){
+        step_size_theta = step_size_theta * 1.5;
       }
     }
   }
   
-  for(int i =  Warm_block; i <  Warm_block + MCMC_iters; i++){
+  for(int i =  Warm_block1 + Warm_block2; i <  Warm_block1 + Warm_block2 + MCMC_iters; i++){
     if((i % 50) == 0){
       Rcpp::Rcout << "Iteration = " << i << "\n";
       Rcpp::Rcout << "Prob_accept FR= " << arma::accu(vec_accept_FR.subvec(i-50, i)) / 51 << "\n";
@@ -1191,12 +1281,12 @@ inline Rcpp::List HMC_sampler_FR(arma::field<arma::vec> Labels,
     HMC_step_FR(Labels, theta_ph, basis_coef_A_ph, basis_coef_B_ph, basis_funct_A,
                 basis_funct_B, basis_funct_AB, X_A, X_B, X_AB, n_A, n_B, n_AB, 
                 I_A_sigma_sq(i), I_B_sigma_sq(i),
-                P_mat, eps_step, step_size_FR, Leapfrog_steps, vec_accept_FR(i));
+                P_mat, eps_step, step_size_FR, Mass_mat_basis, Leapfrog_steps, vec_accept_FR(i));
     HMC_step_theta(Labels, theta_ph, basis_coef_A_ph, basis_coef_B_ph, basis_funct_A,
                    basis_funct_B, basis_funct_AB, X_A, X_B, X_AB, n_A, n_B, n_AB, 
                    I_A_shape, I_A_rate, I_B_shape, I_B_rate,
                    sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape,
-                   eps_step, step_size_sigma, Leapfrog_steps, vec_accept_sigma(i));
+                   eps_step, step_size_theta, Mass_mat_theta, Leapfrog_steps, vec_accept_sigma(i));
     theta_exp = transform_pars(theta_ph);
     
     
@@ -1207,7 +1297,7 @@ inline Rcpp::List HMC_sampler_FR(arma::field<arma::vec> Labels,
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
     basis_coef_B.row(i) = basis_coef_B_ph.t();
-    if((i+1) < Warm_block + MCMC_iters){
+    if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
       theta.row(i + 1) = theta.row(i);
       basis_coef_A.row(i + 1) = basis_coef_A.row(i);
       basis_coef_B.row(i + 1) = basis_coef_B.row(i);

@@ -43,8 +43,8 @@ HMC_TI <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_deg
     .Call('_NeuralComp_HMC_TI', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block, Leapfrog_steps, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean, mu_prior_var, eps_step, step_size, step_size_delta)
 }
 
-HMC_FR <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block = 500L, Leapfrog_steps = 10L, I_A_shape = 40, I_A_rate = 1, I_B_shape = 40, I_B_rate = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, alpha = 0.1, beta = 0.1, mu_prior_mean = 4, mu_prior_var = 0.1, eps_step = 0.001, step_size_sigma = 0.001, step_size_FR = 0.1) {
-    .Call('_NeuralComp_HMC_FR', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean, mu_prior_var, eps_step, step_size_sigma, step_size_FR)
+HMC_FR <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block1 = 500L, Warm_block2 = 500L, Leapfrog_steps = 10L, I_A_shape = 40, I_A_rate = 1, I_B_shape = 40, I_B_rate = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, alpha = 0.1, beta = 0.1, mu_prior_mean = 4, mu_prior_var = 0.1, eps_step = 0.001, step_size_sigma = 0.001, step_size_FR = 0.1) {
+    .Call('_NeuralComp_HMC_FR', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block1, Warm_block2, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean, mu_prior_var, eps_step, step_size_sigma, step_size_FR)
 }
 
 #' MH sampler for labels
