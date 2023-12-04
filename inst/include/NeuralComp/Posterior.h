@@ -24,16 +24,16 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
   // Calculate log-likelihood for A trials
   for(int i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
-      l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / std::exp(arma::dot(basis_funct_A(i,0).row(j), basis_coef_A))),
-                                               pow((1 / theta(0)), 2));
+      l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_A(i,0).row(j), basis_coef_A))),
+                                               pow((1 / theta(2)), 2));
     }
   }
   
   // Calculate log-likelihood for B trials
   for(int i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
-      l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / std::exp(arma::dot(basis_funct_B(i,0).row(j), basis_coef_B))),
-                                                   pow((1 / theta(1)), 2));
+      l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_B(i,0).row(j), basis_coef_B))),
+                                                   pow((1 / theta(3)), 2));
     }
   }
 
@@ -45,33 +45,33 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
         if(j != 0){
           if(Labels(i,0)(j-1) == 0){
             // Condition if spike has not switched (still in A)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))),
-                                                     pow((1 / theta(1)), 2)) +
-              dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))),
+                                                     pow((1 / theta(3)), 2)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
         }
       }else{
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
             // Condition if spike has not switched (still in A)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-              dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
         }
       }
     }
@@ -96,8 +96,8 @@ inline double log_likelihood_TI_A_only(arma::field<arma::vec>& Labels,
   // Calculate log-likelihood for A trials
   for(int i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
-      l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / std::exp(arma::dot(basis_funct_A(i,0).row(j), basis_coef_A))),
-                                               pow((1 / theta(0)), 2));
+      l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_A(i,0).row(j), basis_coef_A))),
+                                               pow((1 / theta(2)), 2));
     }
   }
   
@@ -109,33 +109,33 @@ inline double log_likelihood_TI_A_only(arma::field<arma::vec>& Labels,
         if(j != 0){
           if(Labels(i,0)(j-1) == 0){
             // Condition if spike has not switched (still in A)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))),
-                                                     pow((1 / theta(1)), 2)) +
-                                                       dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))),
+                                                     pow((1 / theta(3)), 2)) +
+                                                       dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
         }
       }else{
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
             // Condition if spike has not switched (still in A)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-              dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
         }
       }
     }
@@ -160,8 +160,8 @@ inline double log_likelihood_TI_B_only(arma::field<arma::vec>& Labels,
   // Calculate log-likelihood for B trials
   for(int i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
-      l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / std::exp(arma::dot(basis_funct_B(i,0).row(j), basis_coef_B))),
-                                               pow((1 / theta(1)), 2));
+      l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_B(i,0).row(j), basis_coef_B))),
+                                               pow((1 / theta(3)), 2));
     }
   }
   
@@ -173,33 +173,33 @@ inline double log_likelihood_TI_B_only(arma::field<arma::vec>& Labels,
         if(j != 0){
           if(Labels(i,0)(j-1) == 0){
             // Condition if spike has not switched (still in A)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))),
-                                                     pow((1 / theta(1)), 2)) +
-                                                       dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))),
+                                                     pow((1 / theta(3)), 2)) +
+                                                       dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2));
         }
       }else{
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
             // Condition if spike has not switched (still in A)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-              dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(2), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(0)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(1)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
         }
       }
     }
@@ -340,15 +340,13 @@ inline double log_posterior_FR(arma::field<arma::vec>& Labels,
                                const arma::vec& n_A,
                                const arma::vec& n_B,
                                const arma::vec& n_AB,
-                               const double& mu_A, 
-                               const double& mu_B,
                                const double& I_A_sigma_sq,
                                const double& I_B_sigma_sq,
                                const arma::mat P_mat){
   double l_posterior = log_likelihood_TI(Labels, theta, basis_coef_A, basis_coef_B,
                                          basis_funct_A, basis_funct_B, basis_funct_AB,
                                          X_A, X_B, X_AB, n_A, n_B, n_AB) +
-                                           log_prior_FR(mu_A, mu_B, I_A_sigma_sq, I_B_sigma_sq,
+                                           log_prior_FR(I_A_sigma_sq, I_B_sigma_sq,
                                                         P_mat, basis_coef_A, basis_coef_B);
   return l_posterior;
 }
@@ -366,8 +364,6 @@ inline double log_posterior_FR_A_only(arma::field<arma::vec>& Labels,
                                       const arma::vec& n_A,
                                       const arma::vec& n_B,
                                       const arma::vec& n_AB,
-                                      const double& mu_A, 
-                                      const double& mu_B,
                                       const double& I_A_sigma_sq,
                                       const double& I_B_sigma_sq,
                                       const arma::mat P_mat){
@@ -375,7 +371,7 @@ inline double log_posterior_FR_A_only(arma::field<arma::vec>& Labels,
   double l_posterior = log_likelihood_TI_A_only(Labels, theta, basis_coef_A, basis_coef_B,
                                                 basis_funct_A, basis_funct_B, basis_funct_AB,
                                                 X_A, X_B, X_AB, n_A, n_B, n_AB) +
-                                                  log_prior_FR(mu_A, mu_B, I_A_sigma_sq, I_B_sigma_sq, 
+                                                  log_prior_FR(I_A_sigma_sq, I_B_sigma_sq, 
                                                                P_mat, basis_coef_A, basis_coef_B);
   return l_posterior;
 }
@@ -393,8 +389,6 @@ inline double log_posterior_FR_B_only(arma::field<arma::vec>& Labels,
                                       const arma::vec& n_A,
                                       const arma::vec& n_B,
                                       const arma::vec& n_AB,
-                                      const double& mu_A, 
-                                      const double& mu_B,
                                       const double& I_A_sigma_sq,
                                       const double& I_B_sigma_sq,
                                       const arma::mat P_mat){
@@ -402,12 +396,12 @@ inline double log_posterior_FR_B_only(arma::field<arma::vec>& Labels,
   double l_posterior = log_likelihood_TI_B_only(Labels, theta, basis_coef_A, basis_coef_B,
                                                 basis_funct_A, basis_funct_B, basis_funct_AB,
                                                 X_A, X_B, X_AB, n_A, n_B, n_AB) +
-                                                  log_prior_FR(mu_A, mu_B, I_A_sigma_sq, I_B_sigma_sq, 
+                                                  log_prior_FR(I_A_sigma_sq, I_B_sigma_sq, 
                                                                P_mat, basis_coef_A, basis_coef_B);
   return l_posterior;
 }
 
-inline double log_posterior_sigma(arma::field<arma::vec>& Labels,
+inline double log_posterior_theta(arma::field<arma::vec>& Labels,
                                   arma::vec theta,
                                   arma::vec basis_coef_A,
                                   arma::vec basis_coef_B,
@@ -420,6 +414,10 @@ inline double log_posterior_sigma(arma::field<arma::vec>& Labels,
                                   const arma::vec& n_A,
                                   const arma::vec& n_B,
                                   const arma::vec& n_AB,
+                                  const double& I_A_shape, 
+                                  const double& I_A_rate,
+                                  const double& I_B_shape,
+                                  const double& I_B_rate,
                                   const double& sigma_A_mean,
                                   const double& sigma_A_shape,
                                   const double& sigma_B_mean,
@@ -427,9 +425,10 @@ inline double log_posterior_sigma(arma::field<arma::vec>& Labels,
   double l_posterior = log_likelihood_TI(Labels, theta, basis_coef_A, basis_coef_B,
                                          basis_funct_A, basis_funct_B, basis_funct_AB,
                                          X_A, X_B, X_AB, n_A, n_B, n_AB) +
-                                           log_prior_sigma(sigma_A_mean, sigma_A_shape,
-                                                           sigma_B_mean, sigma_B_shape,
-                                                           theta);
+                                           log_prior(I_A_shape, I_A_rate, I_B_shape, I_B_rate, 
+                                                     sigma_A_mean, sigma_A_shape,
+                                                     sigma_B_mean, sigma_B_shape,
+                                                     theta);
   return l_posterior;
 }
 
@@ -589,19 +588,17 @@ inline double transformed_log_posterior_FR(arma::field<arma::vec>& Labels,
                                            const arma::vec& n_A,
                                            const arma::vec& n_B,
                                            const arma::vec& n_AB,
-                                           const double& mu_A, 
-                                           const double& mu_B,
                                            const double& I_A_sigma_sq,
                                            const double& I_B_sigma_sq,
                                            const arma::mat P_mat){
   double l_posterior = log_posterior_FR(Labels, transform_pars(theta), basis_coef_A, basis_coef_B,
                                         basis_funct_A, basis_funct_B, basis_funct_AB,
-                                        X_A, X_B, X_AB, n_A, n_B, n_AB, mu_A, mu_B, 
+                                        X_A, X_B, X_AB, n_A, n_B, n_AB, 
                                         I_A_sigma_sq, I_B_sigma_sq, P_mat);
   return l_posterior;
 }
 
-inline double transformed_log_posterior_sigma(arma::field<arma::vec>& Labels,
+inline double transformed_log_posterior_theta(arma::field<arma::vec>& Labels,
                                               arma::vec theta,
                                               arma::vec& basis_coef_A,
                                               arma::vec& basis_coef_B,
@@ -614,15 +611,20 @@ inline double transformed_log_posterior_sigma(arma::field<arma::vec>& Labels,
                                               const arma::vec& n_A,
                                               const arma::vec& n_B,
                                               const arma::vec& n_AB,
+                                              const double& I_A_shape, 
+                                              const double& I_A_rate,
+                                              const double& I_B_shape,
+                                              const double& I_B_rate,
                                               const double& sigma_A_mean,
                                               const double& sigma_A_shape,
                                               const double& sigma_B_mean,
                                               const double& sigma_B_shape){
-  double l_posterior = log_posterior_sigma(Labels, transform_pars(theta), basis_coef_A, basis_coef_B,
-                                        basis_funct_A, basis_funct_B, basis_funct_AB,
-                                        X_A, X_B, X_AB, n_A, n_B, n_AB, sigma_A_mean, 
-                                        sigma_A_shape,sigma_B_mean, sigma_B_shape) +
-                                          theta(0) + theta(1);
+  double l_posterior = log_posterior_theta(Labels, transform_pars(theta), basis_coef_A, basis_coef_B,
+                                           basis_funct_A, basis_funct_B, basis_funct_AB,
+                                           X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_shape,
+                                           I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, 
+                                           sigma_A_shape,sigma_B_mean, sigma_B_shape) +
+                                             arma::accu(theta.subvec(0,3));
   return l_posterior;
 }
 
@@ -784,8 +786,6 @@ inline arma::vec calc_gradient_FR(arma::field<arma::vec>& Labels,
                                   const arma::vec& n_A,
                                   const arma::vec& n_B,
                                   const arma::vec& n_AB,
-                                  const double& mu_A, 
-                                  const double& mu_B,
                                   const double& I_A_sigma_sq,
                                   const double& I_B_sigma_sq,
                                   const arma::mat P_mat,
@@ -818,27 +818,27 @@ inline arma::vec calc_gradient_FR(arma::field<arma::vec>& Labels,
     if(i < basis_coef_A.n_elem){
       grad(i) = (log_posterior_FR_A_only(Labels, theta, basis_coef_A_p_eps, basis_coef_B_p_eps, 
                  basis_funct_A, basis_funct_B, basis_funct_AB, X_A,
-                 X_B, X_AB, n_A, n_B, n_AB, mu_A, mu_B, I_A_sigma_sq, I_B_sigma_sq, 
+                 X_B, X_AB, n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, 
                 P_mat) - log_posterior_FR_A_only(Labels, 
                  theta, basis_coef_A_m_eps, basis_coef_B_m_eps,
                  basis_funct_A, basis_funct_B, basis_funct_AB, X_A,
-                 X_B, X_AB, n_A, n_B, n_AB, mu_A, mu_B, I_A_sigma_sq, I_B_sigma_sq, 
+                 X_B, X_AB, n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, 
                 P_mat)) / (2 * eps_step);
     }else{
       grad(i) = (log_posterior_FR_B_only(Labels, theta, basis_coef_A_p_eps, basis_coef_B_p_eps, 
                  basis_funct_A, basis_funct_B, basis_funct_AB, X_A,
-                 X_B, X_AB, n_A, n_B, n_AB, mu_A, mu_B, I_A_sigma_sq, I_B_sigma_sq, 
+                 X_B, X_AB, n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, 
                  P_mat) - log_posterior_FR_B_only(Labels, 
                  theta, basis_coef_A_m_eps, basis_coef_B_m_eps,
                  basis_funct_A, basis_funct_B, basis_funct_AB, X_A,
-                 X_B, X_AB, n_A, n_B, n_AB, mu_A, mu_B, I_A_sigma_sq, I_B_sigma_sq, 
+                 X_B, X_AB, n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, 
                  P_mat)) / (2 * eps_step);
     }
   }
   return grad;
 }
 
-inline arma::vec calc_gradient_sigma(arma::field<arma::vec>& Labels,
+inline arma::vec calc_gradient_theta(arma::field<arma::vec>& Labels,
                                      arma::vec theta,
                                      arma::vec basis_coef_A,
                                      arma::vec basis_coef_B,
@@ -851,6 +851,10 @@ inline arma::vec calc_gradient_sigma(arma::field<arma::vec>& Labels,
                                      const arma::vec& n_A,
                                      const arma::vec& n_B,
                                      const arma::vec& n_AB,
+                                     const double& I_A_shape, 
+                                     const double& I_A_rate,
+                                     const double& I_B_shape,
+                                     const double& I_B_rate,
                                      const double& sigma_A_mean,
                                      const double& sigma_A_shape,
                                      const double& sigma_B_mean,
@@ -875,13 +879,13 @@ inline arma::vec calc_gradient_sigma(arma::field<arma::vec>& Labels,
     theta_m_eps = ph_m_eps;
     
     // approximate gradient ((f(x + e) f(x - e))/ 2e)
-    grad(i) = (log_posterior_sigma(Labels, theta_p_eps, basis_coef_A, basis_coef_B, 
+    grad(i) = (log_posterior_theta(Labels, theta_p_eps, basis_coef_A, basis_coef_B, 
                basis_funct_A, basis_funct_B, basis_funct_AB, X_A,
-               X_B, X_AB, n_A, n_B, n_AB, 
-               sigma_A_mean, sigma_A_shape,sigma_B_mean, sigma_B_shape) - log_posterior_sigma(Labels, 
+               X_B, X_AB, n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape, I_B_rate,
+               sigma_A_mean, sigma_A_shape,sigma_B_mean, sigma_B_shape) - log_posterior_theta(Labels, 
                theta_m_eps, basis_coef_A, basis_coef_B,
                basis_funct_A, basis_funct_B, basis_funct_AB, X_A,
-               X_B, X_AB, n_A, n_B, n_AB, 
+               X_B, X_AB, n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape, I_B_rate,
                sigma_A_mean, sigma_A_shape,sigma_B_mean, sigma_B_shape)) / (2 * eps_step);
     
   }
@@ -1012,41 +1016,44 @@ inline arma::vec trans_calc_gradient_FR(arma::field<arma::vec>& Labels,
                                         const arma::vec& n_A,
                                         const arma::vec& n_B,
                                         const arma::vec& n_AB,
-                                        const double& mu_A, 
-                                        const double& mu_B,
                                         const double& I_A_sigma_sq,
                                         const double& I_B_sigma_sq,
                                         const arma::mat P_mat,
                                         const double& eps_step){
   arma::vec grad = calc_gradient_FR(Labels, transform_pars(theta), basis_coef_A, basis_coef_B,
                                     basis_funct_A, basis_funct_B, basis_funct_AB,
-                                    X_A, X_B, X_AB, n_A, n_B, n_AB, mu_A, mu_B, 
+                                    X_A, X_B, X_AB, n_A, n_B, n_AB,
                                     I_A_sigma_sq, I_B_sigma_sq,
                                     P_mat, eps_step);
   return(grad);
 }
 
-inline arma::vec trans_calc_gradient_sigma(arma::field<arma::vec>& Labels,
-                                        arma::vec theta,
-                                        arma::vec& basis_coef_A,
-                                        arma::vec& basis_coef_B,
-                                        const arma::field<arma::mat>& basis_funct_A,
-                                        const arma::field<arma::mat>& basis_funct_B,
-                                        const arma::field<arma::mat>& basis_funct_AB,
-                                        const arma::field<arma::vec>& X_A,
-                                        const arma::field<arma::vec>& X_B,
-                                        const arma::field<arma::vec>& X_AB,
-                                        const arma::vec& n_A,
-                                        const arma::vec& n_B,
-                                        const arma::vec& n_AB,
-                                        const double& sigma_A_mean,
-                                        const double& sigma_A_shape,
-                                        const double& sigma_B_mean,
-                                        const double& sigma_B_shape,
-                                        const double& eps_step){
-  arma::vec grad = calc_gradient_sigma(Labels, transform_pars(theta), basis_coef_A, basis_coef_B,
+inline arma::vec trans_calc_gradient_theta(arma::field<arma::vec>& Labels,
+                                           arma::vec theta,
+                                           arma::vec& basis_coef_A,
+                                           arma::vec& basis_coef_B,
+                                           const arma::field<arma::mat>& basis_funct_A,
+                                           const arma::field<arma::mat>& basis_funct_B,
+                                           const arma::field<arma::mat>& basis_funct_AB,
+                                           const arma::field<arma::vec>& X_A,
+                                           const arma::field<arma::vec>& X_B,
+                                           const arma::field<arma::vec>& X_AB,
+                                           const arma::vec& n_A,
+                                           const arma::vec& n_B,
+                                           const arma::vec& n_AB,
+                                           const double& I_A_shape, 
+                                           const double& I_A_rate,
+                                           const double& I_B_shape,
+                                           const double& I_B_rate,
+                                           const double& sigma_A_mean,
+                                           const double& sigma_A_shape,
+                                           const double& sigma_B_mean,
+                                           const double& sigma_B_shape,
+                                           const double& eps_step){
+  arma::vec grad = calc_gradient_theta(Labels, transform_pars(theta), basis_coef_A, basis_coef_B,
                                        basis_funct_A, basis_funct_B, basis_funct_AB,
                                        X_A, X_B, X_AB, n_A, n_B, n_AB, sigma_A_mean, 
+                                       I_A_shape, I_A_rate, I_B_shape, I_B_rate,
                                        sigma_A_shape,sigma_B_mean, sigma_B_shape,
                                        eps_step);
   grad = grad + arma::ones(grad.n_elem);

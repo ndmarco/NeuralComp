@@ -151,9 +151,7 @@ inline double log_prior_TI(const double& mu_A,
 // delta_shape: shape parameter for delta
 // delta_rate: rate parameter for delta
 // theta: (I_A, I_B, sigma_A, sigma_B, delta)
-inline double log_prior_FR(const double& mu_A, 
-                           const double& mu_B,
-                           const double& I_A_sigma_sq,
+inline double log_prior_FR(const double& I_A_sigma_sq,
                            const double& I_B_sigma_sq,
                            const arma::mat P_mat,
                            arma::vec& basis_coef_A,
@@ -162,10 +160,10 @@ inline double log_prior_FR(const double& mu_A,
   
   
   // I_A prior
-  double l_prior =  -((0.5 / I_A_sigma_sq) * arma::dot((basis_coef_A - mu_A * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_A - mu_A * arma::ones(P_mat.n_rows))));
+  double l_prior =  -((0.5 / I_A_sigma_sq) * arma::dot(basis_coef_A, P_mat * basis_coef_A));
   
   // I_B prior
-  l_prior = l_prior - ((0.5 / I_B_sigma_sq) * arma::dot((basis_coef_B - mu_B * arma::ones(P_mat.n_rows)), P_mat * (basis_coef_B - mu_B * arma::ones(P_mat.n_rows))));
+  l_prior = l_prior - ((0.5 / I_B_sigma_sq) * arma::dot(basis_coef_B , P_mat * basis_coef_B));
   
   return l_prior;
 }

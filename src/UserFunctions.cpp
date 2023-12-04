@@ -96,6 +96,7 @@ Rcpp::List FR_CI(const arma::vec time,
                  const arma::vec internal_knots,
                  const arma::mat basis_coef_A_samp,
                  const arma::mat basis_coef_B_samp,
+                 const arma::mat theta,
                  const double burnin_prop = 0.3,
                  const double alpha = 0.05){
   arma::mat basis_funct;
@@ -115,8 +116,8 @@ Rcpp::List FR_CI(const arma::vec time,
   arma::vec B_FR_median = arma::zeros(time.n_elem);
   int burnin_num = std::ceil(burnin_prop * n_MCMC);
   for(int i = burnin_num; i < n_MCMC; i++){
-    MCMC_A_FR.row(i - burnin_num) = arma::exp((basis_funct * basis_coef_A_samp.row(i).t()).t());
-    MCMC_B_FR.row(i - burnin_num) =  arma::exp((basis_funct * basis_coef_B_samp.row(i).t()).t());
+    MCMC_A_FR.row(i - burnin_num) = theta(i,0) + (basis_funct * basis_coef_A_samp.row(i).t()).t();
+    MCMC_B_FR.row(i - burnin_num) = theta(i,1) + (basis_funct * basis_coef_B_samp.row(i).t()).t();
   }
   
   arma::vec p = {alpha/2, 0.5, 1 - (alpha/2)};
@@ -263,6 +264,10 @@ Rcpp::List HMC_FR(arma::field<arma::vec> Labels,
                   const arma::vec internal_knots,
                   int Warm_block = 500,
                   int Leapfrog_steps = 10,
+                  const double I_A_shape = 40, 
+                  const double I_A_rate = 1,
+                  const double I_B_shape = 40,
+                  const double I_B_rate = 1,
                   const double sigma_A_mean = 6.32,
                   const double sigma_A_shape = 1,
                   const double sigma_B_mean = 6.32,
@@ -322,7 +327,8 @@ Rcpp::List HMC_FR(arma::field<arma::vec> Labels,
   
   Rcpp::List output = NeuralComp::HMC_sampler_FR(Labels, basis_funct_A, basis_funct_B, basis_funct_AB,
                                                  X_A, X_B, X_AB, n_A, n_B, n_AB,
-                                                 MCMC_iters, Leapfrog_steps, sigma_A_mean, sigma_A_shape,
+                                                 MCMC_iters, Leapfrog_steps, I_A_shape, I_A_rate,
+                                                 I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
                                                  sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean,
                                                  mu_prior_var, eps_step, step_size_FR, step_size_sigma, Warm_block);
   return output;
