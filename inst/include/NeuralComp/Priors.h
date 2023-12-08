@@ -5,6 +5,9 @@
 #include <cmath>
 #include <RcppDist.h>
 #include <mvnorm.h>
+#include <CppAD.h>
+using namespace CppAD;
+using namespace Eigen;
 
 namespace NeuralComp {
 
@@ -45,6 +48,33 @@ inline double dinv_gauss(const double x,
   return lpdf;
 }
 
+typedef AD<double> a_double;
+typedef Matrix<a_double, Eigen::Dynamic, 1> a_vector;
+
+inline a_double dinv_gauss(const double x,
+                           const a_double mean,
+                           const a_double shape){
+  a_double lpdf = -1 * INFINITY;
+  if(x > 0){
+    lpdf = 0.5 * CppAD::log(shape) - 0.5 * std::log(arma::datum::pi * 2 * pow(x, 3.0)) - 
+      ((shape * (x - mean) * (x - mean) ) / (2 * (mean) * (mean) * x));
+  }
+  
+  return lpdf;
+}
+
+inline a_double dinv_gauss(const a_double x,
+                           const a_double mean,
+                           const a_double shape){
+  a_double lpdf = -1 * INFINITY;
+  if(x > 0){
+    lpdf = 0.5 * CppAD::log(shape) - 0.5 * CppAD::log(arma::datum::pi * 2 * pow(x, 3.0)) - 
+      ((shape * (x - mean) * (x - mean) ) / (2 * (mean) * (mean) * x));
+  }
+  
+  return lpdf;
+}
+
 // return upper probability
 inline double pinv_gauss(const double x,
                          const double& mean,
@@ -58,6 +88,39 @@ inline double pinv_gauss(const double x,
   
   return lcdf;
 }
+
+inline a_double pnorm_AD(const a_double x){
+  a_double x1 =  x / std::sqrt(2);
+  a_double pdf = 0.5 * (1 + CppAD::erf(x1));
+  return pdf;
+}
+
+inline a_double pinv_gauss(const double x,
+                           const a_double mean,
+                           const a_double shape){
+  a_double lcdf = 0;
+  if(x > 0){
+    lcdf = pnorm_AD((sqrt(shape / x) * ((x/ mean) - 1))) + (CppAD::exp((2 * shape) / mean) 
+                                                                                 * (pnorm_AD(-(sqrt(shape / x) * ((x/ mean) + 1)))));
+    lcdf = CppAD::log(1 -lcdf);
+  }
+  
+  return lcdf;
+}
+
+inline a_double pinv_gauss(const a_double x,
+                           const a_double mean,
+                           const a_double shape){
+  a_double lcdf = 0;
+  if(x > 0){
+    lcdf = pnorm_AD((sqrt(shape / x) * ((x/ mean) - 1))) + (CppAD::exp((2 * shape) / mean) 
+                                                              * (pnorm_AD(-(sqrt(shape / x) * ((x/ mean) + 1)))));
+    lcdf = CppAD::log(1 -lcdf);
+  }
+  
+  return lcdf;
+}
+
 
 // return sample from inverse gaussian
 inline double rinv_gauss(const double mean,
@@ -153,17 +216,79 @@ inline double log_prior_TI(const double& mu_A,
 // theta: (I_A, I_B, sigma_A, sigma_B, delta)
 inline double log_prior_FR(const double& I_A_sigma_sq,
                            const double& I_B_sigma_sq,
-                           const arma::mat P_mat,
                            arma::vec& basis_coef_A,
                            arma::vec& basis_coef_B){
   
   
   
   // I_A prior
-  double l_prior =  -((0.5 / I_A_sigma_sq) * arma::dot(basis_coef_A, P_mat * basis_coef_A));
+  double l_prior =  -((0.5 / I_A_sigma_sq) * arma::dot(basis_coef_A, basis_coef_A));
   
   // I_B prior
-  l_prior = l_prior - ((0.5 / I_B_sigma_sq) * arma::dot(basis_coef_B , P_mat * basis_coef_B));
+  l_prior = l_prior - ((0.5 / I_B_sigma_sq) * arma::dot(basis_coef_B , basis_coef_B));
+  
+  return l_prior;
+}
+
+inline double log_prior_FR(const double& I_A_sigma_sq,
+                           const double& I_B_sigma_sq,
+                           Eigen::VectorXd basis_coef){
+  
+  arma::vec basis_coef_A(basis_coef.rows()/2, arma::fill::zeros);
+  arma::vec basis_coef_B(basis_coef.rows()/2, arma::fill::zeros);
+  for(int i = 0; i < basis_coef.rows()/2; i++){
+    basis_coef_A(i) = basis_coef(i);
+    basis_coef_B(i) = basis_coef(i + (basis_coef.rows()/2));
+  }
+  
+  // I_A prior
+  double l_prior =  -((0.5 / I_A_sigma_sq) * arma::dot(basis_coef_A, basis_coef_A));
+  
+  // I_B prior
+  l_prior = l_prior - ((0.5 / I_B_sigma_sq) * arma::dot(basis_coef_B , basis_coef_B));
+  
+  return l_prior;
+}
+
+
+inline a_double dot_AD(arma::rowvec basis_func,
+                       a_vector basis_coef,
+                       bool Indicator_A){
+  a_double output = 0;
+  for(int i = 0; i < basis_func.n_elem; i++){
+    if(Indicator_A == 0){
+      output = output + (basis_func(i) * basis_coef(i));
+    }else{
+      output = output + (basis_func(i) * basis_coef(i + (basis_coef.rows() / 2)));
+    }
+  }
+  return output;
+}
+
+inline a_double norm_AD(a_vector basis_coef,
+                       bool Indicator_A){
+  a_double output = 0;
+  for(int i = 0; i < basis_coef.rows() / 2; i++){
+    if(Indicator_A == 0){
+      output = output + (basis_coef(i) * basis_coef(i));
+    }else{
+      output = output + (basis_coef(i + (basis_coef.rows() / 2)) * basis_coef(i + (basis_coef.rows() / 2)));
+    }
+  }
+  return output;
+}
+
+inline a_double log_prior_FR(const double& I_A_sigma_sq,
+                             const double& I_B_sigma_sq,
+                             a_vector basis_coef){
+  
+  
+  
+  // I_A prior
+  a_double l_prior =  -((0.5 / I_A_sigma_sq) * norm_AD(basis_coef, true));
+  
+  // I_B prior
+  l_prior = l_prior - ((0.5 / I_B_sigma_sq) * norm_AD(basis_coef, false));
   
   return l_prior;
 }
@@ -208,20 +333,68 @@ inline double log_prior_sigma(const double& sigma_A_mean,
 // delta_shape: shape parameter for delta
 // delta_rate: rate parameter for delta
 // theta: (I_A, I_B, sigma_A, sigma_B, delta)
-inline double log_prior(const double& I_A_shape, 
-                        const double& I_A_rate,
+inline double log_prior(const double& I_A_mean, 
+                        const double& I_A_shape,
+                        const double& I_B_mean,
                         const double& I_B_shape,
-                        const double& I_B_rate,
                         const double& sigma_A_mean,
                         const double& sigma_A_shape,
                         const double& sigma_B_mean,
                         const double& sigma_B_shape,
                         arma::vec& theta){
   // I_A prior
-  double l_prior =  R::dgamma(theta(0), I_A_shape, (1 / I_A_rate), true);
+  double l_prior =   dinv_gauss(theta(0), I_A_mean, I_A_shape);
   
   // I_B prior
-  l_prior = l_prior + R::dgamma(theta(1), I_B_shape, (1 / I_B_rate), true);
+  l_prior = l_prior + dinv_gauss(theta(1), I_B_mean, I_B_shape);
+  
+  // sigma_A prior
+  l_prior = l_prior + dinv_gauss(theta(2), sigma_A_mean, sigma_A_shape);
+  
+  // sigma_B prior
+  l_prior = l_prior + dinv_gauss(theta(3), sigma_B_mean, sigma_B_shape);
+  
+  return l_prior;
+}
+
+inline double log_prior(const double& I_A_mean, 
+                        const double& I_A_shape,
+                        const double& I_B_mean,
+                        const double& I_B_shape,
+                        const double& sigma_A_mean,
+                        const double& sigma_A_shape,
+                        const double& sigma_B_mean,
+                        const double& sigma_B_shape,
+                        Eigen::VectorXd theta){
+  // I_A prior
+  double l_prior =  dinv_gauss(theta(0), I_A_mean, I_A_shape);
+  
+  // I_B prior
+  l_prior = l_prior + dinv_gauss(theta(1), I_B_mean, I_B_shape);
+  
+  // sigma_A prior
+  l_prior = l_prior + dinv_gauss(theta(2), sigma_A_mean, sigma_A_shape);
+  
+  // sigma_B prior
+  l_prior = l_prior + dinv_gauss(theta(3), sigma_B_mean, sigma_B_shape);
+  
+  return l_prior;
+}
+
+inline a_double log_prior(const double& I_A_mean, 
+                          const double& I_A_shape,
+                          const double& I_B_mean,
+                          const double& I_B_shape,
+                          const double& sigma_A_mean,
+                          const double& sigma_A_shape,
+                          const double& sigma_B_mean,
+                          const double& sigma_B_shape,
+                          a_vector theta){
+  // I_A prior
+  a_double l_prior = dinv_gauss(theta(0), I_A_mean, I_A_shape);
+  
+  // I_B prior
+  l_prior = l_prior + dinv_gauss(theta(1), I_B_mean, I_B_shape);
   
   // sigma_A prior
   l_prior = l_prior + dinv_gauss(theta(2), sigma_A_mean, sigma_A_shape);

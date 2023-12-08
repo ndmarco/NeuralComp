@@ -35,6 +35,10 @@ HMC <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block =
     .Call('_NeuralComp_HMC', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, Warm_block, init_position, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step, step_size, step_size_delta, Mass_mat)
 }
 
+getBSpline <- function(time, basis_degree, boundary_knots, internal_knots) {
+    .Call('_NeuralComp_getBSpline', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots)
+}
+
 FR_CI <- function(time, basis_degree, boundary_knots, internal_knots, basis_coef_A_samp, basis_coef_B_samp, theta, burnin_prop = 0.3, alpha = 0.05) {
     .Call('_NeuralComp_FR_CI', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots, basis_coef_A_samp, basis_coef_B_samp, theta, burnin_prop, alpha)
 }
@@ -43,8 +47,8 @@ HMC_TI <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_deg
     .Call('_NeuralComp_HMC_TI', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block, Leapfrog_steps, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean, mu_prior_var, eps_step, step_size, step_size_delta)
 }
 
-HMC_FR <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block1 = 500L, Warm_block2 = 500L, Leapfrog_steps = 10L, I_A_shape = 40, I_A_rate = 1, I_B_shape = 40, I_B_rate = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, alpha = 0.1, beta = 0.1, mu_prior_mean = 4, mu_prior_var = 0.1, eps_step = 0.001, step_size_sigma = 0.001, step_size_FR = 0.1) {
-    .Call('_NeuralComp_HMC_FR', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block1, Warm_block2, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean, mu_prior_var, eps_step, step_size_sigma, step_size_FR)
+HMC_FR <- function(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block1 = 500L, Warm_block2 = 500L, Leapfrog_steps = 10L, I_A_shape = 40, I_A_rate = 1, I_B_shape = 40, I_B_rate = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, alpha = 1, beta = 0.05, eps_step = 0.001, step_size_sigma = 0.001, step_size_FR = 0.001) {
+    .Call('_NeuralComp_HMC_FR', PACKAGE = 'NeuralComp', Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, Warm_block1, Warm_block2, Leapfrog_steps, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, alpha, beta, eps_step, step_size_sigma, step_size_FR)
 }
 
 #' MH sampler for labels
@@ -88,8 +92,12 @@ FFBS_labels <- function(X_AB, n_AB, theta, step_size, num_evals, MCMC_iters) {
     .Call('_NeuralComp_FFBS_labels', PACKAGE = 'NeuralComp', X_AB, n_AB, theta, step_size, num_evals, MCMC_iters)
 }
 
-calc_gradient1 <- function(Labels, theta, X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step) {
-    .Call('_NeuralComp_calc_gradient1', PACKAGE = 'NeuralComp', Labels, theta, X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, eps_step)
+calc_gradient_theta1 <- function(Labels, theta, basis_coef_A, basis_coef_B, basis_degree, boundary_knots, internal_knots, X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_mean = 40, I_A_shape = 1, I_B_mean = 40, I_B_shape = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, eps_step = 0.001) {
+    .Call('_NeuralComp_calc_gradient_theta1', PACKAGE = 'NeuralComp', Labels, theta, basis_coef_A, basis_coef_B, basis_degree, boundary_knots, internal_knots, X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, eps_step)
+}
+
+log_likelihood_TI1 <- function(Labels, theta, basis_coef_A, basis_coef_B, basis_degree, internal_knots, boundary_knots, X_A, X_B, X_AB, n_A, n_B, n_AB) {
+    .Call('_NeuralComp_log_likelihood_TI1', PACKAGE = 'NeuralComp', Labels, theta, basis_coef_A, basis_coef_B, basis_degree, internal_knots, boundary_knots, X_A, X_B, X_AB, n_A, n_B, n_AB)
 }
 
 log_likelihood1 <- function(Labels, theta, X_A, X_B, X_AB, n_A, n_B, n_AB) {
@@ -122,6 +130,18 @@ posterior_Labels1 <- function(Labels, X_AB, theta) {
 
 prob_transition1 <- function(label, label_next, X_AB, theta, spike_num) {
     .Call('_NeuralComp_prob_transition1', PACKAGE = 'NeuralComp', label, label_next, X_AB, theta, spike_num)
+}
+
+fx <- function(x, theta) {
+    .Call('_NeuralComp_fx', PACKAGE = 'NeuralComp', x, theta)
+}
+
+fp <- function(x, theta) {
+    .Call('_NeuralComp_fp', PACKAGE = 'NeuralComp', x, theta)
+}
+
+fd <- function(x, theta) {
+    .Call('_NeuralComp_fd', PACKAGE = 'NeuralComp', x, theta)
 }
 
 rcpparma_hello_world <- function() {

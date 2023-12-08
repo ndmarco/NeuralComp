@@ -2,6 +2,10 @@
 #include <cmath>
 #include <NeuralComp.h>
 #include <splines2Armadillo.h>
+#include <CppAD.h>
+
+using namespace CppAD;
+using namespace Eigen;
 
 //' HMC sampler for competition model
 //' 
@@ -87,6 +91,21 @@ arma::mat HMC(arma::field<arma::vec> Labels,
                                             eps_step1, step_size, step_size_delta, Mass_mat1, 
                                             Warm_block);
    return theta;
+}
+
+//[[Rcpp::export]]
+arma::mat getBSpline(const arma::vec time,
+                     const int basis_degree,
+                     const arma::vec boundary_knots,
+                     const arma::vec internal_knots){
+  arma::mat basis_funct;
+  splines2::BSpline bspline;
+  
+  bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                              boundary_knots);
+  arma::mat bspline_mat{bspline.basis(true)};
+  basis_funct = bspline_mat;
+  return basis_funct;
 }
 
 //[[Rcpp::export]]
@@ -216,7 +235,7 @@ Rcpp::List HMC_TI(arma::field<arma::vec> Labels,
    for(int i = 0; i < n_B.n_elem; i++){
      arma::vec time = arma::zeros(n_B(i));
      for(int j = 1; j < n_B(i); j++){
-       time(j) = arma::accu(X_B(i,0).subvec(0,j));
+       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
      }
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
@@ -230,7 +249,7 @@ Rcpp::List HMC_TI(arma::field<arma::vec> Labels,
    for(int i = 0; i < n_AB.n_elem; i++){
      arma::vec time = arma::zeros(n_AB(i));
      for(int j = 1; j < n_AB(i); j++){
-       time(j) = arma::accu(X_AB(i,0).subvec(0,j));
+       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
      }
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
@@ -274,12 +293,10 @@ Rcpp::List HMC_FR(arma::field<arma::vec> Labels,
                   const double sigma_B_mean = 6.32,
                   const double sigma_B_shape = 1,
                   const double alpha = 1,
-                  const double beta = 0.005,
-                  const double mu_prior_mean = 4,
-                  const double mu_prior_var = 0.1,
+                  const double beta = 0.05,
                   const double eps_step = 0.001,
                   double step_size_sigma =  0.001,
-                  double step_size_FR =  0.1){
+                  double step_size_FR =  0.001){
   //Create B-splines
   splines2::BSpline bspline;
   // Make spline basis for A functions
@@ -301,7 +318,7 @@ Rcpp::List HMC_FR(arma::field<arma::vec> Labels,
   for(int i = 0; i < n_B.n_elem; i++){
     arma::vec time = arma::zeros(n_B(i));
     for(int j = 1; j < n_B(i); j++){
-      time(j) = arma::accu(X_B(i,0).subvec(0,j));
+      time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
     }
     bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                 boundary_knots);
@@ -315,7 +332,7 @@ Rcpp::List HMC_FR(arma::field<arma::vec> Labels,
   for(int i = 0; i < n_AB.n_elem; i++){
     arma::vec time = arma::zeros(n_AB(i));
     for(int j = 1; j < n_AB(i); j++){
-      time(j) = arma::accu(X_AB(i,0).subvec(0,j));
+      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
     }
     bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                 boundary_knots);
@@ -330,8 +347,8 @@ Rcpp::List HMC_FR(arma::field<arma::vec> Labels,
                                                  X_A, X_B, X_AB, n_A, n_B, n_AB,
                                                  MCMC_iters, Leapfrog_steps, I_A_shape, I_A_rate,
                                                  I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
-                                                 sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean,
-                                                 mu_prior_var, eps_step, step_size_FR, step_size_sigma,
+                                                 sigma_B_mean, sigma_B_shape, alpha, beta,
+                                                 eps_step, step_size_FR, step_size_sigma,
                                                  Warm_block1, Warm_block2);
   return output;
   
@@ -668,47 +685,362 @@ arma::field<arma::vec> FFBS_labels(const arma::field<arma::vec>& X_AB,
 // 
 // 
 //[[Rcpp::export]]
-arma::vec calc_gradient1(arma::field<arma::vec>& Labels,
+arma::vec calc_gradient_theta1(arma::field<arma::vec>& Labels,
                          arma::vec theta,
+                         arma::vec basis_coef_A,
+                         arma::vec basis_coef_B,
+                         const double basis_degree,
+                         const arma::vec boundary_knots,
+                         const arma::vec internal_knots,
                          const arma::field<arma::vec>& X_A,
                          const arma::field<arma::vec>& X_B,
                          const arma::field<arma::vec>& X_AB,
                          const arma::vec& n_A,
                          const arma::vec& n_B,
                          const arma::vec& n_AB,
-                         const double& I_A_shape,
-                         const double& I_A_rate,
-                         const double& I_B_shape,
-                         const double& I_B_rate,
-                         const double& sigma_A_mean,
-                         const double& sigma_A_shape,
-                         const double& sigma_B_mean,
-                         const double& sigma_B_shape,
-                         const double& delta_shape,
-                         const double& delta_rate,
-                         const arma::vec& eps_step){
-  arma::vec grad(theta.n_elem, arma::fill::zeros);
-  arma::vec theta_p_eps = theta;
-  arma::vec theta_m_eps = theta;
-  for(int i = 0; i < theta.n_elem; i++){
-    theta_p_eps = theta;
-    // f(x + e) in the i^th dimension
-    theta_p_eps(i) = theta_p_eps(i) + eps_step(i);
-    theta_m_eps = theta;
-    // f(x - e) in the i^th dimension
-    theta_m_eps(i) = theta_m_eps(i) - eps_step(i);
-    // approximate gradient ((f(x + e) f(x - e))/ 2e)
-    grad(i) = (NeuralComp::log_posterior(Labels, theta_p_eps, X_A, X_B, X_AB,
-               n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape,
-               I_B_rate, sigma_A_mean, sigma_A_shape,
-               sigma_B_mean, sigma_B_shape) - NeuralComp::log_posterior(Labels, theta_m_eps, X_A, X_B, X_AB,
-               n_A, n_B, n_AB, I_A_shape, I_A_rate, I_B_shape,
-               I_B_rate, sigma_A_mean, sigma_A_shape,
-               sigma_B_mean, sigma_B_shape)) / (2 * eps_step(i));
-
+                         const double I_A_mean = 40, 
+                         const double I_A_shape = 1,
+                         const double I_B_mean = 40,
+                         const double I_B_shape = 1,
+                         const double sigma_A_mean = 6.32,
+                         const double sigma_A_shape = 1,
+                         const double sigma_B_mean = 6.32,
+                         const double sigma_B_shape = 1,
+                         const double& eps_step= 0.001){
+  
+  //Create B-splines
+  splines2::BSpline bspline;
+  // Make spline basis for A functions
+  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+  for(int i = 0; i < n_A.n_elem; i++){
+    arma::vec time = arma::zeros(n_A(i));
+    for(int j = 1; j < n_A(i); j++){
+      time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_A(i,0) = bspline_mat;
   }
+  
+  // Make spline basis for B functions
+  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+  for(int i = 0; i < n_B.n_elem; i++){
+    arma::vec time = arma::zeros(n_B(i));
+    for(int j = 1; j < n_B(i); j++){
+      time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_B(i,0) = bspline_mat;
+  }
+  
+  // Make spline basis for AB functions
+  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+  for(int i = 0; i < n_AB.n_elem; i++){
+    arma::vec time = arma::zeros(n_AB(i));
+    for(int j = 1; j < n_AB(i); j++){
+      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_AB(i,0) = bspline_mat;
+  }
+  
+  arma::vec grad = NeuralComp::calc_gradient_theta(Labels, theta, basis_coef_A,
+                                                   basis_coef_B, basis_funct_A, basis_funct_B,
+                                                   basis_funct_AB, X_A, X_B, X_AB,
+                                                   n_A, n_B, n_AB, I_A_mean,
+                                                   I_A_shape, I_B_mean, I_B_shape,
+                                                   sigma_A_mean, sigma_A_shape,
+                                                   sigma_B_mean, sigma_B_shape, eps_step);
   return grad;
 }
+
+// //[[Rcpp::export]]
+// arma::vec calc_gradient_theta2(arma::field<arma::vec>& Labels,
+//                                arma::vec theta,
+//                                arma::vec basis_coef_A,
+//                                arma::vec basis_coef_B,
+//                                const double basis_degree,
+//                                const arma::vec boundary_knots,
+//                                const arma::vec internal_knots,
+//                                const arma::field<arma::vec>& X_A,
+//                                const arma::field<arma::vec>& X_B,
+//                                const arma::field<arma::vec>& X_AB,
+//                                const arma::vec& n_A,
+//                                const arma::vec& n_B,
+//                                const arma::vec& n_AB,
+//                                const double I_A_mean = 40, 
+//                                const double I_A_shape = 1,
+//                                const double I_B_mean = 40,
+//                                const double I_B_shape = 1,
+//                                const double sigma_A_mean = 6.32,
+//                                const double sigma_A_shape = 1,
+//                                const double sigma_B_mean = 6.32,
+//                                const double sigma_B_shape = 1){
+//   
+//   //Create B-splines
+//   splines2::BSpline bspline;
+//   // Make spline basis for A functions
+//   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+//   for(int i = 0; i < n_A.n_elem; i++){
+//     arma::vec time = arma::zeros(n_A(i));
+//     for(int j = 1; j < n_A(i); j++){
+//       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_A(i,0) = bspline_mat;
+//   }
+//   
+//   // Make spline basis for B functions
+//   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+//   for(int i = 0; i < n_B.n_elem; i++){
+//     arma::vec time = arma::zeros(n_B(i));
+//     for(int j = 1; j < n_B(i); j++){
+//       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_B(i,0) = bspline_mat;
+//   }
+//   
+//   // Make spline basis for AB functions
+//   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+//   for(int i = 0; i < n_AB.n_elem; i++){
+//     arma::vec time = arma::zeros(n_AB(i));
+//     for(int j = 1; j < n_AB(i); j++){
+//       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_AB(i,0) = bspline_mat;
+//   }
+//   
+//   arma::vec grad = NeuralComp::calc_gradient_eigen_theta(Labels, theta, basis_coef_A,
+//                                                          basis_coef_B, basis_funct_A, basis_funct_B,
+//                                                          basis_funct_AB, X_A, X_B, X_AB,
+//                                                          n_A, n_B, n_AB, I_A_mean,
+//                                                          I_A_shape, I_B_mean, I_B_shape,
+//                                                          sigma_A_mean, sigma_A_shape,
+//                                                          sigma_B_mean, sigma_B_shape);
+//   return grad;
+// }
+// 
+// //[[Rcpp::export]]
+// arma::vec calc_gradient_basis1(arma::field<arma::vec>& Labels,
+//                                arma::vec theta,
+//                                arma::vec basis_coef_A,
+//                                arma::vec basis_coef_B,
+//                                const double basis_degree,
+//                                const arma::vec boundary_knots,
+//                                const arma::vec internal_knots,
+//                                const arma::field<arma::vec>& X_A,
+//                                const arma::field<arma::vec>& X_B,
+//                                const arma::field<arma::vec>& X_AB,
+//                                const arma::vec& n_A,
+//                                const arma::vec& n_B,
+//                                const arma::vec& n_AB,
+//                                const double& I_A_sigma_sq = 1,
+//                                const double& I_B_sigma_sq = 1){
+//   
+//   //Create B-splines
+//   splines2::BSpline bspline;
+//   // Make spline basis for A functions
+//   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+//   for(int i = 0; i < n_A.n_elem; i++){
+//     arma::vec time = arma::zeros(n_A(i));
+//     for(int j = 1; j < n_A(i); j++){
+//       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_A(i,0) = bspline_mat;
+//   }
+//   
+//   // Make spline basis for B functions
+//   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+//   for(int i = 0; i < n_B.n_elem; i++){
+//     arma::vec time = arma::zeros(n_B(i));
+//     for(int j = 1; j < n_B(i); j++){
+//       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_B(i,0) = bspline_mat;
+//   }
+//   
+//   // Make spline basis for AB functions
+//   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+//   for(int i = 0; i < n_AB.n_elem; i++){
+//     arma::vec time = arma::zeros(n_AB(i));
+//     for(int j = 1; j < n_AB(i); j++){
+//       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_AB(i,0) = bspline_mat;
+//   }
+//   
+//   arma::vec grad = NeuralComp::calc_gradient_FR(Labels, theta, basis_coef_A,
+//                                                 basis_coef_B, basis_funct_A, basis_funct_B,
+//                                                 basis_funct_AB, X_A, X_B, X_AB,
+//                                                 n_A, n_B, n_AB, I_A_sigma_sq,
+//                                                 I_B_sigma_sq, 0.001);
+//   return grad;
+// }
+// 
+// //[[Rcpp::export]]
+// arma::vec calc_gradient_basis2(arma::field<arma::vec>& Labels,
+//                                arma::vec theta,
+//                                arma::vec basis_coef_A,
+//                                arma::vec basis_coef_B,
+//                                const double basis_degree,
+//                                const arma::vec boundary_knots,
+//                                const arma::vec internal_knots,
+//                                const arma::field<arma::vec>& X_A,
+//                                const arma::field<arma::vec>& X_B,
+//                                const arma::field<arma::vec>& X_AB,
+//                                const arma::vec& n_A,
+//                                const arma::vec& n_B,
+//                                const arma::vec& n_AB,
+//                                const double& I_A_sigma_sq = 1,
+//                                const double& I_B_sigma_sq = 1){
+//   
+//   //Create B-splines
+//   splines2::BSpline bspline;
+//   // Make spline basis for A functions
+//   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+//   for(int i = 0; i < n_A.n_elem; i++){
+//     arma::vec time = arma::zeros(n_A(i));
+//     for(int j = 1; j < n_A(i); j++){
+//       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_A(i,0) = bspline_mat;
+//   }
+//   
+//   // Make spline basis for B functions
+//   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+//   for(int i = 0; i < n_B.n_elem; i++){
+//     arma::vec time = arma::zeros(n_B(i));
+//     for(int j = 1; j < n_B(i); j++){
+//       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_B(i,0) = bspline_mat;
+//   }
+//   
+//   // Make spline basis for AB functions
+//   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+//   for(int i = 0; i < n_AB.n_elem; i++){
+//     arma::vec time = arma::zeros(n_AB(i));
+//     for(int j = 1; j < n_AB(i); j++){
+//       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(true)};
+//     basis_funct_AB(i,0) = bspline_mat;
+//   }
+//   
+//   arma::vec grad = NeuralComp::calc_gradient_eigen_basis(Labels, theta, basis_coef_A,
+//                                                          basis_coef_B, basis_funct_A, basis_funct_B,
+//                                                          basis_funct_AB, X_A, X_B, X_AB,
+//                                                          n_A, n_B, n_AB,I_A_sigma_sq,
+//                                                          I_B_sigma_sq);
+//   return grad;
+// }
+
+// 
+//[[Rcpp::export]]
+double log_likelihood_TI1(arma::field<arma::vec>& Labels,
+                          arma::vec& theta,
+                          arma::vec& basis_coef_A,
+                          arma::vec& basis_coef_B,
+                          double basis_degree,
+                          arma::vec internal_knots,
+                          arma::vec boundary_knots,
+                          const arma::field<arma::vec>& X_A,
+                          const arma::field<arma::vec>& X_B,
+                          const arma::field<arma::vec>& X_AB,
+                          const arma::vec& n_A,
+                          const arma::vec& n_B,
+                          const arma::vec& n_AB){
+  //Create B-splines
+  splines2::BSpline bspline;
+  // Make spline basis for A functions
+  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+  for(int i = 0; i < n_A.n_elem; i++){
+    arma::vec time = arma::zeros(n_A(i));
+    for(int j = 1; j < n_A(i); j++){
+      time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_A(i,0) = bspline_mat;
+  }
+  
+  // Make spline basis for B functions
+  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+  for(int i = 0; i < n_B.n_elem; i++){
+    arma::vec time = arma::zeros(n_B(i));
+    for(int j = 1; j < n_B(i); j++){
+      time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_B(i,0) = bspline_mat;
+  }
+  
+  // Make spline basis for AB functions
+  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+  for(int i = 0; i < n_AB.n_elem; i++){
+    arma::vec time = arma::zeros(n_AB(i));
+    for(int j = 1; j < n_AB(i); j++){
+      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+    }
+    bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                boundary_knots);
+    // Get Basis matrix
+    arma::mat bspline_mat{bspline.basis(true)};
+    basis_funct_AB(i,0) = bspline_mat;
+  }
+  
+  return NeuralComp::log_likelihood_TI(Labels, theta, basis_coef_A, basis_coef_B,
+                                       basis_funct_A, basis_funct_B, basis_funct_AB,
+                                       X_A, X_B, X_AB, n_A, n_B, n_AB);
+}
+
 // 
 //[[Rcpp::export]]
 double log_likelihood1(arma::field<arma::vec>& Labels,
@@ -867,36 +1199,70 @@ double prob_transition1(double label,
   return NeuralComp::prob_transition(label, label_next, X_AB, theta, spike_num);
 }
 
-// 
-// //[[Rcpp::export]]
-// double pinv_gauss1(double x,
-//                    double a,
-//                    double b){
-//   return NeuralComp::pinv_gauss(x, a, b);
-// }
-// 
-// 
-// //[[Rcpp::export]]
-// double log_posterior1(arma::field<arma::vec>& Labels,
-//                      arma::vec theta,
-//                      const arma::field<arma::vec>& X_A,
-//                      const arma::field<arma::vec>& X_B,
-//                      const arma::field<arma::vec>& X_AB,
-//                      const arma::vec& n_A,
-//                      const arma::vec& n_B,
-//                      const arma::vec& n_AB,
-//                      const double& I_A_shape, 
-//                      const double& I_A_rate,
-//                      const double& I_B_shape,
-//                      const double& I_B_rate,
-//                      const double& sigma_A_mean,
-//                      const double& sigma_A_shape,
-//                      const double& sigma_B_mean,
-//                      const double& sigma_B_shape,
-//                      const double& delta_shape,
-//                      const double& delta_rate){
-//   double l_posterior = NeuralComp::log_likelihood(Labels, theta, X_A, X_B, X_AB, n_A, n_B, n_AB) +
-//     NeuralComp::log_prior(I_A_shape, I_A_rate, I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
-//               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, theta);
-//   return l_posterior;
-// }
+typedef AD<double> a_double;
+typedef Matrix<a_double, Eigen::Dynamic, 1> a_vector;
+
+//[[Rcpp::export]]
+double fx(Eigen::VectorXd x, double theta) {
+  double r = theta;
+  for (int i = 0; i < x.rows(); ++i) {
+    r += x(i) * x(i);
+  }
+  r = sqrt(r);
+  return sin(r)/r;
+}
+
+
+a_double fx(a_vector x, double theta) {
+  a_double r = theta;
+  for (int i = 0; i < x.rows(); ++i) {
+    r += x(i) * x(i);
+  }
+  r = sqrt(r);
+  return sin(r)/r;
+}
+
+// [[Rcpp::export]]
+Rcpp::List fp(Eigen::VectorXd x, double theta){
+  a_vector ax(x.rows());
+  a_vector y(1);
+  ADFun<double> gr;
+  
+  for (int i = 0; i < x.rows(); ++i)
+    ax(i) = x(i);
+  
+  Independent(ax);
+  y(0) = fx(ax, theta);
+  gr.Dependent(ax, y);
+  Eigen::VectorXd res = gr.Jacobian(x);
+  Eigen::VectorXd x1(x.rows());
+  for (int i = 0; i < x.rows(); ++i) {
+    x1(i) = x(i) + 10;
+  }
+  arma::vec grad = arma::zeros(x.rows());
+  for(int i = 0; i < res.rows(); i++){
+    grad(i) = res(i);
+  }
+  Eigen::VectorXd res1 = gr.Jacobian(x1);
+  arma::vec grad1 = arma::zeros(x.rows());
+  for(int i = 0; i < res1.rows(); i++){
+    grad1(i) = res1(i);
+  }
+  
+  Rcpp::List output = Rcpp::List::create(Rcpp::Named("grad", grad),
+                                         Rcpp::Named("grad1", grad1));
+  return output;
+}
+
+// [[Rcpp::export]]
+arma::vec fd(Eigen::VectorXd x, double theta){
+  arma::vec grad(x.rows(), arma::fill::zeros);
+  for(int i = 0; i < x.rows(); i++){
+    Eigen::VectorXd x_pe = x;
+    x_pe(i,0) = x_pe(i,0) + 0.001;
+    Eigen::VectorXd x_me = x;
+    x_me(i,0) = x_me(i,0) - 0.001;
+    grad(i) = (fx(x_pe, theta) - fx(x_me, theta)) / 0.002;
+  }
+  return grad;
+}
