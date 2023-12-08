@@ -109,37 +109,21 @@ inline void leapfrog_step_FR(arma::field<arma::vec>& Labels,
                              arma::mat& Mass_mat,
                              arma::vec& position,
                              arma::vec& momentum,
-                             ADFun<double>& gr, 
-                             int step_num){
+                             ADFun<double>& gr,
+                             int step_num,
+                             int num_leapfrog){
+  position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) = position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) + 
+    step_size * momentum;
   arma::vec position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   arma::vec position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
-  arma::vec momentum_i;
-  if(step_num == 0){
-    momentum_i = momentum + 0.5 * step_size * 
-      trans_calc_gradient_eigen_basis(Labels, position_theta, position_basis_coef_A, 
-                                      position_basis_coef_B, basis_funct_A, basis_funct_B,
-                                      basis_funct_AB, X_A, X_B, X_AB, n_A,
-                                      n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, gr);
-  }else{
-    momentum_i = momentum + 0.5 * step_size * 
+  if(step_num != (num_leapfrog - 1)){
+    momentum = momentum + step_size * 
       trans_calc_gradient_eigen_basis_update(Labels, position_theta, position_basis_coef_A, 
                                              position_basis_coef_B, basis_funct_A, basis_funct_B,
                                              basis_funct_AB, X_A, X_B, X_AB, n_A,
                                              n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, gr);
   }
-  
-  
-  position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) = position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) + 
-    step_size * arma::solve(Mass_mat, momentum_i);
-  position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
-  position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
-  position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
-  momentum = momentum_i + 0.5 * step_size * 
-    trans_calc_gradient_eigen_basis_update(Labels, position_theta, position_basis_coef_A, 
-                                           position_basis_coef_B, basis_funct_A, basis_funct_B,
-                                           basis_funct_AB, X_A, X_B, X_AB, n_A,
-                                           n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, gr);
 }
 
 inline void leapfrog_step_theta(arma::field<arma::vec>& Labels,
@@ -165,42 +149,26 @@ inline void leapfrog_step_theta(arma::field<arma::vec>& Labels,
                                 arma::mat& Mass_mat,
                                 arma::vec& position,
                                 arma::vec& momentum,
-                                ADFun<double>& gr, 
-                                int step_num){
+                                ADFun<double>& gr,
+                                int step_num,
+                                int num_leapfrog){
+  // update position
+  position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) + 
+    step_size * momentum;
   arma::vec position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   arma::vec position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
-  arma::vec momentum_i;
-  if(step_num == 0){
-    momentum_i = momentum + 0.5 * step_size * 
-      trans_calc_gradient_eigen_theta(Labels, position_theta, position_basis_coef_A, 
-                                      position_basis_coef_B, basis_funct_A, basis_funct_B,
-                                      basis_funct_AB, X_A, X_B, X_AB, n_A,
-                                      n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
-                                      sigma_A_mean, sigma_A_shape, 
-                                      sigma_B_mean, sigma_B_shape, gr);
-  }else{
-    momentum_i = momentum + 0.5 * step_size * 
+  // update momentum
+  if(step_num != (num_leapfrog - 1)){
+    momentum = momentum + step_size * 
       trans_calc_gradient_eigen_theta_update(Labels, position_theta, position_basis_coef_A, 
-                                      position_basis_coef_B, basis_funct_A, basis_funct_B,
-                                      basis_funct_AB, X_A, X_B, X_AB, n_A,
-                                      n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
-                                      sigma_A_mean, sigma_A_shape, 
-                                      sigma_B_mean, sigma_B_shape, gr);
+                                             position_basis_coef_B, basis_funct_A, basis_funct_B,
+                                             basis_funct_AB, X_A, X_B, X_AB, n_A,
+                                             n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
+                                             sigma_A_mean, sigma_A_shape, 
+                                             sigma_B_mean, sigma_B_shape, gr);
   }
   
-  position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) + 
-    step_size * arma::solve(Mass_mat, momentum_i);
-  position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
-  position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
-  position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
-  momentum = momentum_i + 0.5 * step_size * 
-    trans_calc_gradient_eigen_theta_update(Labels, position_theta, position_basis_coef_A, 
-                                           position_basis_coef_B, basis_funct_A, basis_funct_B,
-                                           basis_funct_AB, X_A, X_B, X_AB, n_A,
-                                           n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
-                                           sigma_A_mean, sigma_A_shape, 
-                                           sigma_B_mean, sigma_B_shape, gr);
 }
 
 
@@ -323,11 +291,29 @@ inline void leapfrog_FR(arma::field<arma::vec>& Labels,
   ADFun<double> gr;
   prop_position = position;
   prop_momentum = momentum;
+  arma::vec position_theta = prop_position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
+  arma::vec position_basis_coef_A = prop_position.subvec(0, basis_funct_A(0,0).n_cols - 1);
+  arma::vec position_basis_coef_B = prop_position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
+  // Initial half-step
+  prop_momentum = prop_momentum + 0.5 * step_size * 
+    trans_calc_gradient_eigen_basis(Labels, position_theta, position_basis_coef_A, 
+                                    position_basis_coef_B, basis_funct_A, basis_funct_B,
+                                    basis_funct_AB, X_A, X_B, X_AB, n_A,
+                                    n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, gr);
   for(int i = 0; i < Leapfrog_steps; i++){
     leapfrog_step_FR(Labels, basis_funct_A, basis_funct_B, basis_funct_AB, X_A, 
                      X_B, X_AB, n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq,
-                     eps_step, step_size, Mass_mat, prop_position, prop_momentum, gr, i);
+                     eps_step, step_size, Mass_mat, prop_position, prop_momentum, gr, i, Leapfrog_steps);
   }
+  position_theta = prop_position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
+  position_basis_coef_A = prop_position.subvec(0, basis_funct_A(0,0).n_cols - 1);
+  position_basis_coef_B = prop_position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
+  // Final half-step
+  prop_momentum = prop_momentum + 0.5 * step_size * 
+    trans_calc_gradient_eigen_basis_update(Labels, position_theta, position_basis_coef_A, 
+                                           position_basis_coef_B, basis_funct_A, basis_funct_B,
+                                           basis_funct_AB, X_A, X_B, X_AB, n_A,
+                                           n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, gr);
 }
 
 inline void leapfrog_theta(arma::field<arma::vec>& Labels,
@@ -359,13 +345,37 @@ inline void leapfrog_theta(arma::field<arma::vec>& Labels,
   ADFun<double> gr;
   prop_position = position;
   prop_momentum = momentum;
+  arma::vec position_theta = prop_position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
+  arma::vec position_basis_coef_A = prop_position.subvec(0, basis_funct_A(0,0).n_cols - 1);
+  arma::vec position_basis_coef_B = prop_position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
+  // Initial half-step
+  prop_momentum = prop_momentum + 0.5 * step_size * 
+    trans_calc_gradient_eigen_theta(Labels, position_theta, position_basis_coef_A, 
+                                    position_basis_coef_B, basis_funct_A, basis_funct_B,
+                                    basis_funct_AB, X_A, X_B, X_AB, n_A,
+                                    n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
+                                    sigma_A_mean, sigma_A_shape, 
+                                    sigma_B_mean, sigma_B_shape, gr);
+  
   for(int i = 0; i < Leapfrog_steps; i++){
     leapfrog_step_theta(Labels, basis_funct_A, basis_funct_B, basis_funct_AB, X_A, 
                         X_B, X_AB, n_A, n_B, n_AB,
                         sigma_A_mean, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
                         sigma_A_shape, sigma_B_mean, sigma_B_shape,
-                        eps_step, step_size, Mass_mat, prop_position, prop_momentum, gr, i);
+                        eps_step, step_size, Mass_mat, prop_position, prop_momentum, gr, i, Leapfrog_steps);
   }
+  
+  position_theta = prop_position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
+  position_basis_coef_A = prop_position.subvec(0, basis_funct_A(0,0).n_cols - 1);
+  position_basis_coef_B = prop_position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
+  // Final half-step
+  prop_momentum = prop_momentum + 0.5 * step_size * 
+    trans_calc_gradient_eigen_theta_update(Labels, position_theta, position_basis_coef_A, 
+                                           position_basis_coef_B, basis_funct_A, basis_funct_B,
+                                           basis_funct_AB, X_A, X_B, X_AB, n_A,
+                                           n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
+                                           sigma_A_mean, sigma_A_shape, 
+                                           sigma_B_mean, sigma_B_shape, gr);
 }
 
 inline void leapfrog_delta(arma::field<arma::vec>& Labels,
