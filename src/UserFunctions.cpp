@@ -106,7 +106,9 @@ arma::mat GetTraceLabels(const arma::field<arma::vec> MCMC_output,
 //'   \item{\code{basis_coef_B}}{Matrix containing MCMC samples of the coefficients of the B-splines for the B process (if time-inhomogeneous)}
 //'   \item{\code{I_A_sigma_sq}}{Vector of MCMC samples of I_A_sigma squared}
 //'   \item{\code{I_B_sigma_sq}}{Vector of MCMC samples of I_B_sigma squared}
-//'   \item{\code{LogLik}}{Log-likelihood plot of best performing chain}
+//'   \item{\code{LogLik}}{Log-likelihood for each MCMC iteration}
+//'   \item{\code{LogPosterior}}{Log-Posterior for each MCMC iteration}
+//'   
 //' }
 //' 
 //' @section Warning:

@@ -439,6 +439,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   arma::vec I_B_sigma_sq(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
   arma::vec vec_accept(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec llik(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
+  arma::vec lposterior(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec basis_coef_A_ph = basis_coef_A.row(0).t();
   arma::vec basis_coef_B_ph = basis_coef_B.row(0).t();
   
@@ -503,6 +504,9 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
+    lposterior(i) = log_posterior_model(llik(i), theta_exp, I_A_mean, I_A_shape, 
+               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate);
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
@@ -588,6 +592,9 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
+    lposterior(i) = log_posterior_model(llik(i), theta_exp, I_A_mean, I_A_shape, 
+               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate);
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
@@ -654,6 +661,9 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
+    lposterior(i) = log_posterior_model(llik(i), theta_exp, I_A_mean, I_A_shape, 
+               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate);
     
     theta.row(i) = theta_ph.t();
     if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
@@ -666,7 +676,8 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   
   Rcpp::List params = Rcpp::List::create(Rcpp::Named("theta", arma::exp(theta)),
                                          Rcpp::Named("labels", Labels),
-                                         Rcpp::Named("LogLik", llik));
+                                         Rcpp::Named("LogLik", llik),
+                                         Rcpp::Named("LogPosterior", lposterior));
   
   return params;
 }
@@ -713,6 +724,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   arma::vec I_B_sigma_sq(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
   arma::vec vec_accept(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec llik(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
+  arma::vec lposterior(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec basis_coef_A_ph = basis_coef_A.row(0).t();
   arma::vec basis_coef_B_ph = basis_coef_B.row(0).t();
   
@@ -787,6 +799,11 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
+    lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
+               I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
+               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+               alpha, beta);
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
@@ -911,6 +928,11 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
+    lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
+               I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
+               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+               alpha, beta);
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
@@ -1002,6 +1024,11 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
+    lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
+               I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
+               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+               alpha, beta);
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
@@ -1024,7 +1051,8 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
                                          Rcpp::Named("basis_coef_B", basis_coef_B),
                                          Rcpp::Named("I_A_sigma_sq", I_A_sigma_sq),
                                          Rcpp::Named("I_B_sigma_sq", I_B_sigma_sq),
-                                         Rcpp::Named("LogLik", llik));
+                                         Rcpp::Named("LogLik", llik),
+                                         Rcpp::Named("LogPosterior", lposterior));
   
   return params;
 }
