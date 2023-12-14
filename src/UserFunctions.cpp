@@ -142,6 +142,7 @@ arma::mat GetTraceLabels(const arma::field<arma::vec> MCMC_output,
 //' 
 //' ## set parameters
 //' MCMC_iters <- 100
+//' 
 //' basis_degree <- 3
 //' boundary_knots <- c(0, 1)
 //' internal_knots <- c(0.25, 0.5, 0.75)
