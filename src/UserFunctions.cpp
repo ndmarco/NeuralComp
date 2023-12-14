@@ -7,92 +7,27 @@
 using namespace CppAD;
 using namespace Eigen;
 
-//' HMC sampler for competition model
+
+//' Construct B-splines
 //' 
-//' @name HMC
-//' @param Labels List of vectors containing labels containing membership of spike for AB trials
-//' @param X_A List of vectors containing ISIs for A trials
-//' @param X_B List of vectors containing ISIs for B trials
-//' @param X_AB List of vectors containing ISIs for AB trials
-//' @param n_A Vector containing number of spikes per trial for A stimulus trials
-//' @param n_B Vector containing number of spikes per trial for B stimulus trials
-//' @param n_AB Vector containing number of spikes per trial for AB stimulus trials
-//' @param MCMC_iters Integer containing number of HMC iterations
-//' @param init_position Vector containing starting position for HMC
-//' @param Leapfrog_steps Integer containing number of leapfrog steps for approximating the Hamiltonian dynamics
-//' @param I_A_shape Double containing shape parameter for prior distribution on I_A
-//' @param I_A_rate Double containing rate parameter for prior distribution on I_A
-//' @param I_B_shape Double containing shape parameter for prior distribution on I_B
-//' @param I_B_rate Double containing rate parameter for prior distribution on I_B
-//' @param sigma_A_mean Double containing mean parameter for prior distribution on sigma_A
-//' @param sigma_A_shape Double containing shape parameter for prior distribution on sigma_A
-//' @param sigma_B_mean Double containing mean parameter for prior distribution on sigma_B
-//' @param sigma_B_shape Double containing shape parameter for prior distribution on sigma_B
-//' @param delta_shape Double containing shape parameter for prior distribution on delta
-//' @param delta_rate Double containing rate parameter for prior distribution on delta
-//' @param eps_step Vector containing step size for approximating gradient
-//' @param step_size Vector containing step size for leapfrog integrator
+//' Creates B-spline basis functions evaluated at the time points of interest.
+//' 
+//' @name getBSpline
+//' @param time Vector of time points of interest
+//' @param basis_degree Integer indicating the degree of B-splines
+//' @param boundary_knots Vector of two elements specifying the boundary knots
+//' @param internal_knots Vector containing the desired internal knots of the B-splines
+//' @returns Matrix containing the B-splines evaluated at the time points of interest
+//' 
+//' @examples
+//' time <- seq(0, 1, 0.01)
+//' basis_degree <- 3
+//' boundary_knots <- c(0, 1)
+//' internal_knots <- c(0.25, 0.5, 0.75)
+//' 
+//' B <- getBSpline(time, basis_degree, boundary_knots, internal_knots)
 //' 
 //' @export
-//[[Rcpp::export]]
-arma::mat HMC(arma::field<arma::vec> Labels,
-              const arma::field<arma::vec> X_A,
-              const arma::field<arma::vec> X_B,
-              const arma::field<arma::vec> X_AB,
-              const arma::vec n_A,
-              const arma::vec n_B,
-              const arma::vec n_AB,
-              int MCMC_iters,
-              int Warm_block = 500,
-              Rcpp::Nullable<Rcpp::NumericVector> init_position = R_NilValue,
-              int Leapfrog_steps = 10,
-              const double I_A_shape = 40, 
-              const double I_A_rate = 1,
-              const double I_B_shape = 40,
-              const double I_B_rate = 1,
-              const double sigma_A_mean = 6.32,
-              const double sigma_A_shape = 1,
-              const double sigma_B_mean = 6.32,
-              const double sigma_B_shape = 1,
-              const double delta_shape = 0.5,
-              const double delta_rate = 0.1,
-              Rcpp::Nullable<Rcpp::NumericVector> eps_step = R_NilValue,
-              double step_size =  0.001,
-              double step_size_delta =  0.00005,
-              Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat = R_NilValue){
-  arma::vec init_position1;
-  if(init_position.isNull()){
-    init_position1 = {50, 50, sqrt(50), sqrt(50), 0.001};
-  }else{
-    Rcpp::NumericVector X_(init_position);
-    init_position1 = Rcpp::as<arma::vec>(X_);
-  }
-  arma::vec eps_step1;
-  if(eps_step.isNull()){
-    eps_step1 = {0.001, 0.001, 0.001, 0.001, 0.00005};
-  }else{
-    Rcpp::NumericVector X_(eps_step);
-    eps_step1 = Rcpp::as<arma::vec>(X_);
-  }
-  arma::mat Mass_mat1;
-  if(Mass_mat.isNull()){
-    arma::vec diag_elem = {1, 1, 1, 1};
-    Mass_mat1 = arma::diagmat(diag_elem);
-  }else{
-    Rcpp::NumericMatrix X_(Mass_mat);
-    Mass_mat1 = Rcpp::as<arma::mat>(X_);
-  }
-  
-  
-  arma::mat theta = NeuralComp::HMC_sampler(Labels, X_A, X_B, X_AB, n_A, n_B, n_AB, init_position1,
-                                            MCMC_iters, Leapfrog_steps, I_A_shape, I_A_rate,
-                                            I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
-                                            sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-                                            eps_step1, step_size, step_size_delta, Mass_mat1, 
-                                            Warm_block);
-   return theta;
-}
-
 //[[Rcpp::export]]
 arma::mat getBSpline(const arma::vec time,
                      const int basis_degree,
@@ -109,269 +44,6 @@ arma::mat getBSpline(const arma::vec time,
 }
 
 //[[Rcpp::export]]
-Rcpp::List FR_CI(const arma::vec time,
-                 const int basis_degree,
-                 const arma::vec boundary_knots,
-                 const arma::vec internal_knots,
-                 const arma::mat basis_coef_A_samp,
-                 const arma::mat basis_coef_B_samp,
-                 const arma::mat theta,
-                 const double burnin_prop = 0.3,
-                 const double alpha = 0.05){
-  arma::mat basis_funct;
-  splines2::BSpline bspline;
-  
-  bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                              boundary_knots);
-  arma::mat bspline_mat{bspline.basis(true)};
-  basis_funct = bspline_mat;
-  
-  int n_MCMC = basis_coef_A_samp.n_rows;
-  arma::mat MCMC_A_FR = arma::zeros(std::floor((1 - burnin_prop) * n_MCMC), time.n_elem);
-  arma::mat MCMC_B_FR = arma::zeros(std::floor((1 - burnin_prop) * n_MCMC), time.n_elem);
-  arma::mat A_FR_CI = arma::zeros(time.n_elem, 2);
-  arma::mat B_FR_CI = arma::zeros(time.n_elem, 2);
-  arma::vec A_FR_median = arma::zeros(time.n_elem);
-  arma::vec B_FR_median = arma::zeros(time.n_elem);
-  int burnin_num = std::ceil(burnin_prop * n_MCMC);
-  for(int i = burnin_num; i < n_MCMC; i++){
-    MCMC_A_FR.row(i - burnin_num) = theta(i,0) + (basis_funct * basis_coef_A_samp.row(i).t()).t();
-    MCMC_B_FR.row(i - burnin_num) = theta(i,1) + (basis_funct * basis_coef_B_samp.row(i).t()).t();
-  }
-  
-  arma::vec p = {alpha/2, 0.5, 1 - (alpha/2)};
-  arma::vec q = arma::zeros(3);
-  for(int i = 0; i < time.n_elem; i++){
-    q = arma::quantile(MCMC_A_FR.col(i), p);
-    A_FR_CI(i,0) = q(0);
-    A_FR_median(i) = q(1);
-    A_FR_CI(i,1) = q(2);
-    q = arma::quantile(MCMC_B_FR.col(i), p);
-    B_FR_CI(i,0) = q(0);
-    B_FR_median(i) = q(1);
-    B_FR_CI(i,1) = q(2);
-  }
-  
-  Rcpp::List output =  Rcpp::List::create(Rcpp::Named("A_FR_MCMC_Samps", MCMC_A_FR),
-                                          Rcpp::Named("B_FR_MCMC_Samps", MCMC_B_FR),
-                                          Rcpp::Named("A_FR_CI", A_FR_CI),
-                                          Rcpp::Named("B_FR_CI", B_FR_CI),
-                                          Rcpp::Named("A_FR_median", A_FR_median),
-                                          Rcpp::Named("B_FR_median", B_FR_median));
-  
-  return output;
-}
-
-//' HMC sampler for competition model
- //' 
- //' @name HMC_TI
- //' @param Labels List of vectors containing labels containing membership of spike for AB trials
- //' @param X_A List of vectors containing ISIs for A trials
- //' @param X_B List of vectors containing ISIs for B trials
- //' @param X_AB List of vectors containing ISIs for AB trials
- //' @param n_A Vector containing number of spikes per trial for A stimulus trials
- //' @param n_B Vector containing number of spikes per trial for B stimulus trials
- //' @param n_AB Vector containing number of spikes per trial for AB stimulus trials
- //' @param MCMC_iters Integer containing number of HMC iterations
- //' @param init_position Vector containing starting position for HMC
- //' @param Leapfrog_steps Integer containing number of leapfrog steps for approximating the Hamiltonian dynamics
- //' @param I_A_shape Double containing shape parameter for prior distribution on I_A
- //' @param I_A_rate Double containing rate parameter for prior distribution on I_A
- //' @param I_B_shape Double containing shape parameter for prior distribution on I_B
- //' @param I_B_rate Double containing rate parameter for prior distribution on I_B
- //' @param sigma_A_mean Double containing mean parameter for prior distribution on sigma_A
- //' @param sigma_A_shape Double containing shape parameter for prior distribution on sigma_A
- //' @param sigma_B_mean Double containing mean parameter for prior distribution on sigma_B
- //' @param sigma_B_shape Double containing shape parameter for prior distribution on sigma_B
- //' @param delta_shape Double containing shape parameter for prior distribution on delta
- //' @param delta_rate Double containing rate parameter for prior distribution on delta
- //' @param eps_step Vector containing step size for approximating gradient
- //' @param step_size Vector containing step size for leapfrog integrator
- //' 
- //' @export
- //[[Rcpp::export]]
-Rcpp::List HMC_TI(arma::field<arma::vec> Labels,
-                  const arma::field<arma::vec> X_A,
-                  const arma::field<arma::vec> X_B,
-                  const arma::field<arma::vec> X_AB,
-                  const arma::vec n_A,
-                  const arma::vec n_B,
-                  const arma::vec n_AB,
-                  int MCMC_iters,
-                  const int basis_degree,
-                  const arma::vec boundary_knots,
-                  const arma::vec internal_knots,
-                  int Warm_block = 500,
-                  int Leapfrog_steps = 10,
-                  const double sigma_A_mean = 6.32,
-                  const double sigma_A_shape = 1,
-                  const double sigma_B_mean = 6.32,
-                  const double sigma_B_shape = 1,
-                  const double alpha = 1,
-                  const double beta = 0.005,
-                  const double mu_prior_mean = 4,
-                  const double mu_prior_var = 1,
-                  const double eps_step = 0.001,
-                  double step_size =  0.001,
-                  double step_size_delta =  0.00005){
-   //Create B-splines
-   splines2::BSpline bspline;
-   // Make spline basis for A functions
-   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-   for(int i = 0; i < n_A.n_elem; i++){
-     arma::vec time = arma::zeros(n_A(i));
-     for(int j = 1; j < n_A(i); j++){
-       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-     }
-     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                 boundary_knots);
-     // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
-     basis_funct_A(i,0) = bspline_mat;
-   }
-   
-   // Make spline basis for B functions
-   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-   for(int i = 0; i < n_B.n_elem; i++){
-     arma::vec time = arma::zeros(n_B(i));
-     for(int j = 1; j < n_B(i); j++){
-       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-     }
-     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                 boundary_knots);
-     // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
-     basis_funct_B(i,0) = bspline_mat;
-   }
-   
-   // Make spline basis for AB functions
-   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-   for(int i = 0; i < n_AB.n_elem; i++){
-     arma::vec time = arma::zeros(n_AB(i));
-     for(int j = 1; j < n_AB(i); j++){
-       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-     }
-     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                 boundary_knots);
-     // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
-     basis_funct_AB(i,0) = bspline_mat;
-   }
-   
-   
-   
-   Rcpp::List output = NeuralComp::HMC_sampler_TI(Labels, basis_funct_A, basis_funct_B, basis_funct_AB,
-                                                  X_A, X_B, X_AB, n_A, n_B, n_AB,
-                                                  MCMC_iters, Leapfrog_steps, sigma_A_mean, sigma_A_shape,
-                                                  sigma_B_mean, sigma_B_shape, alpha, beta, mu_prior_mean,
-                                                  mu_prior_var, eps_step, step_size, Warm_block);
-   return output;
-   
- }
-
-//[[Rcpp::export]]
-Rcpp::List HMC_FR(arma::field<arma::vec> Labels,
-                  const arma::field<arma::vec> X_A,
-                  const arma::field<arma::vec> X_B,
-                  const arma::field<arma::vec> X_AB,
-                  const arma::vec n_A,
-                  const arma::vec n_B,
-                  const arma::vec n_AB,
-                  int MCMC_iters,
-                  const int basis_degree,
-                  const arma::vec boundary_knots,
-                  const arma::vec internal_knots,
-                  int Warm_block1 = 500,
-                  int Warm_block2 = 500,
-                  int Leapfrog_steps = 10,
-                  const double I_A_shape = 40, 
-                  const double I_A_rate = 1,
-                  const double I_B_shape = 40,
-                  const double I_B_rate = 1,
-                  const double sigma_A_mean = 6.32,
-                  const double sigma_A_shape = 1,
-                  const double sigma_B_mean = 6.32,
-                  const double sigma_B_shape = 1,
-                  const double alpha = 1,
-                  const double beta = 0.05,
-                  double step_size_sigma =  0.001,
-                  double step_size_FR =  0.001){
-  //Create B-splines
-  splines2::BSpline bspline;
-  // Make spline basis for A functions
-  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-  for(int i = 0; i < n_A.n_elem; i++){
-    arma::vec time = arma::zeros(n_A(i));
-    for(int j = 1; j < n_A(i); j++){
-      time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_A(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for B functions
-  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-  for(int i = 0; i < n_B.n_elem; i++){
-    arma::vec time = arma::zeros(n_B(i));
-    for(int j = 1; j < n_B(i); j++){
-      time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_B(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for AB functions
-  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-  for(int i = 0; i < n_AB.n_elem; i++){
-    arma::vec time = arma::zeros(n_AB(i));
-    for(int j = 1; j < n_AB(i); j++){
-      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_AB(i,0) = bspline_mat;
-  }
-  
-  
-  
-  Rcpp::List output = NeuralComp::HMC_sampler_FR(Labels, basis_funct_A, basis_funct_B, basis_funct_AB,
-                                                 X_A, X_B, X_AB, n_A, n_B, n_AB,
-                                                 MCMC_iters, Leapfrog_steps, I_A_shape, I_A_rate,
-                                                 I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
-                                                 sigma_B_mean, sigma_B_shape, alpha, beta,
-                                                 step_size_FR, step_size_sigma,
-                                                 Warm_block1, Warm_block2);
-  return output;
-  
-}
-
-//' MH sampler for labels
- //[[Rcpp::export]]
- arma::field<arma::vec> Sample_Labels(const arma::field<arma::vec> X_AB,
-                                      const arma::vec n_AB,
-                                      int MCMC_iters,
-                                      arma::vec theta){
-   
-   arma::field<arma::vec> init_position(n_AB.n_elem, 1);
-   for(int i = 0; i < n_AB.n_elem; i++){
-     init_position(i,0) = arma::zeros(n_AB(i));
-   }
-   
-   arma::field<arma::vec> Labels = NeuralComp::labels_sampler(X_AB, init_position,
-                                                              n_AB, theta, MCMC_iters);
-   return Labels;
-   
- }
-
-//[[Rcpp::export]]
 arma::mat GetTraceLabels(const arma::field<arma::vec> MCMC_output,
                          int sample_num,
                          int MCMC_iters){
@@ -385,1001 +57,231 @@ arma::mat GetTraceLabels(const arma::field<arma::vec> MCMC_output,
   return trace;
 }
 
-
+//' Sampler for Drift-Diffusion Competition Model
+//' 
+//' Conducts MCMC to get posterior samples from the drift-diffusion competition model.
+//' This function can fit a time-homogeneous model, as well as a time-inhomogeneous 
+//' model.
+//' 
+//' @name Sampler_Competition
+//' @param X_A List of vectors containing the ISIs of A trials
+//' @param X_B List of vectors containing the ISIs of B trials
+//' @param X_AB List of vectors containing the ISIs of AB trials
+//' @param n_A Vector containing number of spikes for each A trial
+//' @param n_B Vector containing number of spikes for each B trial
+//' @param n_AB Vector containing number of spikes for each AB trial
+//' @param MCMC_iters Integer containing the number of MCMC_iterations excluding warm up blocks
+//' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+//' @param boundary_knots Vector of two elements specifying the boundary knots
+//' @param internal_knots Vector containing the desired internal knots of the B-splines
+//' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
+//' @param Warm_block1 Integer containing number of iterations to adapt the leapfrog step size under identity mass matrices
+//' @param Warm_block2 Integer containing number of iterations to adapt the mass matrices, leapfrog step size, and delta sampling parameters
+//' @param Leapfrog_steps Integer containing number of leapfrog steps per HMC step
+//' @param I_A_mean Double containing the value for the mean parameter of IG prior on I_A
+//' @param I_A_shape Double containing the value for the shape parameter of IG prior on I_A
+//' @param I_B_mean Double containing the value for the mean parameter of IG prior on I_B
+//' @param I_B_shape Double containing the value for the shape parameter of IG prior on I_B
+//' @param sigma_A_mean Double containing the value for the mean parameter of IG prior on sigma_A
+//' @param sigma_A_shape Double containing the value for the shape parameter of IG prior on sigma_A
+//' @param sigma_B_mean Double containing the value for the mean parameter of IG prior on sigma_B
+//' @param sigma_B_shape Double containing the value for the shape parameter of IG prior on sigma_B
+//' @param delta_shape Double containing the value for the shape parameter of gamma prior on delta
+//' @param delta_rate Double containing the value for the rate parameter of gamma prior on delta
+//' @param step_size_theta Double containing initial leapfrog step size for theta parameters
+//' @param step_size_FR Double containing initial leapfrog step size for time-inhomogeneous firing rate parameters
+//' @param delta_proposal_mean Double containing the value for mean parameter of the lognormal proposal distribution of delta parameter
+//' @param delta_proposal_sd Double containing the value for sd parameter of the lognormal proposal distribution of delta parameter
+//' @param alpha_labels Double containing probability that proposed new deltas come from the prior on delta instead of adapted lognormal distribution
+//' @param alpha Double containing the value for the shape parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared
+//' @param beta Double containing the value for the scale parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared
+//' @param delta_adaptation_block Integer containing how often the delta sampling parameters should be updated in Warm_block2
+//' @param Mass_adaptation_block Integer containing how often the Mass Matrix should be updated in Warm_block2
+//' @param M_proposal Integer containing the number of deltas proposed when sampling delta
+//' @returns List containing:
+//' \describe{
+//'   \item{\code{theta}}{Matrix of samples of the theta parameters (I_A, I_B, sigma_A, sigma_B, delta) where each row is an MCMC sample}
+//'   \item{\code{labels}}{List of matrices where each item in the list contains MCMC samples from an AB trial}
+//'   \item{\code{basis_coef_A}}{Matrix containing MCMC samples of the coefficients of the B-splines for the A process (if time-inhomogeneous)}
+//'   \item{\code{basis_coef_B}}{Matrix containing MCMC samples of the coefficients of the B-splines for the B process (if time-inhomogeneous)}
+//'   \item{\code{I_A_sigma_sq}}{Vector of MCMC samples of I_A_sigma squared}
+//'   \item{\code{I_B_sigma_sq}}{Vector of MCMC samples of I_B_sigma squared}
+//'   \item{\code{LogLik}}{Log-likelihood plot of best performing chain}
+//' }
+//' 
+//' @section Warning:
+//' The following must be true:
+//' \describe{
+//'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+//'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+//'   \item{\code{I_A_mean}}{must be greater than 0}
+//'   \item{\code{I_A_shape}}{must be greater than 0}
+//'   \item{\code{I_B_mean}}{must be greater than 0}
+//'   \item{\code{I_B_shape}}{must be greater than 0}
+//'   \item{\code{sigma_A_mean}}{must be greater than 0}
+//'   \item{\code{sigma_A_shape}}{must be greater than 0}
+//'   \item{\code{sigma_B_mean}}{must be greater than 0}
+//'   \item{\code{sigma_B_shape}}{must be greater than 0}
+//'   \item{\code{delta_shape}}{must be greater than 0}
+//'   \item{\code{delta_rate}}{must be greater than 0}
+//'   \item{\code{step_size_theta}}{must be greater than 0}
+//'   \item{\code{step_size_FR}}{must be greater than 0}
+//'   \item{\code{delta_proposal_sd}}{must be greater than 0}
+//'   \item{\code{alpha_labels}}{must be between 0 and 1}
+//'   \item{\code{alpha}}{must be greater than 0}
+//'   \item{\code{beta}}{must be greater than 0}
+//' }
+//' 
+//' @examples
+//' ##############################
+//' ### Time-Homogeneous Model ###
+//' ##############################
+//' 
+//' ## Load sample data
+//' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+//' 
+//' ## set parameters
+//' MCMC_iters <- 100
+//' basis_degree <- 3
+//' boundary_knots <- c(0, 1)
+//' internal_knots <- c(0.25, 0.5, 0.75)
+//' 
+//' ## Warm Blocks should be longer, however for the example, they are short
+//' Warm_block1 = 50
+//' Warm_block2 = 50
+//' 
+//' # Run MCMC chain
+//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+//'                                time_inhomogeneous = FALSE)
+//' 
+//' 
+//' ################################
+//' ### Time-Inhomogeneous Model ###
+//' ################################
+//' 
+//' ## Load sample data
+//' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+//' 
+//' ## set parameters
+//' MCMC_iters <- 100
+//' basis_degree <- 3
+//' boundary_knots <- c(0, 1)
+//' internal_knots <- c(0.25, 0.5, 0.75)
+//' 
+//' ## Warm Blocks should be longer, however for the example, they are short
+//' Warm_block1 = 50
+//' Warm_block2 = 50
+//' 
+//' # Run MCMC chain
+//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//' 
+//' @export
 //[[Rcpp::export]]
-double posterior_Z1(arma::vec& Labels,
-                    const arma::vec& X_AB,
-                    arma::vec& theta,
-                    int spike_num,
-                    int n_AB){
-  return NeuralComp::posterior_Z(Labels, X_AB, theta, spike_num, n_AB);
-}
-
-
-//[[Rcpp::export]]
-Rcpp::List Sampler(const arma::field<arma::vec> X_A,
-                   const arma::field<arma::vec> X_B,
-                   const arma::field<arma::vec> X_AB,
-                   const arma::vec n_A,
-                   const arma::vec n_B,
-                   const arma::vec n_AB,
-                   int MCMC_iters,
-                   int Warm_block = 500,
-                   Rcpp::Nullable<Rcpp::NumericVector> init_position = R_NilValue,
-                   int Leapfrog_steps = 10,
-                   const double I_A_shape = 40, 
-                   const double I_A_rate = 1,
-                   const double I_B_shape = 40,
-                   const double I_B_rate = 1,
-                   const double sigma_A_mean = 6.32,
-                   const double sigma_A_shape = 1,
-                   const double sigma_B_mean = 6.32,
-                   const double sigma_B_shape = 1,
-                   const double delta_shape = 0.5,
-                   const double delta_rate = 0.1,
-                   Rcpp::Nullable<Rcpp::NumericVector> eps_step = R_NilValue,
-                   double step_size =  0.001,
-                   double step_size_delta =  0.00005,
-                   const double& step_size_labels = 0.0001,
-                   const int& num_evals = 10000,
-                   const double prior_p_labels = 0.5,
-                   Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat = R_NilValue){
-  arma::vec init_position1;
-  if(init_position.isNull()){
-    init_position1 = {50, 50, sqrt(50), sqrt(50), 0.15};
-  }else{
-    Rcpp::NumericVector X_(init_position);
-    init_position1 = Rcpp::as<arma::vec>(X_);
-  }
-  arma::vec eps_step1;
-  if(eps_step.isNull()){
-    eps_step1 = {0.001, 0.001, 0.001, 0.001, 0.00005};
-  }else{
-    Rcpp::NumericVector X_(eps_step);
-    eps_step1 = Rcpp::as<arma::vec>(X_);
-  }
-  arma::mat Mass_mat1;
-  if(Mass_mat.isNull()){
-    arma::vec diag_elem = {1, 1, 1, 1};
-    Mass_mat1 = arma::diagmat(diag_elem);
-  }else{
-    Rcpp::NumericMatrix X_(Mass_mat);
-    Mass_mat1 = Rcpp::as<arma::mat>(X_);
-  }
-  
-  
-  Rcpp::List param = NeuralComp::Total_sampler(X_A, X_B, X_AB, n_A, n_B, n_AB, init_position1,
-                                               MCMC_iters, Leapfrog_steps, I_A_shape, I_A_rate,
-                                               I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
-                                               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-                                               eps_step1, step_size, step_size_delta, step_size_labels,
-                                               num_evals, prior_p_labels, Mass_mat1, 
-                                               Warm_block);
-  return param;
-  
-}
-
-// //[[Rcpp::export]]
-// Rcpp::List Mixed_Sampler(const arma::field<arma::vec> X_A,
-//                          const arma::field<arma::vec> X_B,
-//                          const arma::field<arma::vec> X_AB,
-//                          const arma::vec n_A,
-//                          const arma::vec n_B,
-//                          const arma::vec n_AB,
-//                          int MCMC_iters,
-//                          int Warm_block1 = 200,
-//                          int Warm_block2 = 300,
-//                          Rcpp::Nullable<Rcpp::NumericVector> init_position = R_NilValue,
-//                          int Leapfrog_steps = 10,
-//                          const double I_A_shape = 40, 
-//                          const double I_A_rate = 1,
-//                          const double I_B_shape = 40,
-//                          const double I_B_rate = 1,
-//                          const double sigma_A_mean = 6.32,
-//                          const double sigma_A_shape = 1,
-//                          const double sigma_B_mean = 6.32,
-//                          const double sigma_B_shape = 1,
-//                          const double delta_shape = 0.01,
-//                          const double delta_rate = 0.1,
-//                          Rcpp::Nullable<Rcpp::NumericVector> eps_step = R_NilValue,
-//                          double step_size =  0.001,
-//                          double step_size_delta =  0.00002,
-//                          const double& step_size_labels = 0.0001,
-//                          const int& num_evals = 10000,
-//                          double delta_proposal_mean = -2,
-//                          double delta_proposal_sd = 0.3,
-//                          double alpha = 0.2,
-//                          int delta_adaption_block = 100,
-//                          int M_proposal = 10,
-//                          int n_Ensambler_sampler = 5,
-//                          Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat = R_NilValue){
-//   arma::vec init_position1;
-//   if(init_position.isNull()){
-//     init_position1 = {50, 50, sqrt(50), sqrt(50), 0.01};
-//   }else{
-//     Rcpp::NumericVector X_(init_position);
-//     init_position1 = Rcpp::as<arma::vec>(X_);
-//   }
-//   arma::vec eps_step1;
-//   if(eps_step.isNull()){
-//     eps_step1 = {0.001, 0.001, 0.001, 0.001, 0.00005};
-//   }else{
-//     Rcpp::NumericVector X_(eps_step);
-//     eps_step1 = Rcpp::as<arma::vec>(X_);
-//   }
-//   arma::mat Mass_mat1;
-//   if(Mass_mat.isNull()){
-//     arma::vec diag_elem = {1, 1, 1, 1};
-//     Mass_mat1 = arma::diagmat(diag_elem);
-//   }else{
-//     Rcpp::NumericMatrix X_(Mass_mat);
-//     Mass_mat1 = Rcpp::as<arma::mat>(X_);
-//   }
-//   
-//   
-//   Rcpp::List param = NeuralComp::Mixed_sampler(X_A, X_B, X_AB, n_A, n_B, n_AB, init_position1,
-//                                                MCMC_iters, Leapfrog_steps, I_A_shape, I_A_rate,
-//                                                I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
-//                                                sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-//                                                eps_step1, step_size, step_size_delta, step_size_labels,
-//                                                num_evals, delta_proposal_mean, delta_proposal_sd, 
-//                                                alpha, delta_adaption_block,
-//                                                M_proposal, n_Ensambler_sampler, Mass_mat1, 
-//                                                Warm_block1, Warm_block2);
-//   return param;
-// }
-
-//[[Rcpp::export]]
-Rcpp::List Mixed_Sampler_TI(const arma::field<arma::vec> X_A,
-                            const arma::field<arma::vec> X_B,
-                            const arma::field<arma::vec> X_AB,
-                            const arma::vec n_A,
-                            const arma::vec n_B,
-                            const arma::vec n_AB,
-                            int MCMC_iters,
-                            const int basis_degree,
-                            const arma::vec boundary_knots,
-                            const arma::vec internal_knots,
-                            int Warm_block1 = 500,
-                            int Warm_block2 = 1000,
-                            int Leapfrog_steps = 10,
-                            const double I_A_mean = 40, 
-                            const double I_A_shape = 1,
-                            const double I_B_mean = 40,
-                            const double I_B_shape = 1,
-                            const double sigma_A_mean = 6.32,
-                            const double sigma_A_shape = 1,
-                            const double sigma_B_mean = 6.32,
-                            const double sigma_B_shape = 1,
-                            const double delta_shape = 0.01,
-                            const double delta_rate = 0.1,
-                            double step_size_theta =  0.001,
-                            double step_size_FR =  0.001,
-                            const double& step_size_labels = 0.0001,
-                            double delta_proposal_mean = -2,
-                            double delta_proposal_sd = 0.3,
-                            double alpha_labels = 0.2,
-                            double alpha = 1,
-                            double beta = 0.005,
-                            int delta_adaption_block = 100,
-                            int theta_adaption_block = 500,
-                            int M_proposal = 10,
-                            int n_Ensambler_sampler = 5,
-                            Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat = R_NilValue){
-  //Create B-splines
-  splines2::BSpline bspline;
-  // Make spline basis for A functions
-  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-  for(int i = 0; i < n_A.n_elem; i++){
-    arma::vec time = arma::zeros(n_A(i));
-    for(int j = 1; j < n_A(i); j++){
-      time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_A(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for B functions
-  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-  for(int i = 0; i < n_B.n_elem; i++){
-    arma::vec time = arma::zeros(n_B(i));
-    for(int j = 1; j < n_B(i); j++){
-      time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_B(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for AB functions
-  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-  for(int i = 0; i < n_AB.n_elem; i++){
-    arma::vec time = arma::zeros(n_AB(i));
-    for(int j = 1; j < n_AB(i); j++){
-      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_AB(i,0) = bspline_mat;
-  }
-  
-  Rcpp::List param = NeuralComp::Mixed_sampler_int_TI(basis_funct_A, basis_funct_B, basis_funct_AB,
-                                                      X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, 
-                                                      Leapfrog_steps, I_A_mean, I_A_shape,
-                                                      I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
-                                                      sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-                                                      step_size_theta, step_size_FR, step_size_labels,
-                                                      delta_proposal_mean, delta_proposal_sd, 
-                                                      alpha_labels, alpha, beta, delta_adaption_block,
-                                                      theta_adaption_block, M_proposal, n_Ensambler_sampler, 
-                                                      Warm_block1, Warm_block2);
-  return param;
-  
-}
-
-
-// //[[Rcpp::export]]
-// Rcpp::List Mixed_Sampler_int(const arma::field<arma::vec> X_A,
-//                              const arma::field<arma::vec> X_B,
-//                              const arma::field<arma::vec> X_AB,
-//                              const arma::vec n_A,
-//                              const arma::vec n_B,
-//                              const arma::vec n_AB,
-//                              int MCMC_iters,
-//                              int Warm_block1 = 200,
-//                              int Warm_block2 = 300,
-//                              Rcpp::Nullable<Rcpp::NumericVector> init_position = R_NilValue,
-//                              int Leapfrog_steps = 10,
-//                              const double I_A_shape = 40, 
-//                              const double I_A_rate = 1,
-//                              const double I_B_shape = 40,
-//                              const double I_B_rate = 1,
-//                              const double sigma_A_mean = 6.32,
-//                              const double sigma_A_shape = 1,
-//                              const double sigma_B_mean = 6.32,
-//                              const double sigma_B_shape = 1,
-//                              const double delta_shape = 0.01,
-//                              const double delta_rate = 0.1,
-//                              Rcpp::Nullable<Rcpp::NumericVector> eps_step = R_NilValue,
-//                              double step_size =  0.001,
-//                              double step_size_delta =  0.00002,
-//                              const double& step_size_labels = 0.0001,
-//                              const int& num_evals = 10000,
-//                              double delta_proposal_mean = -2,
-//                              double delta_proposal_sd = 0.3,
-//                              double alpha = 0.2,
-//                              int delta_adaption_block = 100,
-//                              int M_proposal = 10,
-//                              int n_Ensambler_sampler = 5,
-//                              Rcpp::Nullable<Rcpp::NumericMatrix> Mass_mat = R_NilValue){
-//   arma::vec init_position1;
-//   if(init_position.isNull()){
-//     init_position1 = {50, 50, sqrt(50), sqrt(50), 0.01};
-//   }else{
-//     Rcpp::NumericVector X_(init_position);
-//     init_position1 = Rcpp::as<arma::vec>(X_);
-//   }
-//   arma::vec eps_step1;
-//   if(eps_step.isNull()){
-//     eps_step1 = {0.001, 0.001, 0.001, 0.001, 0.00005};
-//   }else{
-//     Rcpp::NumericVector X_(eps_step);
-//     eps_step1 = Rcpp::as<arma::vec>(X_);
-//   }
-//   arma::mat Mass_mat1;
-//   if(Mass_mat.isNull()){
-//     arma::vec diag_elem = {1, 1, 1, 1};
-//     Mass_mat1 = arma::diagmat(diag_elem);
-//   }else{
-//     Rcpp::NumericMatrix X_(Mass_mat);
-//     Mass_mat1 = Rcpp::as<arma::mat>(X_);
-//   }
-//   
-//   
-//   Rcpp::List param = NeuralComp::Mixed_sampler_int(X_A, X_B, X_AB, n_A, n_B, n_AB, init_position1,
-//                                                    MCMC_iters, Leapfrog_steps, I_A_shape, I_A_rate,
-//                                                    I_B_shape, I_B_rate, sigma_A_mean, sigma_A_shape,
-//                                                    sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-//                                                    eps_step1, step_size, step_size_delta, step_size_labels,
-//                                                    num_evals, delta_proposal_mean, delta_proposal_sd, 
-//                                                    alpha, delta_adaption_block,
-//                                                    M_proposal, n_Ensambler_sampler, Mass_mat1, 
-//                                                    Warm_block1, Warm_block2);
-//   return param;
-//   
-// }
-
-//[[Rcpp::export]]
-arma::mat approx_trans_p(double step_size,
-                         int num_evals,
-                         arma::vec& theta){
-  return NeuralComp::approx_trans_prob(step_size, num_evals, theta);
-}
-
-//[[Rcpp::export]]
-arma::mat forward_pass1(arma::vec& theta,
-                        const arma::vec& X_AB,
-                        double step_size,
-                        int num_evals){
-  arma::vec theta_exp = arma::exp(theta);
-  arma::vec theta_0 = theta_exp;
-  theta_0(4) = 0;
-  arma::mat trans_prob_0 = NeuralComp::approx_trans_prob(step_size, num_evals, theta_0);
-  arma::mat trans_prob = NeuralComp::approx_trans_prob(step_size, num_evals, theta_exp);
-  return NeuralComp::forward_pass(theta_exp, X_AB);
-}
-
-//[[Rcpp::export]]
-arma::vec backward_sim1(arma::mat& Prob_mat,
-                        arma::vec& theta,
-                        const arma::vec& X_AB,
-                        double step_size,
-                        int num_evals){
-  double prob_propose = 0;
-  arma::vec theta_exp = arma::exp(theta);
-  arma::vec ph = NeuralComp::backward_sim(Prob_mat, theta_exp, X_AB, prob_propose);
-  Rcpp::Rcout << prob_propose;
-  return ph;
-}
-
-//[[Rcpp::export]]
-arma::field<arma::vec> FFBS_labels(const arma::field<arma::vec>& X_AB,
-                                   const arma::vec& n_AB,
-                                   arma::vec& theta,
-                                   double step_size,
-                                   int num_evals,
-                                   int MCMC_iters){
-  arma::field<arma::vec> init_position(n_AB.n_elem, 1);
-  for(int i = 0; i < n_AB.n_elem; i++){
-    init_position(i,0) = arma::zeros(n_AB(i));
-  }
-  
-  arma::field<arma::vec> Labels = NeuralComp::FFBS(X_AB, init_position, n_AB, theta, step_size, 
-                                                   num_evals, MCMC_iters);
-  return Labels;
-}
-
-
-// //[[Rcpp::export]]
-// arma::vec trans_calc_gradient1(arma::field<arma::vec>& Labels,
-//                                arma::vec& theta,
-//                                const arma::field<arma::vec>& X_A,
-//                                const arma::field<arma::vec>& X_B,
-//                                const arma::field<arma::vec>& X_AB,
-//                                const arma::vec& n_A,
-//                                const arma::vec& n_B,
-//                                const arma::vec& n_AB,
-//                                const double& I_A_shape, 
-//                                const double& I_A_rate,
-//                                const double& I_B_shape,
-//                                const double& I_B_rate,
-//                                const double& sigma_A_mean,
-//                                const double& sigma_A_shape,
-//                                const double& sigma_B_mean,
-//                                const double& sigma_B_shape,
-//                                const double& delta_shape,
-//                                const double& delta_rate,
-//                                const arma::vec& eps_step){
-//   
-//   arma::vec grad = NeuralComp::calc_gradient(Labels, NeuralComp::transform_pars(theta), X_A, X_B, X_AB, n_A,
-//                                  n_B, n_AB, I_A_shape, I_A_rate, I_B_shape, I_B_rate,
-//                                  sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape,
-//                                  delta_shape, delta_rate, eps_step);
-//   grad = grad + arma::ones(grad.n_elem);
-//   
-//   return(grad);
-// }
-// 
-// 
-//[[Rcpp::export]]
-arma::vec calc_gradient_theta1(arma::field<arma::vec>& Labels,
-                         arma::vec theta,
-                         arma::vec basis_coef_A,
-                         arma::vec basis_coef_B,
-                         const double basis_degree,
-                         const arma::vec boundary_knots,
-                         const arma::vec internal_knots,
-                         const arma::field<arma::vec>& X_A,
-                         const arma::field<arma::vec>& X_B,
-                         const arma::field<arma::vec>& X_AB,
-                         const arma::vec& n_A,
-                         const arma::vec& n_B,
-                         const arma::vec& n_AB,
-                         const double I_A_mean = 40, 
-                         const double I_A_shape = 1,
-                         const double I_B_mean = 40,
-                         const double I_B_shape = 1,
-                         const double sigma_A_mean = 6.32,
-                         const double sigma_A_shape = 1,
-                         const double sigma_B_mean = 6.32,
-                         const double sigma_B_shape = 1,
-                         const double& eps_step= 0.001){
-  
-  //Create B-splines
-  splines2::BSpline bspline;
-  // Make spline basis for A functions
-  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-  for(int i = 0; i < n_A.n_elem; i++){
-    arma::vec time = arma::zeros(n_A(i));
-    for(int j = 1; j < n_A(i); j++){
-      time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_A(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for B functions
-  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-  for(int i = 0; i < n_B.n_elem; i++){
-    arma::vec time = arma::zeros(n_B(i));
-    for(int j = 1; j < n_B(i); j++){
-      time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_B(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for AB functions
-  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-  for(int i = 0; i < n_AB.n_elem; i++){
-    arma::vec time = arma::zeros(n_AB(i));
-    for(int j = 1; j < n_AB(i); j++){
-      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_AB(i,0) = bspline_mat;
-  }
-  
-  arma::vec grad = NeuralComp::calc_gradient_theta(Labels, theta, basis_coef_A,
-                                                   basis_coef_B, basis_funct_A, basis_funct_B,
-                                                   basis_funct_AB, X_A, X_B, X_AB,
-                                                   n_A, n_B, n_AB, I_A_mean,
-                                                   I_A_shape, I_B_mean, I_B_shape,
-                                                   sigma_A_mean, sigma_A_shape,
-                                                   sigma_B_mean, sigma_B_shape, eps_step);
-  return grad;
-}
-
-// //[[Rcpp::export]]
-// arma::vec calc_gradient_theta2(arma::field<arma::vec>& Labels,
-//                                arma::vec theta,
-//                                arma::vec basis_coef_A,
-//                                arma::vec basis_coef_B,
-//                                const double basis_degree,
-//                                const arma::vec boundary_knots,
-//                                const arma::vec internal_knots,
-//                                const arma::field<arma::vec>& X_A,
-//                                const arma::field<arma::vec>& X_B,
-//                                const arma::field<arma::vec>& X_AB,
-//                                const arma::vec& n_A,
-//                                const arma::vec& n_B,
-//                                const arma::vec& n_AB,
-//                                const double I_A_mean = 40, 
-//                                const double I_A_shape = 1,
-//                                const double I_B_mean = 40,
-//                                const double I_B_shape = 1,
-//                                const double sigma_A_mean = 6.32,
-//                                const double sigma_A_shape = 1,
-//                                const double sigma_B_mean = 6.32,
-//                                const double sigma_B_shape = 1){
-//   
-//   //Create B-splines
-//   splines2::BSpline bspline;
-//   // Make spline basis for A functions
-//   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-//   for(int i = 0; i < n_A.n_elem; i++){
-//     arma::vec time = arma::zeros(n_A(i));
-//     for(int j = 1; j < n_A(i); j++){
-//       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_A(i,0) = bspline_mat;
-//   }
-//   
-//   // Make spline basis for B functions
-//   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-//   for(int i = 0; i < n_B.n_elem; i++){
-//     arma::vec time = arma::zeros(n_B(i));
-//     for(int j = 1; j < n_B(i); j++){
-//       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_B(i,0) = bspline_mat;
-//   }
-//   
-//   // Make spline basis for AB functions
-//   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-//   for(int i = 0; i < n_AB.n_elem; i++){
-//     arma::vec time = arma::zeros(n_AB(i));
-//     for(int j = 1; j < n_AB(i); j++){
-//       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_AB(i,0) = bspline_mat;
-//   }
-//   
-//   arma::vec grad = NeuralComp::calc_gradient_eigen_theta(Labels, theta, basis_coef_A,
-//                                                          basis_coef_B, basis_funct_A, basis_funct_B,
-//                                                          basis_funct_AB, X_A, X_B, X_AB,
-//                                                          n_A, n_B, n_AB, I_A_mean,
-//                                                          I_A_shape, I_B_mean, I_B_shape,
-//                                                          sigma_A_mean, sigma_A_shape,
-//                                                          sigma_B_mean, sigma_B_shape);
-//   return grad;
-// }
-// 
-// //[[Rcpp::export]]
-// arma::vec calc_gradient_basis1(arma::field<arma::vec>& Labels,
-//                                arma::vec theta,
-//                                arma::vec basis_coef_A,
-//                                arma::vec basis_coef_B,
-//                                const double basis_degree,
-//                                const arma::vec boundary_knots,
-//                                const arma::vec internal_knots,
-//                                const arma::field<arma::vec>& X_A,
-//                                const arma::field<arma::vec>& X_B,
-//                                const arma::field<arma::vec>& X_AB,
-//                                const arma::vec& n_A,
-//                                const arma::vec& n_B,
-//                                const arma::vec& n_AB,
-//                                const double& I_A_sigma_sq = 1,
-//                                const double& I_B_sigma_sq = 1){
-//   
-//   //Create B-splines
-//   splines2::BSpline bspline;
-//   // Make spline basis for A functions
-//   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-//   for(int i = 0; i < n_A.n_elem; i++){
-//     arma::vec time = arma::zeros(n_A(i));
-//     for(int j = 1; j < n_A(i); j++){
-//       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_A(i,0) = bspline_mat;
-//   }
-//   
-//   // Make spline basis for B functions
-//   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-//   for(int i = 0; i < n_B.n_elem; i++){
-//     arma::vec time = arma::zeros(n_B(i));
-//     for(int j = 1; j < n_B(i); j++){
-//       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_B(i,0) = bspline_mat;
-//   }
-//   
-//   // Make spline basis for AB functions
-//   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-//   for(int i = 0; i < n_AB.n_elem; i++){
-//     arma::vec time = arma::zeros(n_AB(i));
-//     for(int j = 1; j < n_AB(i); j++){
-//       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_AB(i,0) = bspline_mat;
-//   }
-//   
-//   arma::vec grad = NeuralComp::calc_gradient_FR(Labels, theta, basis_coef_A,
-//                                                 basis_coef_B, basis_funct_A, basis_funct_B,
-//                                                 basis_funct_AB, X_A, X_B, X_AB,
-//                                                 n_A, n_B, n_AB, I_A_sigma_sq,
-//                                                 I_B_sigma_sq, 0.001);
-//   return grad;
-// }
-// 
-// //[[Rcpp::export]]
-// arma::vec calc_gradient_basis2(arma::field<arma::vec>& Labels,
-//                                arma::vec theta,
-//                                arma::vec basis_coef_A,
-//                                arma::vec basis_coef_B,
-//                                const double basis_degree,
-//                                const arma::vec boundary_knots,
-//                                const arma::vec internal_knots,
-//                                const arma::field<arma::vec>& X_A,
-//                                const arma::field<arma::vec>& X_B,
-//                                const arma::field<arma::vec>& X_AB,
-//                                const arma::vec& n_A,
-//                                const arma::vec& n_B,
-//                                const arma::vec& n_AB,
-//                                const double& I_A_sigma_sq = 1,
-//                                const double& I_B_sigma_sq = 1){
-//   
-//   //Create B-splines
-//   splines2::BSpline bspline;
-//   // Make spline basis for A functions
-//   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-//   for(int i = 0; i < n_A.n_elem; i++){
-//     arma::vec time = arma::zeros(n_A(i));
-//     for(int j = 1; j < n_A(i); j++){
-//       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_A(i,0) = bspline_mat;
-//   }
-//   
-//   // Make spline basis for B functions
-//   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-//   for(int i = 0; i < n_B.n_elem; i++){
-//     arma::vec time = arma::zeros(n_B(i));
-//     for(int j = 1; j < n_B(i); j++){
-//       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_B(i,0) = bspline_mat;
-//   }
-//   
-//   // Make spline basis for AB functions
-//   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-//   for(int i = 0; i < n_AB.n_elem; i++){
-//     arma::vec time = arma::zeros(n_AB(i));
-//     for(int j = 1; j < n_AB(i); j++){
-//       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-//     }
-//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-//                                 boundary_knots);
-//     // Get Basis matrix
-//     arma::mat bspline_mat{bspline.basis(true)};
-//     basis_funct_AB(i,0) = bspline_mat;
-//   }
-//   
-//   arma::vec grad = NeuralComp::calc_gradient_eigen_basis(Labels, theta, basis_coef_A,
-//                                                          basis_coef_B, basis_funct_A, basis_funct_B,
-//                                                          basis_funct_AB, X_A, X_B, X_AB,
-//                                                          n_A, n_B, n_AB,I_A_sigma_sq,
-//                                                          I_B_sigma_sq);
-//   return grad;
-// }
-
-// 
-//[[Rcpp::export]]
-double log_likelihood_TI1(arma::field<arma::vec>& Labels,
-                          arma::vec& theta,
-                          arma::vec& basis_coef_A,
-                          arma::vec& basis_coef_B,
-                          double basis_degree,
-                          arma::vec internal_knots,
-                          arma::vec boundary_knots,
-                          const arma::field<arma::vec>& X_A,
-                          const arma::field<arma::vec>& X_B,
-                          const arma::field<arma::vec>& X_AB,
-                          const arma::vec& n_A,
-                          const arma::vec& n_B,
-                          const arma::vec& n_AB){
-  //Create B-splines
-  splines2::BSpline bspline;
-  // Make spline basis for A functions
-  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-  for(int i = 0; i < n_A.n_elem; i++){
-    arma::vec time = arma::zeros(n_A(i));
-    for(int j = 1; j < n_A(i); j++){
-      time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_A(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for B functions
-  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-  for(int i = 0; i < n_B.n_elem; i++){
-    arma::vec time = arma::zeros(n_B(i));
-    for(int j = 1; j < n_B(i); j++){
-      time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_B(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for AB functions
-  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-  for(int i = 0; i < n_AB.n_elem; i++){
-    arma::vec time = arma::zeros(n_AB(i));
-    for(int j = 1; j < n_AB(i); j++){
-      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_AB(i,0) = bspline_mat;
-  }
-  
-  return NeuralComp::log_likelihood_TI(Labels, theta, basis_coef_A, basis_coef_B,
-                                       basis_funct_A, basis_funct_B, basis_funct_AB,
-                                       X_A, X_B, X_AB, n_A, n_B, n_AB);
-}
-
-// 
-//[[Rcpp::export]]
-double log_likelihood1(arma::field<arma::vec>& Labels,
-                       arma::vec& theta,
-                       const arma::field<arma::vec>& X_A,
-                       const arma::field<arma::vec>& X_B,
-                       const arma::field<arma::vec>& X_AB,
-                       const arma::vec& n_A,
-                       const arma::vec& n_B,
-                       const arma::vec& n_AB){
-  double l_likelihood = 0;
-
-  // Calculate log-likelihood for A trials
-  for(int i = 0; i < n_A.n_elem; i++){
-    for(int j = 0; j < n_A(i); j++){
-      l_likelihood = l_likelihood + NeuralComp::dinv_gauss(X_A(i,0)(j), (1 / theta(0)), pow((1 / theta(2)), 2));
-    }
-  }
-
-  // Calculate log-likelihood for B trials
-  for(int i = 0; i < n_B.n_elem; i++){
-    for(int j = 0; j < n_B(i); j++){
-      l_likelihood = l_likelihood + NeuralComp::dinv_gauss(X_B(i,0)(j), (1 / theta(1)), pow((1 / theta(3)), 2));
-    }
-  }
-
-  // calculate log-likelihood for AB trials
-  for(int i = 0; i < n_AB.n_elem; i++){
-    for(int j = 0; j < n_AB(i); j++){
-      if(Labels(i,0)(j) == 0){
-        // label is A
-        if(j != 0){
-          if(Labels(i,0)(j-1) == 0){
-            // Condition if spike has not switched (still in A)
-            l_likelihood = l_likelihood + NeuralComp::pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-              NeuralComp::dinv_gauss(X_AB(i,0)(j), (1 / theta(0)), pow((1 / theta(2)), 2));
-          }else{
-            // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + NeuralComp::pinv_gauss(X_AB(i,0)(j), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-              NeuralComp::dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2));
-          }
-        }else{
-          l_likelihood = l_likelihood + NeuralComp::pinv_gauss(X_AB(i,0)(j), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-            NeuralComp::dinv_gauss(X_AB(i,0)(j), (1 / theta(0)), pow((1 / theta(2)), 2));
-        }
-      }else{
-        // label is B
-        if(j != 0){
-          if(Labels(i,0)(j-1) == 1){
-            // Condition if spike has not switched (still in A)
-            l_likelihood = l_likelihood + NeuralComp::pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-              NeuralComp::dinv_gauss(X_AB(i,0)(j), (1 / theta(1)), pow((1 / theta(3)), 2));
-          }else{
-            // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + NeuralComp::pinv_gauss(X_AB(i,0)(j), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-              NeuralComp::dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2));
-          }
-        }else{
-          l_likelihood = l_likelihood + NeuralComp::pinv_gauss(X_AB(i,0)(j), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-            NeuralComp::dinv_gauss(X_AB(i,0)(j), (1 / theta(1)), pow((1 / theta(3)), 2));
-        }
+Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
+                               const arma::field<arma::vec> X_B,
+                               const arma::field<arma::vec> X_AB,
+                               const arma::vec n_A,
+                               const arma::vec n_B,
+                               const arma::vec n_AB,
+                               int MCMC_iters,
+                               const int basis_degree,
+                               const arma::vec boundary_knots,
+                               const arma::vec internal_knots,
+                               bool time_inhomogeneous = true,
+                               int Warm_block1 = 500,
+                               int Warm_block2 = 1000,
+                               int Leapfrog_steps = 10,
+                               const double I_A_mean = 40, 
+                               const double I_A_shape = 1,
+                               const double I_B_mean = 40,
+                               const double I_B_shape = 1,
+                               const double sigma_A_mean = 6.32,
+                               const double sigma_A_shape = 1,
+                               const double sigma_B_mean = 6.32,
+                               const double sigma_B_shape = 1,
+                               const double delta_shape = 0.01,
+                               const double delta_rate = 0.1,
+                               double step_size_theta =  0.001,
+                               double step_size_FR =  0.001,
+                               double delta_proposal_mean = -2,
+                               double delta_proposal_sd = 0.3,
+                               double alpha_labels = 0.2,
+                               double alpha = 1,
+                               double beta = 0.005,
+                               int delta_adaption_block = 100,
+                               int Mass_adaption_block = 500,
+                               int M_proposal = 10){
+  Rcpp::List param;
+  if(time_inhomogeneous == true){
+    //Create B-splines
+    splines2::BSpline bspline;
+    // Make spline basis for A functions
+    arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+    for(int i = 0; i < n_A.n_elem; i++){
+      arma::vec time = arma::zeros(n_A(i));
+      for(int j = 1; j < n_A(i); j++){
+        time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
       }
-      if(l_likelihood < -999999999999999){
-        Rcpp::Rcout << i << j << "\n";
-        i = 100;
-        j = 100;
-      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(true)};
+      basis_funct_A(i,0) = bspline_mat;
     }
-  }
-  return l_likelihood;
-}
-
-//[[Rcpp::export]]
-double rinv_gauss1(double mean,
-                   double shape){
-  return NeuralComp::rinv_gauss(mean, shape);
-}
-
-//[[Rcpp::export]]
-arma::vec r_multinomial(arma::vec prob){
-  return NeuralComp::rmutlinomial(prob);
-}
-
-
-//[[Rcpp::export]]
-Rcpp::List FFBS_ensemble(const arma::field<arma::vec>& X_AB,
-                         const arma::vec& n_AB,
-                         arma::vec theta,
-                         arma::vec basis_coef_A,
-                         arma::vec basis_coef_B,
-                         const int basis_degree,
-                         const arma::vec boundary_knots,
-                         const arma::vec internal_knots,
-                         int MCMC_iters,
-                         const double step_size = 0.0001,
-                         const int num_evals = 10000,
-                         double delta_proposal_mean = -2.525729,
-                         double delta_proposal_sd = 0.005,
-                         int M_proposal = 10,
-                         const double delta_shape= 0.5,
-                         const double delta_rate = 0.1,
-                         const double alpha = 0.2){
-  arma::field<arma::vec> Labels(n_AB.n_elem, MCMC_iters);
-  // Use initial starting position
-  for(int j = 0; j < MCMC_iters; j++){
+    
+    // Make spline basis for B functions
+    arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+    for(int i = 0; i < n_B.n_elem; i++){
+      arma::vec time = arma::zeros(n_B(i));
+      for(int j = 1; j < n_B(i); j++){
+        time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(true)};
+      basis_funct_B(i,0) = bspline_mat;
+    }
+    
+    // Make spline basis for AB functions
+    arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
     for(int i = 0; i < n_AB.n_elem; i++){
-      Labels(i, j) = arma::zeros(n_AB(i));
-    }
-  }
-  
-  //Create B-splines
-  splines2::BSpline bspline;
-  // Make spline basis for AB functions
-  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-  for(int i = 0; i < n_AB.n_elem; i++){
-    arma::vec time = arma::zeros(n_AB(i));
-    for(int j = 1; j < n_AB(i); j++){
-      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(true)};
-    basis_funct_AB(i,0) = bspline_mat;
-  }
-  
-  arma::mat thetas(MCMC_iters, theta.n_elem, arma::fill::zeros);
-  thetas.row(0) = theta.t();
-  thetas.row(1) = theta.t();
-  arma::vec theta_i(theta.n_elem, arma::fill::zeros);
-  for(int i = 1; i < MCMC_iters; i++){
-    theta_i = thetas.row(i).t();
-    NeuralComp::FFBS_ensemble_step1(Labels, i, X_AB, n_AB, theta_i, basis_coef_A,
-                                    basis_coef_B, basis_funct_AB, step_size,
-                                   delta_proposal_mean, delta_proposal_sd, alpha,
-                                   M_proposal, delta_shape, delta_rate);
-    if((i % 25) == 0){
-      Rcpp::Rcout << "Iteration " << i;
-    }
-
-    thetas.row(i) = theta_i.t();
-    if((i + 1) < MCMC_iters){
-      thetas.row(i + 1) = thetas.row(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
-        Labels(j, i + 1) = Labels(j, i);
+      arma::vec time = arma::zeros(n_AB(i));
+      for(int j = 1; j < n_AB(i); j++){
+        time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
       }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(true)};
+      basis_funct_AB(i,0) = bspline_mat;
     }
-  }
-  Rcpp::List params = Rcpp::List::create(Rcpp::Named("theta", arma::exp(thetas)),
-                                         Rcpp::Named("labels", Labels));
-  return params;
-}
-
-//[[Rcpp::export]]
-arma::field<arma::vec> prior_Labels1(const arma::vec& n_AB,
-                                     arma::mat trans_prob_0,
-                                     arma::mat trans_prob){
-  return NeuralComp::prior_Labels(n_AB, trans_prob_0, trans_prob);
-}
-
-//[[Rcpp::export]]
-double calc_log_sum1(arma::vec x){
-  return NeuralComp::calc_log_sum(x);
-}
-
-//[[Rcpp::export]]
-double posterior_Labels1(arma::vec& Labels,
-                         const arma::vec& X_AB,
-                         arma::vec &theta){
-  return NeuralComp::posterior_Labels(Labels, X_AB, theta);
-}
-
-//[[Rcpp::export]]
-double prob_transition1(double label,
-                        double label_next,
-                        const arma::vec& X_AB,
-                        arma::vec& theta,
-                        int spike_num){
-  return NeuralComp::prob_transition(label, label_next, X_AB, theta, spike_num);
-}
-
-typedef AD<double> a_double;
-typedef Matrix<a_double, Eigen::Dynamic, 1> a_vector;
-
-//[[Rcpp::export]]
-double fx(Eigen::VectorXd x, double theta) {
-  double r = theta;
-  for (int i = 0; i < x.rows(); ++i) {
-    r += x(i) * x(i);
-  }
-  r = sqrt(r);
-  return sin(r)/r;
-}
-
-
-a_double fx(a_vector x, double theta) {
-  a_double r = theta;
-  for (int i = 0; i < x.rows(); ++i) {
-    r += x(i) * x(i);
-  }
-  r = sqrt(r);
-  return sin(r)/r;
-}
-
-// [[Rcpp::export]]
-Rcpp::List fp(Eigen::VectorXd x, double theta){
-  a_vector ax(x.rows());
-  a_vector y(1);
-  ADFun<double> gr;
-  
-  for (int i = 0; i < x.rows(); ++i)
-    ax(i) = x(i);
-  
-  Independent(ax);
-  y(0) = fx(ax, theta);
-  gr.Dependent(ax, y);
-  Eigen::VectorXd res = gr.Jacobian(x);
-  Eigen::VectorXd x1(x.rows());
-  for (int i = 0; i < x.rows(); ++i) {
-    x1(i) = x(i) + 10;
-  }
-  arma::vec grad = arma::zeros(x.rows());
-  for(int i = 0; i < res.rows(); i++){
-    grad(i) = res(i);
-  }
-  Eigen::VectorXd res1 = gr.Jacobian(x1);
-  arma::vec grad1 = arma::zeros(x.rows());
-  for(int i = 0; i < res1.rows(); i++){
-    grad1(i) = res1(i);
+    
+    param = NeuralComp::Mixed_sampler_int_TI(basis_funct_A, basis_funct_B, basis_funct_AB,
+                                             X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, 
+                                             Leapfrog_steps, I_A_mean, I_A_shape,
+                                             I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+                                             sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+                                             step_size_theta, step_size_FR,
+                                             delta_proposal_mean, delta_proposal_sd, 
+                                             alpha_labels, alpha, beta, delta_adaption_block,
+                                             Mass_adaption_block, M_proposal, 
+                                             Warm_block1, Warm_block2);
+  }else{
+    param = NeuralComp::Mixed_sampler_int(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, 
+                                          Leapfrog_steps, I_A_mean, I_A_shape,
+                                          I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+                                          sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+                                          step_size_theta, step_size_FR,
+                                          delta_proposal_mean, delta_proposal_sd, 
+                                          alpha_labels, delta_adaption_block,
+                                          Mass_adaption_block, M_proposal, 
+                                          Warm_block1, Warm_block2);
   }
   
-  Rcpp::List output = Rcpp::List::create(Rcpp::Named("grad", grad),
-                                         Rcpp::Named("grad1", grad1));
-  return output;
-}
-
-// [[Rcpp::export]]
-arma::vec fd(Eigen::VectorXd x, double theta){
-  arma::vec grad(x.rows(), arma::fill::zeros);
-  for(int i = 0; i < x.rows(); i++){
-    Eigen::VectorXd x_pe = x;
-    x_pe(i,0) = x_pe(i,0) + 0.001;
-    Eigen::VectorXd x_me = x;
-    x_me(i,0) = x_me(i,0) - 0.001;
-    grad(i) = (fx(x_pe, theta) - fx(x_me, theta)) / 0.002;
-  }
-  return grad;
+  return param;
 }
