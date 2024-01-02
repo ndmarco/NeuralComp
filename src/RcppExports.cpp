@@ -84,6 +84,73 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Sampler_IGP
+Rcpp::List Sampler_IGP(const arma::field<arma::vec> X, const arma::vec n, int MCMC_iters, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, bool time_inhomogeneous, int Warm_block1, int Warm_block2, int Leapfrog_steps, const double I_mean, const double I_shape, const double sigma_mean, const double sigma_shape, double step_size_theta, double step_size_FR, double alpha, double beta, int Mass_adaption_block, int M_proposal);
+RcppExport SEXP _NeuralComp_Sampler_IGP(SEXP XSEXP, SEXP nSEXP, SEXP MCMC_itersSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP time_inhomogeneousSEXP, SEXP Warm_block1SEXP, SEXP Warm_block2SEXP, SEXP Leapfrog_stepsSEXP, SEXP I_meanSEXP, SEXP I_shapeSEXP, SEXP sigma_meanSEXP, SEXP sigma_shapeSEXP, SEXP step_size_thetaSEXP, SEXP step_size_FRSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP Mass_adaption_blockSEXP, SEXP M_proposalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
+    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
+    Rcpp::traits::input_parameter< bool >::type time_inhomogeneous(time_inhomogeneousSEXP);
+    Rcpp::traits::input_parameter< int >::type Warm_block1(Warm_block1SEXP);
+    Rcpp::traits::input_parameter< int >::type Warm_block2(Warm_block2SEXP);
+    Rcpp::traits::input_parameter< int >::type Leapfrog_steps(Leapfrog_stepsSEXP);
+    Rcpp::traits::input_parameter< const double >::type I_mean(I_meanSEXP);
+    Rcpp::traits::input_parameter< const double >::type I_shape(I_shapeSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_mean(sigma_meanSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma_shape(sigma_shapeSEXP);
+    Rcpp::traits::input_parameter< double >::type step_size_theta(step_size_thetaSEXP);
+    Rcpp::traits::input_parameter< double >::type step_size_FR(step_size_FRSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< int >::type Mass_adaption_block(Mass_adaption_blockSEXP);
+    Rcpp::traits::input_parameter< int >::type M_proposal(M_proposalSEXP);
+    rcpp_result_gen = Rcpp::wrap(Sampler_IGP(X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_mean, I_shape, sigma_mean, sigma_shape, step_size_theta, step_size_FR, alpha, beta, Mass_adaption_block, M_proposal));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FR_CI_IGP
+Rcpp::List FR_CI_IGP(const arma::vec time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const arma::mat basis_coef_samp, const arma::mat theta, const double burnin_prop, const double alpha);
+RcppExport SEXP _NeuralComp_FR_CI_IGP(SEXP timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP basis_coef_sampSEXP, SEXP thetaSEXP, SEXP burnin_propSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type basis_coef_samp(basis_coef_sampSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
+    Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, basis_coef_samp, theta, burnin_prop, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FR_CI_Competition
+Rcpp::List FR_CI_Competition(const arma::vec time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const arma::mat basis_coef_A_samp, const arma::mat basis_coef_B_samp, const arma::mat theta, const double burnin_prop, const double alpha);
+RcppExport SEXP _NeuralComp_FR_CI_Competition(SEXP timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP basis_coef_A_sampSEXP, SEXP basis_coef_B_sampSEXP, SEXP thetaSEXP, SEXP burnin_propSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type basis_coef_A_samp(basis_coef_A_sampSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type basis_coef_B_samp(basis_coef_B_sampSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
+    Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(FR_CI_Competition(time, basis_degree, boundary_knots, internal_knots, basis_coef_A_samp, basis_coef_B_samp, theta, burnin_prop, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpparma_hello_world
 arma::mat rcpparma_hello_world();
 RcppExport SEXP _NeuralComp_rcpparma_hello_world() {
@@ -169,6 +236,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_getBSpline", (DL_FUNC) &_NeuralComp_getBSpline, 4},
     {"_NeuralComp_GetTraceLabels", (DL_FUNC) &_NeuralComp_GetTraceLabels, 3},
     {"_NeuralComp_Sampler_Competition", (DL_FUNC) &_NeuralComp_Sampler_Competition, 34},
+    {"_NeuralComp_Sampler_IGP", (DL_FUNC) &_NeuralComp_Sampler_IGP, 20},
+    {"_NeuralComp_FR_CI_IGP", (DL_FUNC) &_NeuralComp_FR_CI_IGP, 8},
+    {"_NeuralComp_FR_CI_Competition", (DL_FUNC) &_NeuralComp_FR_CI_Competition, 9},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},

@@ -455,7 +455,7 @@ inline double log_likelihood_IGP_theta(arma::vec theta,
                                        const arma::field<arma::vec>& X,
                                        const arma::vec& n){
   double l_likelihood = 0;
-  // Calculate log-likelihood for trials
+  // Calculate log-likelihood 
   for(int i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct(i,0).row(j), basis_coef))),
@@ -477,6 +477,24 @@ inline a_double log_likelihood_eigen_IGP_theta(a_vector theta,
   for(int i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct(i,0).row(j), basis_coef))),
+                                               pow((1 / theta(1)), 2));
+    }
+  }
+  
+  return l_likelihood;
+}
+
+inline a_double log_likelihood_eigen_IGP_basis(arma::vec theta,
+                                               a_vector basis_coef,
+                                               const arma::field<arma::mat>& basis_funct,
+                                               const arma::field<arma::vec>& X,
+                                               const arma::vec& n){
+  
+  a_double l_likelihood = 0;
+  // Calculate log-likelihood
+  for(int i = 0; i < n.n_elem; i++){
+    for(int j = 0; j < n(i); j++){
+      l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) + dot_AD1(basis_funct(i,0).row(j), basis_coef))),
                                                pow((1 / theta(1)), 2));
     }
   }
@@ -714,30 +732,52 @@ inline double log_posterior_delta(arma::field<arma::vec>& Labels,
 }
 
 inline double log_posterior_IGP_theta(arma::vec theta,
-                                arma::vec basis_coef,
-                                const arma::field<arma::mat>& basis_funct,
-                                const arma::field<arma::vec>& X,
-                                const arma::vec& n,
-                                const double& I_mean,
-                                const double& I_shape,
-                                const double& sigma_mean,
-                                const double& sigma_shape){
+                                      arma::vec basis_coef,
+                                      const arma::field<arma::mat>& basis_funct,
+                                      const arma::field<arma::vec>& X,
+                                      const arma::vec& n,
+                                      const double& I_mean,
+                                      const double& I_shape,
+                                      const double& sigma_mean,
+                                      const double& sigma_shape){
   double l_posterior = log_likelihood_IGP_theta(theta, basis_coef, basis_funct, X, n) +
     dinv_gauss(theta(0), I_mean, I_shape) +  dinv_gauss(theta(1), sigma_mean, sigma_shape);
   return l_posterior;
 }
 
 inline a_double log_posterior_eigen_IGP_theta(a_vector theta,
-                                            arma::vec basis_coef,
-                                            const arma::field<arma::mat>& basis_funct,
-                                            const arma::field<arma::vec>& X,
-                                            const arma::vec& n,
-                                            const double& I_mean,
-                                            const double& I_shape,
-                                            const double& sigma_mean,
-                                            const double& sigma_shape){
+                                              arma::vec basis_coef,
+                                              const arma::field<arma::mat>& basis_funct,
+                                              const arma::field<arma::vec>& X,
+                                              const arma::vec& n,
+                                              const double& I_mean,
+                                              const double& I_shape,
+                                              const double& sigma_mean,
+                                              const double& sigma_shape){
   a_double l_posterior = log_likelihood_eigen_IGP_theta(theta, basis_coef, basis_funct, X, n) +
     dinv_gauss(theta(0), I_mean, I_shape) +  dinv_gauss(theta(1), sigma_mean, sigma_shape);
+  return l_posterior;
+}
+
+inline double log_posterior_IGP_basis(arma::vec theta,
+                                      arma::vec basis_coef,
+                                      const arma::field<arma::mat>& basis_funct,
+                                      const arma::field<arma::vec>& X,
+                                      const arma::vec& n,
+                                      const double& I_sigma_sq){
+  double l_posterior = log_likelihood_IGP_theta(theta, basis_coef, basis_funct, X, n) +
+    log_prior_FR1(I_sigma_sq, basis_coef);
+  return l_posterior;
+}
+
+inline a_double log_posterior_eigen_IGP_basis(arma::vec theta,
+                                              a_vector basis_coef,
+                                              const arma::field<arma::mat>& basis_funct,
+                                              const arma::field<arma::vec>& X,
+                                              const arma::vec& n,
+                                              const double& I_sigma_sq){
+  a_double l_posterior = log_likelihood_eigen_IGP_basis(theta, basis_coef, basis_funct, X, n) +
+    log_prior_FR1(I_sigma_sq, basis_coef);
   return l_posterior;
 }
 
@@ -953,6 +993,29 @@ inline a_double transformed_log_posterior_eigen_IGP_theta(a_vector theta,
                                                        basis_funct, X, n, I_mean,
                                                        I_shape, sigma_mean, sigma_shape) +
                                                          theta(0) + theta(1);
+  return l_posterior;
+}
+
+inline double transformed_log_posterior_IGP_basis(arma::vec theta,
+                                                  arma::vec basis_coef,
+                                                  const arma::field<arma::mat>& basis_funct,
+                                                  const arma::field<arma::vec>& X,
+                                                  const arma::vec& n,
+                                                  const double& I_sigma_sq){
+  double l_posterior = log_posterior_IGP_basis(transform_pars(theta), basis_coef,
+                                               basis_funct, X, n, I_sigma_sq);
+  return l_posterior;
+}
+
+inline a_double transformed_log_posterior_eigen_IGP_basis(arma::vec theta,
+                                                          a_vector basis_coef,
+                                                          const arma::field<arma::mat>& basis_funct,
+                                                          const arma::field<arma::vec>& X,
+                                                          const arma::vec& n,
+                                                          const double& I_sigma_sq){
+
+  a_double l_posterior = log_posterior_eigen_IGP_basis(transform_pars(theta), basis_coef,
+                                                       basis_funct, X, n, I_sigma_sq);
   return l_posterior;
 }
 
@@ -1180,6 +1243,59 @@ inline arma::vec calc_gradient_eigen_IGP_theta_update(arma::vec theta,
   return grad;
 }
 
+inline arma::vec calc_gradient_eigen_IGP_basis(arma::vec theta,
+                                               arma::vec basis_coef,
+                                               const arma::field<arma::mat>& basis_funct,
+                                               const arma::field<arma::vec>& X,
+                                               const arma::vec& n,
+                                               const double& I_sigma_sq,
+                                               ADFun<double>& gr){
+  arma::vec grad((basis_coef.n_elem), arma::fill::zeros);
+  Eigen::VectorXd x(basis_coef.n_elem);
+  a_vector ax(basis_coef.n_elem);
+  a_vector y(1);
+  
+  for (int i = 0; i < basis_coef.n_elem; i++){
+    x(i) = basis_coef(i);
+    ax(i) = x(i);
+    
+  }
+  
+  
+  Independent(ax);
+  y(0) = log_posterior_eigen_IGP_basis(theta, ax, basis_funct,
+    X, n, I_sigma_sq);
+  gr.Dependent(ax, y);
+  Eigen::VectorXd res = gr.Jacobian(x);
+  for(int i = 0; i < res.rows(); i++){
+    grad(i) = res(i);
+  }
+  return grad;
+}
+
+inline arma::vec calc_gradient_eigen_IGP_basis_update(arma::vec theta,
+                                                      arma::vec basis_coef,
+                                                      const arma::field<arma::mat>& basis_funct,
+                                                      const arma::field<arma::vec>& X,
+                                                      const arma::vec& n,
+                                                      const double& I_sigma_sq,
+                                                      ADFun<double>& gr){
+  arma::vec grad((basis_coef.n_elem), arma::fill::zeros);
+  Eigen::VectorXd x(basis_coef.n_elem);
+  a_vector y(1);
+  
+  for (int i = 0; i < basis_coef.n_elem; i++){
+    x(i) = basis_coef(i);
+    
+  }
+  
+  Eigen::VectorXd res = gr.Jacobian(x);
+  for(int i = 0; i < res.rows(); i++){
+    grad(i) = res(i);
+  }
+  return grad;
+}
+
 
 inline arma::vec trans_calc_gradient_eigen_theta(arma::field<arma::vec>& Labels,
                                                  arma::vec theta,
@@ -1289,7 +1405,7 @@ inline arma::vec trans_calc_gradient_eigen_basis_update(arma::field<arma::vec>& 
   return grad;
 }
 
-inline arma::vec trans_calc_gradient_IGP_eigen_theta(arma::vec theta,
+inline arma::vec trans_calc_gradient_eigen_IGP_theta(arma::vec theta,
                                                      arma::vec basis_coef,
                                                      const arma::field<arma::mat>& basis_funct,
                                                      const arma::field<arma::vec>& X,
@@ -1318,6 +1434,30 @@ inline arma::vec trans_calc_gradient_eigen_IGP_theta_update(arma::vec theta,
   arma::vec grad = calc_gradient_eigen_IGP_theta_update(transform_pars(theta), basis_coef, basis_funct,
                                                         X, n, I_mean, I_shape, sigma_mean, sigma_shape, gr);
   grad = grad + arma::ones(grad.n_elem);
+  return grad;
+}
+
+inline arma::vec trans_calc_gradient_eigen_IGP_basis(arma::vec theta,
+                                                     arma::vec basis_coef,
+                                                     const arma::field<arma::mat>& basis_funct,
+                                                     const arma::field<arma::vec>& X,
+                                                     const arma::vec& n,
+                                                     const double& I_sigma_sq,
+                                                     ADFun<double>& gr){
+  arma::vec grad = calc_gradient_eigen_IGP_basis(transform_pars(theta), basis_coef, basis_funct,
+                                                 X, n, I_sigma_sq, gr);
+  return grad;
+}
+
+inline arma::vec trans_calc_gradient_eigen_IGP_basis_update(arma::vec theta,
+                                                            arma::vec basis_coef,
+                                                            const arma::field<arma::mat>& basis_funct,
+                                                            const arma::field<arma::vec>& X,
+                                                            const arma::vec& n,
+                                                            const double& I_sigma_sq,
+                                                            ADFun<double>& gr){
+  arma::vec grad = calc_gradient_eigen_IGP_basis_update(transform_pars(theta), basis_coef, basis_funct,
+                                                        X, n, I_sigma_sq, gr);
   return grad;
 }
 
@@ -1372,6 +1512,40 @@ inline double log_posterior_model_TI(double log_lik,
   
   lposterior = lposterior + R::dgamma(1/I_A_sigma_sq, alpha, 1/ beta, true);
   lposterior = lposterior + R::dgamma(1/I_B_sigma_sq, alpha, 1/ beta, true);
+  
+  return lposterior;
+}
+
+inline double log_posterior_IGP_model(double log_lik,
+                                      arma::vec theta,
+                                      const double& I_mean, 
+                                      const double& I_shape,
+                                      const double& sigma_mean,
+                                      const double& sigma_shape){
+  double lposterior = log_lik;
+  lposterior = lposterior + dinv_gauss(theta(0), I_mean, I_shape) + 
+    dinv_gauss(theta(1), sigma_mean, sigma_shape);
+  return lposterior;
+}
+
+inline double log_posterior_IGP_model_TI(double log_lik,
+                                         arma::vec theta,
+                                         arma::vec basis_coef,
+                                         double I_sigma_sq,
+                                         const double& I_mean, 
+                                         const double& I_shape,
+                                         const double& sigma_mean,
+                                         const double& sigma_shape,
+                                         const double alpha,
+                                         const double beta){
+  double lposterior = log_lik;
+  // prior on I and sigma
+  lposterior = lposterior + dinv_gauss(theta(0), I_mean, I_shape) + 
+    dinv_gauss(theta(1), sigma_mean, sigma_shape);
+  // prior on b-splines
+  lposterior = lposterior + log_prior_FR1(I_sigma_sq, basis_coef);
+  // prior on I_sigma_sq
+  lposterior = lposterior + R::dgamma(1/I_sigma_sq, alpha, 1/ beta, true);
   
   return lposterior;
 }

@@ -230,6 +230,16 @@ inline double log_prior_FR(const double& I_A_sigma_sq,
   return l_prior;
 }
 
+inline double log_prior_FR1(const double& I_sigma_sq,
+                            arma::vec& basis_coef){
+  
+  
+  
+  // I_A prior
+  double l_prior =  -((0.5 / I_sigma_sq) * arma::dot(basis_coef, basis_coef));
+  return l_prior;
+}
+
 inline double log_prior_FR(const double& I_A_sigma_sq,
                            const double& I_B_sigma_sq,
                            Eigen::VectorXd basis_coef){
@@ -265,6 +275,15 @@ inline a_double dot_AD(arma::rowvec basis_func,
   return output;
 }
 
+inline a_double dot_AD1(arma::rowvec basis_func,
+                       a_vector basis_coef){
+  a_double output = 0;
+  for(int i = 0; i < basis_func.n_elem; i++){
+    output = output + (basis_func(i) * basis_coef(i));
+  }
+  return output;
+}
+
 inline a_double norm_AD(a_vector basis_coef,
                        bool Indicator_A){
   a_double output = 0;
@@ -290,6 +309,25 @@ inline a_double log_prior_FR(const double& I_A_sigma_sq,
   // I_B prior
   l_prior = l_prior - ((0.5 / I_B_sigma_sq) * norm_AD(basis_coef, false));
   
+  return l_prior;
+}
+
+
+inline a_double norm_AD1(a_vector basis_coef){
+  a_double output = 0;
+  for(int i = 0; i < basis_coef.rows(); i++){
+      output = output + (basis_coef(i) * basis_coef(i));
+  }
+  return output;
+} 
+
+inline a_double log_prior_FR1(const double& I_sigma_sq,
+                            a_vector basis_coef){
+  
+  
+  
+  // I_A prior
+  a_double l_prior =  -((0.5 / I_sigma_sq) * norm_AD1(basis_coef));
   return l_prior;
 }
 
