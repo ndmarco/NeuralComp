@@ -515,7 +515,7 @@ Rcpp::List Sampler_IGP(const arma::field<arma::vec> X,
                                             Leapfrog_steps, I_mean, I_shape,
                                             sigma_mean, sigma_shape,
                                             step_size_theta, step_size_FR,
-                                            alpha, beta,Mass_adaption_block, 
+                                            alpha, beta, Mass_adaption_block, 
                                             Warm_block1, Warm_block2);
  }else{
    param = NeuralComp::Mixed_sampler_IGP_int(X, n, MCMC_iters, Leapfrog_steps, I_mean,
@@ -627,7 +627,7 @@ Rcpp::List FR_CI_IGP(const arma::vec time,
   arma::mat MCMC_FR = arma::zeros(std::floor((1 - burnin_prop) * n_MCMC), time.n_elem);
   arma::mat FR_CI = arma::zeros(time.n_elem, 2);
   arma::vec FR_median = arma::zeros(time.n_elem);
-  int burnin_num = std::ceil(burnin_prop * n_MCMC);
+  int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
   for(int i = burnin_num; i < n_MCMC; i++){
     MCMC_FR.row(i - burnin_num) = theta(i,0) + (basis_funct * basis_coef_samp.row(i).t()).t();
   }
@@ -673,7 +673,7 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
   arma::mat B_FR_CI = arma::zeros(time.n_elem, 2);
   arma::vec A_FR_median = arma::zeros(time.n_elem);
   arma::vec B_FR_median = arma::zeros(time.n_elem);
-  int burnin_num = std::ceil(burnin_prop * n_MCMC);
+  int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
   for(int i = burnin_num; i < n_MCMC; i++){
     MCMC_A_FR.row(i - burnin_num) = theta(i,0) + (basis_funct * basis_coef_A_samp.row(i).t()).t();
     MCMC_B_FR.row(i - burnin_num) = theta(i,1) + (basis_funct * basis_coef_B_samp.row(i).t()).t();

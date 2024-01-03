@@ -1487,7 +1487,7 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
                                            int theta_adaptation_block,
                                            int Warm_block1,
                                            int Warm_block2){
-  arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 5, arma::fill::ones);
+  arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 2, arma::fill::ones);
   arma::mat basis_coef(MCMC_iters + Warm_block1 + Warm_block2, basis_funct(0,0).n_cols, arma::fill::zeros);
   arma::vec I_sigma_sq(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
   arma::vec vec_accept(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
@@ -1495,7 +1495,7 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
   arma::vec lposterior(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec basis_coef_ph = basis_coef.row(0).t();
   
-  arma::vec init_position(5, arma::fill::ones);
+  arma::vec init_position(2, arma::fill::ones);
   init_position(0) = I_mean;
   init_position(1) = sigma_mean;
   theta.row(0) = arma::log(init_position.t());
