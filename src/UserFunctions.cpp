@@ -56,20 +56,6 @@ arma::mat getBSpline(const arma::vec time,
   return basis_funct;
 }
 
-//[[Rcpp::export]]
-arma::mat GetTraceLabels(const arma::field<arma::vec> MCMC_output,
-                         int sample_num,
-                         int MCMC_iters){
-  arma::mat trace(MCMC_output(sample_num-1, 0).n_elem, MCMC_iters, arma::fill::zeros);
-  for(int i = 0; i < MCMC_output(sample_num-1, 0).n_elem; i++){
-    for(int j = 0; j < MCMC_iters; j++){
-      Rcpp::Rcout << i << "  " << j;
-      trace(i, j) = MCMC_output(sample_num-1,j)(i);
-    }
-  }
-  return trace;
-}
-
 //' Sampler for Drift-Diffusion Competition Model
 //' 
 //' Conducts MCMC to get posterior samples from the drift-diffusion competition model.
@@ -209,7 +195,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
                                const arma::vec internal_knots,
                                bool time_inhomogeneous = true,
                                int Warm_block1 = 500,
-                               int Warm_block2 = 1000,
+                               int Warm_block2 = 3000,
                                int Leapfrog_steps = 10,
                                const double I_A_mean = 40, 
                                const double I_A_shape = 1,
@@ -480,7 +466,7 @@ Rcpp::List Sampler_IGP(const arma::field<arma::vec> X,
                        const arma::vec internal_knots,
                        bool time_inhomogeneous = true,
                        int Warm_block1 = 500,
-                       int Warm_block2 = 1000,
+                       int Warm_block2 = 3000,
                        int Leapfrog_steps = 10,
                        const double I_mean = 40, 
                        const double I_shape = 1,

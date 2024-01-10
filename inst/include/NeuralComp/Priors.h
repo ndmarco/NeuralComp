@@ -266,7 +266,7 @@ inline a_double dot_AD(arma::rowvec basis_func,
                        bool Indicator_A){
   a_double output = 0;
   for(int i = 0; i < basis_func.n_elem; i++){
-    if(Indicator_A == 0){
+    if(Indicator_A == true){
       output = output + (basis_func(i) * basis_coef(i));
     }else{
       output = output + (basis_func(i) * basis_coef(i + (basis_coef.rows() / 2)));
@@ -287,8 +287,8 @@ inline a_double dot_AD1(arma::rowvec basis_func,
 inline a_double norm_AD(a_vector basis_coef,
                        bool Indicator_A){
   a_double output = 0;
-  for(int i = 0; i < basis_coef.rows() / 2; i++){
-    if(Indicator_A == 0){
+  for(int i = 0; i < (basis_coef.rows() / 2); i++){
+    if(Indicator_A == true){
       output = output + (basis_coef(i) * basis_coef(i));
     }else{
       output = output + (basis_coef(i + (basis_coef.rows() / 2)) * basis_coef(i + (basis_coef.rows() / 2)));
@@ -300,8 +300,6 @@ inline a_double norm_AD(a_vector basis_coef,
 inline a_double log_prior_FR(const double& I_A_sigma_sq,
                              const double& I_B_sigma_sq,
                              a_vector basis_coef){
-  
-  
   
   // I_A prior
   a_double l_prior =  -((0.5 / I_A_sigma_sq) * norm_AD(basis_coef, true));

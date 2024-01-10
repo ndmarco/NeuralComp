@@ -632,11 +632,11 @@ inline a_double log_posterior_eigen_theta(arma::field<arma::vec>& Labels,
                                         const double& sigma_B_shape){
   a_double l_posterior = log_likelihood_eigen_theta(Labels, theta, basis_coef_A, basis_coef_B,
                                                   basis_funct_A, basis_funct_B, basis_funct_AB,
-                                                  X_A, X_B, X_AB, n_A, n_B, n_AB);
-                                                    // log_prior(I_A_mean, I_A_shape, I_B_mean, I_B_shape, 
-                                                    //           sigma_A_mean, sigma_A_shape,
-                                                    //           sigma_B_mean, sigma_B_shape,
-                                                    //           theta);
+                                                  X_A, X_B, X_AB, n_A, n_B, n_AB) +
+                                                    log_prior(I_A_mean, I_A_shape, I_B_mean, I_B_shape,
+                                                              sigma_A_mean, sigma_A_shape,
+                                                              sigma_B_mean, sigma_B_shape,
+                                                              theta);
   return l_posterior;
 }
 
