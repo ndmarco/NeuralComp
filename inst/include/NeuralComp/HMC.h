@@ -25,14 +25,14 @@ inline void leapfrog_step_FR(arma::field<arma::vec>& Labels,
                              const double& I_A_sigma_sq,
                              const double& I_B_sigma_sq,
                              double& step_size,
-                             arma::mat& Mass_mat,
+                             arma::mat& Mass_mat_inv,
                              arma::vec& position,
                              arma::vec& momentum,
                              ADFun<double>& gr,
                              int step_num,
                              int num_leapfrog){
   position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) = position.subvec(0, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1) + 
-    step_size * arma::inv_sympd(Mass_mat) * momentum;
+    step_size * Mass_mat_inv * momentum;
   arma::vec position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   arma::vec position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
@@ -64,7 +64,7 @@ inline void leapfrog_step_theta(arma::field<arma::vec>& Labels,
                                 const double& sigma_B_mean,
                                 const double& sigma_B_shape,
                                 double& step_size,
-                                arma::mat& Mass_mat,
+                                arma::mat& Mass_mat_inv,
                                 arma::vec& position,
                                 arma::vec& momentum,
                                 ADFun<double>& gr,
@@ -72,7 +72,7 @@ inline void leapfrog_step_theta(arma::field<arma::vec>& Labels,
                                 int num_leapfrog){
   // update position
   position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols,position.n_elem-2) + 
-    step_size  * arma::inv_sympd(Mass_mat) * momentum;
+    step_size  * Mass_mat_inv * momentum;
   arma::vec position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   arma::vec position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
@@ -97,7 +97,7 @@ inline void leapfrog_step_IGP_theta(const arma::field<arma::mat>& basis_funct,
                                     const double& sigma_mean,
                                     const double& sigma_shape,
                                     double& step_size,
-                                    arma::mat& Mass_mat,
+                                    arma::mat& Mass_mat_inv,
                                     arma::vec& position,
                                     arma::vec& momentum,
                                     ADFun<double>& gr,
@@ -105,7 +105,7 @@ inline void leapfrog_step_IGP_theta(const arma::field<arma::mat>& basis_funct,
                                     int num_leapfrog){
   // update position
   position.subvec(basis_funct(0,0).n_cols, position.n_elem-1) = position.subvec(basis_funct(0,0).n_cols, position.n_elem-1) + 
-    step_size  * arma::inv_sympd(Mass_mat) * momentum;
+    step_size  * Mass_mat_inv * momentum;
   arma::vec position_theta = position.subvec(basis_funct(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef = position.subvec(0, basis_funct(0,0).n_cols - 1);
   // update momentum
@@ -124,7 +124,7 @@ inline void leapfrog_step_IGP_basis(const arma::field<arma::mat>& basis_funct,
                                     const arma::vec& n,
                                     const double& I_sigma_sq,
                                     double& step_size,
-                                    arma::mat& Mass_mat,
+                                    arma::mat& Mass_mat_inv,
                                     arma::vec& position,
                                     arma::vec& momentum,
                                     ADFun<double>& gr,
@@ -132,7 +132,7 @@ inline void leapfrog_step_IGP_basis(const arma::field<arma::mat>& basis_funct,
                                     int num_leapfrog){
   // update position
   position.subvec(0, basis_funct(0,0).n_cols-1) = position.subvec(0, basis_funct(0,0).n_cols-1) + 
-    step_size  * arma::inv_sympd(Mass_mat) * momentum;
+    step_size  * Mass_mat_inv * momentum;
   arma::vec position_theta = position.subvec(basis_funct(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef = position.subvec(0, basis_funct(0,0).n_cols - 1);
   // update momentum
@@ -176,10 +176,11 @@ inline void leapfrog_FR(arma::field<arma::vec>& Labels,
                                     position_basis_coef_B, basis_funct_A, basis_funct_B,
                                     basis_funct_AB, X_A, X_B, X_AB, n_A,
                                     n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, gr);
+  arma::mat Mass_mat_inv = arma::inv_sympd(Mass_mat);
   for(int i = 0; i < Leapfrog_steps; i++){
     leapfrog_step_FR(Labels, basis_funct_A, basis_funct_B, basis_funct_AB, X_A, 
                      X_B, X_AB, n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq,
-                     step_size, Mass_mat, prop_position, prop_momentum, gr, i, Leapfrog_steps);
+                     step_size, Mass_mat_inv, prop_position, prop_momentum, gr, i, Leapfrog_steps);
   }
   position_theta = prop_position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   position_basis_coef_A = prop_position.subvec(0, basis_funct_A(0,0).n_cols - 1);
@@ -231,12 +232,12 @@ inline void leapfrog_theta(arma::field<arma::vec>& Labels,
                                     n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
                                     sigma_A_mean, sigma_A_shape, 
                                     sigma_B_mean, sigma_B_shape, gr);
-  
+  arma::mat Mass_mat_inv = arma::inv_sympd(Mass_mat);
   for(int i = 0; i < Leapfrog_steps; i++){
     leapfrog_step_theta(Labels, basis_funct_A, basis_funct_B, basis_funct_AB, X_A, 
                         X_B, X_AB, n_A, n_B, n_AB, I_A_mean, I_A_shape, I_B_mean, I_B_shape,
                         sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape,
-                        step_size, Mass_mat, prop_position, prop_momentum, gr, i, Leapfrog_steps);
+                        step_size, Mass_mat_inv, prop_position, prop_momentum, gr, i, Leapfrog_steps);
   }
   
   position_theta = prop_position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
@@ -272,8 +273,9 @@ inline void leapfrog_IGP_basis(const arma::field<arma::mat>& basis_funct,
   prop_momentum = prop_momentum + 0.5 * step_size * 
     trans_calc_gradient_eigen_IGP_basis(position_theta, position_basis_coef, basis_funct, 
                                         X, n, I_sigma_sq,  gr);
+  arma::mat Mass_mat_inv = arma::inv_sympd(Mass_mat);
   for(int i = 0; i < Leapfrog_steps; i++){
-    leapfrog_step_IGP_basis(basis_funct, X, n, I_sigma_sq, step_size, Mass_mat, 
+    leapfrog_step_IGP_basis(basis_funct, X, n, I_sigma_sq, step_size, Mass_mat_inv, 
                             prop_position, prop_momentum, gr, i, Leapfrog_steps);
   }
   position_theta = prop_position.subvec(basis_funct(0,0).n_cols, position.n_elem - 1);
@@ -308,10 +310,10 @@ inline void leapfrog_IGP_theta(const arma::field<arma::mat>& basis_funct,
     trans_calc_gradient_eigen_IGP_theta(position_theta, position_basis_coef, 
                                         basis_funct, X, n, I_mean, I_shape,
                                         sigma_mean, sigma_shape, gr);
-  
+  arma::mat Mass_mat_inv = arma::inv_sympd(Mass_mat);
   for(int i = 0; i < Leapfrog_steps; i++){
     leapfrog_step_IGP_theta(basis_funct, X, n, I_mean, I_shape, sigma_mean, sigma_shape,
-                            step_size, Mass_mat, prop_position, prop_momentum, gr, i, Leapfrog_steps);
+                            step_size, Mass_mat_inv, prop_position, prop_momentum, gr, i, Leapfrog_steps);
   }
   
   position_theta = prop_position.subvec(basis_funct(0,0).n_cols, position.n_elem - 1);
@@ -849,19 +851,15 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
       }
     }
     
-    if((i % 50) == 0){
+    if((i % 10) == 0){
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-49, i))/ 50;
-      if(prop_accept_10_theta  <= 0.1){
-        step_size_theta = step_size_theta * 0.1;
-      }else if(prop_accept_10_theta<= 0.3){
+      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
+      if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.6){
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.80){
-        step_size_theta = step_size_theta * 2;
-      }else if(prop_accept_10_theta > 0.9){
-        step_size_theta = step_size_theta * 5;
+        step_size_theta = step_size_theta * 1.2;
       }
     }
   }
@@ -1194,34 +1192,25 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
         Labels(j, i + 1) = Labels(j, i);
       }
     }
-    
-    if((i % 50) == 0){
+    if((i % 10) == 0){
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-49, i))/ 50;
-      if(prop_accept_10  <= 0.1){
-        step_size_FR = step_size_FR * 0.1;
-      }else if(prop_accept_10 <= 0.3){
+      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-9, i))/ 10;
+      if(prop_accept_10  <= 0.3){
         step_size_FR = step_size_FR * 0.5;
       }else if(prop_accept_10 <= 0.6){
         step_size_FR = step_size_FR * 0.8;
       }else if(prop_accept_10 > 0.8){
-        step_size_FR = step_size_FR * 2;
-      }else if(prop_accept_10 > 0.9){
-        step_size_FR = step_size_FR * 5;
+        step_size_FR = step_size_FR * 1.2;
       }
       
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-49, i))/ 50;
-      if(prop_accept_10_theta  <= 0.1){
-        step_size_theta = step_size_theta * 0.1;
-      }else if(prop_accept_10_theta<= 0.3){
+      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
+      if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.6){
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.8){
-        step_size_theta = step_size_theta * 2;
-      }else if(prop_accept_10_theta > 0.9){
-        step_size_theta = step_size_theta * 5;
+        step_size_theta = step_size_theta * 1.2;
       }
     }
   }
@@ -1291,12 +1280,12 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   }
   
   //convert labels
-  arma::field<arma::mat> labels_out(1, n_AB.n_elem);
+  arma::field<arma::mat> labels_out(n_AB.n_elem, 1);
   for(int i = 0; i < n_AB.n_elem; i++){
-    labels_out(0,i) = arma::zeros(Warm_block1 + Warm_block2 + MCMC_iters, n_AB(i));
+    labels_out(i,0) = arma::zeros(Warm_block1 + Warm_block2 + MCMC_iters, n_AB(i));
     for(int j = 0; j < Warm_block1 + Warm_block2 + MCMC_iters; j++){
       for(int k = 0; k < n_AB(i); k++){
-        labels_out(0,i)(j,k) = Labels(i,j)(k);
+        labels_out(i,0)(j,k) = Labels(i,j)(k);
       }
     }
   }
@@ -1431,19 +1420,15 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
       theta.row(i + 1) = theta.row(i);
     }
     
-    if((i % 50) == 0){
+    if((i % 10) == 0){
       // adjust step size for I and sigma
-      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-49, i))/ 50;
-      if(prop_accept_10_theta  <= 0.1){
-        step_size_theta = step_size_theta * 0.1;
-      }else if(prop_accept_10_theta<= 0.3){
+      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
+      if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.6){
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.8){
-        step_size_theta = step_size_theta * 2;
-      }else if(prop_accept_10_theta > 0.9){
-        step_size_theta = step_size_theta * 5;
+        step_size_theta = step_size_theta * 1.2;
       }
     }
   }
@@ -1638,33 +1623,25 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
       I_sigma_sq(i + 1) = I_sigma_sq(i);
     }
     
-    if((i % 50) == 0){
+    if((i % 10) == 0){
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-49, i))/ 50;
-      if(prop_accept_10  <= 0.1){
-        step_size_FR = step_size_FR * 0.1;
-      }else if(prop_accept_10 <= 0.3){
+      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-9, i))/ 10;
+      if(prop_accept_10  <= 0.3){
         step_size_FR = step_size_FR * 0.5;
       }else if(prop_accept_10 <= 0.6){
         step_size_FR = step_size_FR * 0.8;
       }else if(prop_accept_10 > 0.8){
-        step_size_FR = step_size_FR * 2;
-      }else if(prop_accept_10 > 0.9){
-        step_size_FR = step_size_FR * 5;
+        step_size_FR = step_size_FR * 1.2;
       }
       
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-49, i))/ 50;
-      if(prop_accept_10_theta  <= 0.1){
-        step_size_theta = step_size_theta * 0.1;
-      }else if(prop_accept_10_theta<= 0.3){
+      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
+      if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.6){
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.8){
-        step_size_theta = step_size_theta * 2;
-      }else if(prop_accept_10_theta > 0.9){
-        step_size_theta = step_size_theta * 5;
+        step_size_theta = step_size_theta * 1.2;
       }
     }
   }
@@ -1721,3 +1698,6 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
 
 
 #endif
+
+
+

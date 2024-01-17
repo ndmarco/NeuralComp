@@ -261,7 +261,7 @@ Sampler_IGP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal
     .Call('_NeuralComp_Sampler_IGP', PACKAGE = 'NeuralComp', X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_mean, I_shape, sigma_mean, sigma_shape, step_size_theta, step_size_FR, alpha, beta, Mass_adaption_block, M_proposal)
 }
 
-#' Construct CI for IGP Firing Rate
+#' Constructs CI for IGP Firing Rate
 #' 
 #' Constructs credible intervals for the time-inhomgeneous mean parameter (I) of the
 #' inverse Gaussian renewal process.
@@ -271,7 +271,7 @@ Sampler_IGP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal
 #' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
 #' @param boundary_knots Vector of two elements specifying the boundary knots
 #' @param internal_knots Vector containing the desired internal knots of the B-splines
-#' @param basis_coef_samp Matrix of MCMC samples of the basis coefficients (\code{basis_coef} from \code{Sampler_IGP})
+#' @param Results List produced from running \code{Sampler_IGP}
 #' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in
 #' @param alpha Double indicating the size of the credible interval ((1 - alpha) * 100 percent)
 #' 
@@ -292,31 +292,6 @@ Sampler_IGP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal
 #' }
 #' 
 #' @examples
-#' ##############################
-#' ### Time-Homogeneous Model ###
-#' ##############################
-#' 
-#' ## Load sample data
-#' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
-#' 
-#' ## set parameters
-#' MCMC_iters <- 100
-#' 
-#' basis_degree <- 3
-#' boundary_knots <- c(0, 1)
-#' internal_knots <- c(0.25, 0.5, 0.75)
-#' 
-#' ## Warm Blocks should be longer, however for the example, they are short
-#' Warm_block1 = 50
-#' Warm_block2 = 50
-#' 
-#' # Run MCMC chain
-#' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
-#'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-#'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-#'                                time_inhomogeneous = FALSE)
-#' 
-#' 
 #' ################################
 #' ### Time-Inhomogeneous Model ###
 #' ################################
@@ -339,13 +314,150 @@ Sampler_IGP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal
 #'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
 #'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 #' 
+#' # Get CI
+#' time <- seq(0, 1, 0.01)
+#' CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+#' 
 #' @export
-FR_CI_IGP <- function(time, basis_degree, boundary_knots, internal_knots, basis_coef_samp, theta, burnin_prop = 0.3, alpha = 0.05) {
-    .Call('_NeuralComp_FR_CI_IGP', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots, basis_coef_samp, theta, burnin_prop, alpha)
+FR_CI_IGP <- function(time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.3, alpha = 0.05) {
+    .Call('_NeuralComp_FR_CI_IGP', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, alpha)
 }
 
-FR_CI_Competition <- function(time, basis_degree, boundary_knots, internal_knots, basis_coef_A_samp, basis_coef_B_samp, theta, burnin_prop = 0.3, alpha = 0.05) {
-    .Call('_NeuralComp_FR_CI_Competition', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots, basis_coef_A_samp, basis_coef_B_samp, theta, burnin_prop, alpha)
+FR_CI_Competition <- function(time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.3, alpha = 0.05) {
+    .Call('_NeuralComp_FR_CI_Competition', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, alpha)
+}
+
+#' Calculates WAIC for the Competition Model
+#' 
+#' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
+#' the drift-diffusion competition model. This function will use the output from
+#' \code{Sampler_Competition}. The WAIC is defined on the deviance scale as waic = -2(lppd - p),
+#' where lppd is the log pointwise predictive density, and p is the effective number of parameters.
+#' 
+#' @name WAIC_Competition
+#' @param X_A List of vectors containing the ISIs of A trials
+#' @param X_B List of vectors containing the ISIs of B trials
+#' @param X_AB List of vectors containing the ISIs of AB trials
+#' @param n_A Vector containing number of spikes for each A trial
+#' @param n_B Vector containing number of spikes for each B trial
+#' @param n_AB Vector containing number of spikes for each AB trial
+#' @param Results List produced from running \code{Sampler_Competition}
+#' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+#' @param boundary_knots Vector of two elements specifying the boundary knots
+#' @param internal_knots Vector containing the desired internal knots of the B-splines
+#' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
+#' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in
+#' @param max_time Double containing parameter for estimating the probability of switching states (max_time should be large enough so that the probability of observing an ISI greater than this is negligible) 
+#' @param n_eval Integer containing parameter for estimating the probability of switching states (the larger the number the more computationally expensive, but more accurate)
+#' @returns waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
+#' 
+#' @section Warning:
+#' The following must be true:
+#' \describe{
+#'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+#'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+#'   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+#' }
+#' 
+#' @examples
+#' ################################
+#' ### Time-Inhomogeneous Model ###
+#' ################################
+#' 
+#' ## Load sample data
+#' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## set parameters
+#' MCMC_iters <- 100
+#' basis_degree <- 3
+#' boundary_knots <- c(0, 1)
+#' internal_knots <- c(0.25, 0.5, 0.75)
+#' 
+#' ## Warm Blocks should be longer, however for the example, they are short
+#' Warm_block1 = 50
+#' Warm_block2 = 50
+#' 
+#' # Run MCMC chain
+#' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+#'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+#'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#' 
+#' # Get CI
+#' time <- seq(0, 1, 0.01)
+#' CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+#' 
+#' @export
+WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2, max_time = 1, n_eval = 10000L) {
+    .Call('_NeuralComp_WAIC_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, max_time, n_eval)
+}
+
+#' Calculates WAIC for the Inverse Gaussian Renewal Process
+#' 
+#' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
+#' the inverse Gaussian renewal process. This function will use the output from
+#' \code{Sampler_IGP} fit for the A, B, and AB data. The WAIC is defined on the 
+#' deviance scale as waic = -2(lppd - p), where lppd is the log pointwise 
+#' predictive density, and p is the effective number of parameters.
+#' 
+#' @name WAIC_IGP
+#' @param X_A List of vectors containing the ISIs of A trials
+#' @param X_B List of vectors containing the ISIs of B trials
+#' @param X_AB List of vectors containing the ISIs of AB trials
+#' @param n_A Vector containing number of spikes for each A trial
+#' @param n_B Vector containing number of spikes for each B trial
+#' @param n_AB Vector containing number of spikes for each AB trial
+#' @param Results_A List produced from running \code{Sampler_Competition} for A trials
+#' @param Results_B List produced from running \code{Sampler_Competition} for B trials
+#' @param Results_AB List produced from running \code{Sampler_Competition} for AB trials
+#' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+#' @param boundary_knots Vector of two elements specifying the boundary knots
+#' @param internal_knots Vector containing the desired internal knots of the B-splines
+#' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
+#' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in
+#' @returns waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
+#' 
+#' @section Warning:
+#' The following must be true:
+#' \describe{
+#'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+#'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+#'   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+#' }
+#' 
+#' @examples
+#' ################################
+#' ### Time-Inhomogeneous Model ###
+#' ################################
+#' 
+#' ## Load sample data
+#' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## set parameters
+#' MCMC_iters <- 100
+#' basis_degree <- 3
+#' boundary_knots <- c(0, 1)
+#' internal_knots <- c(0.25, 0.5, 0.75)
+#' 
+#' ## Warm Blocks should be longer, however for the example, they are short
+#' Warm_block1 = 50
+#' Warm_block2 = 50
+#' 
+#' # Run MCMC chain
+#' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+#'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+#'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#' 
+#' # Get CI
+#' time <- seq(0, 1, 0.01)
+#' CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+#' 
+#' @export
+WAIC_IGP <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
+    .Call('_NeuralComp_WAIC_IGP', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
+}
+
+test <- function(theta, max_time, n_eval) {
+    .Call('_NeuralComp_test', PACKAGE = 'NeuralComp', theta, max_time, n_eval)
 }
 
 rcpparma_hello_world <- function() {

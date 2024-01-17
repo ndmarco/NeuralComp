@@ -64,11 +64,11 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
-            // Condition if spike has not switched (still in A)
+            // Condition if spike has not switched (still in B)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }else{
-            // Condition if spike has switched from B to A
+            // Condition if spike has switched from A to B
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }
@@ -140,11 +140,11 @@ inline double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
-            // Condition if spike has not switched (still in A)
+            // Condition if spike has not switched (still in B)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }else{
-            // Condition if spike has switched from B to A
+            // Condition if spike has switched from A to B
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }
@@ -214,11 +214,11 @@ inline a_double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
-            // Condition if spike has not switched (still in A)
+            // Condition if spike has not switched (still in B)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }else{
-            // Condition if spike has switched from B to A
+            // Condition if spike has switched from A to B
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }
@@ -291,11 +291,11 @@ inline double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
-            // Condition if spike has not switched (still in A)
+            // Condition if spike has not switched (still in B)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }else{
-            // Condition if spike has switched from B to A
+            // Condition if spike has switched from A to B
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B))), pow((1 / theta(3)), 2));
           }
@@ -364,11 +364,11 @@ inline a_double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
-            // Condition if spike has not switched (still in A)
+            // Condition if spike has not switched (still in B)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) + dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) + dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false))), pow((1 / theta(3)), 2));
           }else{
-            // Condition if spike has switched from B to A
+            // Condition if spike has switched from A to B
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) + dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true))), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) + dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false))), pow((1 / theta(3)), 2));
           }
@@ -431,11 +431,11 @@ inline double log_likelihood(arma::field<arma::vec>& Labels,
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
-            // Condition if spike has not switched (still in A)
+            // Condition if spike has not switched (still in B)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j), (1 / theta(1)), pow((1 / theta(3)), 2));
           }else{
-            // Condition if spike has switched from B to A
+            // Condition if spike has switched from A to B
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / theta(0)), pow((1 / theta(2)), 2)) +
               dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2));
           }
@@ -473,7 +473,7 @@ inline a_double log_likelihood_eigen_IGP_theta(a_vector theta,
                                                const arma::vec& n){
   
   a_double l_likelihood = 0;
-  // Calculate log-likelihood for A trials
+  // Calculate log-likelihood for trials
   for(int i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) + arma::dot(basis_funct(i,0).row(j), basis_coef))),

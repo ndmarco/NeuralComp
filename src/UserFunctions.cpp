@@ -513,7 +513,7 @@ Rcpp::List Sampler_IGP(const arma::field<arma::vec> X,
  return param;
 }
 
-//' Construct CI for IGP Firing Rate
+//' Constructs CI for IGP Firing Rate
 //' 
 //' Constructs credible intervals for the time-inhomgeneous mean parameter (I) of the
 //' inverse Gaussian renewal process.
@@ -523,7 +523,7 @@ Rcpp::List Sampler_IGP(const arma::field<arma::vec> X,
 //' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
 //' @param boundary_knots Vector of two elements specifying the boundary knots
 //' @param internal_knots Vector containing the desired internal knots of the B-splines
-//' @param basis_coef_samp Matrix of MCMC samples of the basis coefficients (\code{basis_coef} from \code{Sampler_IGP})
+//' @param Results List produced from running \code{Sampler_IGP}
 //' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in
 //' @param alpha Double indicating the size of the credible interval ((1 - alpha) * 100 percent)
 //' 
@@ -544,31 +544,6 @@ Rcpp::List Sampler_IGP(const arma::field<arma::vec> X,
 //' }
 //' 
 //' @examples
-//' ##############################
-//' ### Time-Homogeneous Model ###
-//' ##############################
-//' 
-//' ## Load sample data
-//' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
-//' 
-//' ## set parameters
-//' MCMC_iters <- 100
-//' 
-//' basis_degree <- 3
-//' boundary_knots <- c(0, 1)
-//' internal_knots <- c(0.25, 0.5, 0.75)
-//' 
-//' ## Warm Blocks should be longer, however for the example, they are short
-//' Warm_block1 = 50
-//' Warm_block2 = 50
-//' 
-//' # Run MCMC chain
-//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
-//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-//'                                time_inhomogeneous = FALSE)
-//' 
-//' 
 //' ################################
 //' ### Time-Inhomogeneous Model ###
 //' ################################
@@ -591,16 +566,36 @@ Rcpp::List Sampler_IGP(const arma::field<arma::vec> X,
 //'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
 //'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 //' 
+//' # Get CI
+//' time <- seq(0, 1, 0.01)
+//' CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+//' 
 //' @export
 //[[Rcpp::export]]
 Rcpp::List FR_CI_IGP(const arma::vec time,
                      const int basis_degree,
                      const arma::vec boundary_knots,
                      const arma::vec internal_knots,
-                     const arma::mat basis_coef_samp,
-                     const arma::mat theta,
+                     const Rcpp::List Results,
                      const double burnin_prop = 0.3,
                      const double alpha = 0.05){
+  
+  const arma::mat basis_coef_samp = Results["basis_coef"];
+  const arma::mat theta = Results["theta"];
+  
+  // Check conditions
+  if(basis_degree <  1){
+    Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+  }
+  for(int i = 0; i < internal_knots.n_elem; i++){
+    if(boundary_knots(0) >= internal_knots(i)){
+      Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+    }
+    if(boundary_knots(1) <= internal_knots(i)){
+      Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+    }
+  }
+  
   arma::mat basis_funct;
   splines2::BSpline bspline;
   
@@ -639,11 +634,26 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
                              const int basis_degree,
                              const arma::vec boundary_knots,
                              const arma::vec internal_knots,
-                             const arma::mat basis_coef_A_samp,
-                             const arma::mat basis_coef_B_samp,
-                             const arma::mat theta,
+                             const Rcpp::List Results,
                              const double burnin_prop = 0.3,
                              const double alpha = 0.05){
+  const arma::mat basis_coef_A_samp = Results["basis_coef_A"];
+  const arma::mat basis_coef_B_samp = Results["basis_coef_B"];
+  const arma::mat theta = Results["theta"];
+  
+  // Check conditions
+  if(basis_degree <  1){
+    Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+  }
+  for(int i = 0; i < internal_knots.n_elem; i++){
+    if(boundary_knots(0) >= internal_knots(i)){
+      Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+    }
+    if(boundary_knots(1) <= internal_knots(i)){
+      Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+    }
+  }
+  
   arma::mat basis_funct;
   splines2::BSpline bspline;
   
@@ -685,5 +695,375 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
                                           Rcpp::Named("A_FR_median", A_FR_median),
                                           Rcpp::Named("B_FR_median", B_FR_median));
   
+  return output;
+}
+
+
+//' Calculates WAIC for the Competition Model
+//' 
+//' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
+//' the drift-diffusion competition model. This function will use the output from
+//' \code{Sampler_Competition}. The WAIC is defined on the deviance scale as waic = -2(lppd - p),
+//' where lppd is the log pointwise predictive density, and p is the effective number of parameters.
+//' 
+//' @name WAIC_Competition
+//' @param X_A List of vectors containing the ISIs of A trials
+//' @param X_B List of vectors containing the ISIs of B trials
+//' @param X_AB List of vectors containing the ISIs of AB trials
+//' @param n_A Vector containing number of spikes for each A trial
+//' @param n_B Vector containing number of spikes for each B trial
+//' @param n_AB Vector containing number of spikes for each AB trial
+//' @param Results List produced from running \code{Sampler_Competition}
+//' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+//' @param boundary_knots Vector of two elements specifying the boundary knots
+//' @param internal_knots Vector containing the desired internal knots of the B-splines
+//' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
+//' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in
+//' @param max_time Double containing parameter for estimating the probability of switching states (max_time should be large enough so that the probability of observing an ISI greater than this is negligible) 
+//' @param n_eval Integer containing parameter for estimating the probability of switching states (the larger the number the more computationally expensive, but more accurate)
+//' @returns waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
+//' 
+//' @section Warning:
+//' The following must be true:
+//' \describe{
+//'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+//'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+//'   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+//' }
+//' 
+//' @examples
+//' ################################
+//' ### Time-Inhomogeneous Model ###
+//' ################################
+//' 
+//' ## Load sample data
+//' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+//' 
+//' ## set parameters
+//' MCMC_iters <- 100
+//' basis_degree <- 3
+//' boundary_knots <- c(0, 1)
+//' internal_knots <- c(0.25, 0.5, 0.75)
+//' 
+//' ## Warm Blocks should be longer, however for the example, they are short
+//' Warm_block1 = 50
+//' Warm_block2 = 50
+//' 
+//' # Run MCMC chain
+//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//' 
+//' # Get CI
+//' time <- seq(0, 1, 0.01)
+//' CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+//' 
+//' @export
+//[[Rcpp::export]]
+double WAIC_Competition(const arma::field<arma::vec> X_A,
+                        const arma::field<arma::vec> X_B,
+                        const arma::field<arma::vec> X_AB,
+                        const arma::vec n_A,
+                        const arma::vec n_B,
+                        const arma::vec n_AB,
+                        Rcpp::List Results,
+                        const int basis_degree,
+                        const arma::vec boundary_knots,
+                        const arma::vec internal_knots,
+                        bool time_inhomogeneous = true,
+                        const double burnin_prop = 0.2,
+                        const double max_time = 1,
+                        const int n_eval = 10000){
+  // Check if max_time is large enough
+  double max_ISI = 0;
+  double max_ISI_i = 0;
+  for(int i = 0; i < n_A.n_elem; i++){
+    max_ISI_i = arma::max(X_A(i,0));
+    if(max_ISI < max_ISI_i){
+      max_ISI = max_ISI_i;
+    }
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+    max_ISI_i = arma::max(X_B(i,0));
+    if(max_ISI < max_ISI_i){
+      max_ISI = max_ISI_i;
+    }
+  }
+  for(int i = 0; i < n_AB.n_elem; i++){
+    max_ISI_i = arma::max(X_AB(i,0));
+    if(max_ISI < max_ISI_i){
+      max_ISI = max_ISI_i;
+    }
+  }
+  if(5 * max_ISI > max_time){
+    Rcpp::Rcout << "'max_time' may be too low. 'max_time' has been changed to " << 5 * max_ISI << "\n";
+    max_ISI = 5 * max_ISI;
+  }
+  if(burnin_prop < 0){
+    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }if(burnin_prop >= 1){
+    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }
+  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+  arma::mat basis_coef_A;
+  arma::mat basis_coef_B;
+  arma::mat theta = Results["theta"];
+  if(time_inhomogeneous == true){
+    // Check conditions
+    if(basis_degree <  1){
+      Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+    }
+    for(int i = 0; i < internal_knots.n_elem; i++){
+      if(boundary_knots(0) >= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+      }
+      if(boundary_knots(1) <= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+      }
+    }
+    
+    //Create B-splines
+    splines2::BSpline bspline;
+    for(int i = 0; i < n_A.n_elem; i++){
+      arma::vec time = arma::zeros(n_A(i));
+      for(int j = 1; j < n_A(i); j++){
+        time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(true)};
+      basis_funct_A(i,0) = bspline_mat;
+    }
+    
+    for(int i = 0; i < n_B.n_elem; i++){
+      arma::vec time = arma::zeros(n_B(i));
+      for(int j = 1; j < n_B(i); j++){
+        time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(true)};
+      basis_funct_B(i,0) = bspline_mat;
+    }
+    
+    for(int i = 0; i < n_AB.n_elem; i++){
+      arma::vec time = arma::zeros(n_AB(i));
+      for(int j = 1; j < n_AB(i); j++){
+        time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(true)};
+      basis_funct_AB(i,0) = bspline_mat;
+    }
+    arma::mat ph = Results["basis_coef_A"];
+    basis_coef_A = ph;
+    arma::mat ph1 = Results["basis_coef_B"];
+    basis_coef_B = ph1;
+  }else{
+    for(int i = 0; i < n_A.n_elem; i++){
+      basis_funct_A(i, 0) = arma::zeros(n_A(i), 1);
+    }
+    for(int i = 0; i < n_B.n_elem; i++){
+      basis_funct_B(i, 0) = arma::zeros(n_B(i), 1);
+    }
+    for(int i = 0; i < n_AB.n_elem; i++){
+      basis_funct_AB(i, 0) = arma::zeros(n_AB(i), 1);
+    }
+    basis_coef_A = arma::zeros(theta.n_rows,1);
+    basis_coef_B = arma::zeros(theta.n_rows,1);
+    
+  }
+  
+  const arma::field<arma::mat> Labels = Results["labels"];
+  double waic = NeuralComp::calc_WAIC_competition(X_A, X_B, X_AB, n_A, n_B, n_AB, theta, basis_coef_A,
+                                                  basis_coef_B, basis_funct_A, basis_funct_B, basis_funct_AB,
+                                                  Labels, burnin_prop, max_time, n_eval);
+  return waic;
+}
+
+//' Calculates WAIC for the Inverse Gaussian Renewal Process
+//' 
+//' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
+//' the inverse Gaussian renewal process. This function will use the output from
+//' \code{Sampler_IGP} fit for the A, B, and AB data. The WAIC is defined on the 
+//' deviance scale as waic = -2(lppd - p), where lppd is the log pointwise 
+//' predictive density, and p is the effective number of parameters.
+//' 
+//' @name WAIC_IGP
+//' @param X_A List of vectors containing the ISIs of A trials
+//' @param X_B List of vectors containing the ISIs of B trials
+//' @param X_AB List of vectors containing the ISIs of AB trials
+//' @param n_A Vector containing number of spikes for each A trial
+//' @param n_B Vector containing number of spikes for each B trial
+//' @param n_AB Vector containing number of spikes for each AB trial
+//' @param Results_A List produced from running \code{Sampler_Competition} for A trials
+//' @param Results_B List produced from running \code{Sampler_Competition} for B trials
+//' @param Results_AB List produced from running \code{Sampler_Competition} for AB trials
+//' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+//' @param boundary_knots Vector of two elements specifying the boundary knots
+//' @param internal_knots Vector containing the desired internal knots of the B-splines
+//' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
+//' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in
+//' @returns waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
+//' 
+//' @section Warning:
+//' The following must be true:
+//' \describe{
+//'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+//'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+//'   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+//' }
+//' 
+//' @examples
+//' ################################
+//' ### Time-Inhomogeneous Model ###
+//' ################################
+//' 
+//' ## Load sample data
+//' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+//' 
+//' ## set parameters
+//' MCMC_iters <- 100
+//' basis_degree <- 3
+//' boundary_knots <- c(0, 1)
+//' internal_knots <- c(0.25, 0.5, 0.75)
+//' 
+//' ## Warm Blocks should be longer, however for the example, they are short
+//' Warm_block1 = 50
+//' Warm_block2 = 50
+//' 
+//' # Run MCMC chain
+//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//' 
+//' # Get CI
+//' time <- seq(0, 1, 0.01)
+//' CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+//' 
+//' @export
+//[[Rcpp::export]]
+double WAIC_IGP(const arma::field<arma::vec> X_A,
+                       const arma::field<arma::vec> X_B,
+                       const arma::field<arma::vec> X_AB,
+                       const arma::vec n_A,
+                       const arma::vec n_B,
+                       const arma::vec n_AB,
+                       Rcpp::List Results_A,
+                       Rcpp::List Results_B,
+                       Rcpp::List Results_AB,
+                       const int basis_degree,
+                       const arma::vec boundary_knots,
+                       const arma::vec internal_knots,
+                       bool time_inhomogeneous = true,
+                       const double burnin_prop = 0.2){
+ 
+ if(burnin_prop < 0){
+   Rcpp::stop("'burnin_prop' must be between 0 and 1");
+ }if(burnin_prop >= 1){
+   Rcpp::stop("'burnin_prop' must be between 0 and 1");
+ }
+ arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+ arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+ arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+ arma::mat basis_coef_A;
+ arma::mat basis_coef_B;
+ arma::mat basis_coef_AB;
+ arma::mat theta_A = Results_A["theta"];
+ arma::mat theta_B = Results_B["theta"];
+ arma::mat theta_AB = Results_AB["theta"];
+ if(time_inhomogeneous == true){
+   // Check conditions
+   if(basis_degree <  1){
+     Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+   }
+   for(int i = 0; i < internal_knots.n_elem; i++){
+     if(boundary_knots(0) >= internal_knots(i)){
+       Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+     }
+     if(boundary_knots(1) <= internal_knots(i)){
+       Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+     }
+   }
+   
+   //Create B-splines
+   splines2::BSpline bspline;
+   for(int i = 0; i < n_A.n_elem; i++){
+     arma::vec time = arma::zeros(n_A(i));
+     for(int j = 1; j < n_A(i); j++){
+       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+     }
+     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                 boundary_knots);
+     // Get Basis matrix
+     arma::mat bspline_mat{bspline.basis(true)};
+     basis_funct_A(i,0) = bspline_mat;
+   }
+   
+   for(int i = 0; i < n_B.n_elem; i++){
+     arma::vec time = arma::zeros(n_B(i));
+     for(int j = 1; j < n_B(i); j++){
+       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+     }
+     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                 boundary_knots);
+     // Get Basis matrix
+     arma::mat bspline_mat{bspline.basis(true)};
+     basis_funct_B(i,0) = bspline_mat;
+   }
+   
+   for(int i = 0; i < n_AB.n_elem; i++){
+     arma::vec time = arma::zeros(n_AB(i));
+     for(int j = 1; j < n_AB(i); j++){
+       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+     }
+     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                 boundary_knots);
+     // Get Basis matrix
+     arma::mat bspline_mat{bspline.basis(true)};
+     basis_funct_AB(i,0) = bspline_mat;
+   }
+   arma::mat ph = Results_A["basis_coef"];
+   basis_coef_A = ph;
+   arma::mat ph1 = Results_B["basis_coef"];
+   basis_coef_B = ph1;
+   arma::mat ph2 = Results_AB["basis_coef"];
+   basis_coef_AB = ph2;
+ }else{
+   for(int i = 0; i < n_A.n_elem; i++){
+     basis_funct_A(i, 0) = arma::zeros(n_A(i), 1);
+   }
+   for(int i = 0; i < n_B.n_elem; i++){
+     basis_funct_B(i, 0) = arma::zeros(n_B(i), 1);
+   }
+   for(int i = 0; i < n_AB.n_elem; i++){
+     basis_funct_AB(i, 0) = arma::zeros(n_AB(i), 1);
+   }
+   basis_coef_A = arma::zeros(theta_A.n_rows,1);
+   basis_coef_B = arma::zeros(theta_B.n_rows,1);
+   basis_coef_AB = arma::zeros(theta_AB.n_rows,1);
+ }
+ 
+ double waic = NeuralComp::calc_WAIC_IGP(X_A, X_B, X_AB, n_A, n_B, n_AB, theta_A, 
+                                         basis_coef_A, theta_B, basis_coef_B, 
+                                         theta_AB, basis_coef_AB, basis_funct_A, 
+                                         basis_funct_B, basis_funct_AB, burnin_prop);
+
+ return waic;
+}
+
+//[[Rcpp::export]]
+arma::mat test(arma::vec theta,
+               double max_time,
+               int n_eval){
+  arma::mat output = NeuralComp::approximate_L_given_theta(theta,
+                                                           max_time,
+                                                           n_eval);
   return output;
 }

@@ -102,8 +102,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // FR_CI_IGP
-Rcpp::List FR_CI_IGP(const arma::vec time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const arma::mat basis_coef_samp, const arma::mat theta, const double burnin_prop, const double alpha);
-RcppExport SEXP _NeuralComp_FR_CI_IGP(SEXP timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP basis_coef_sampSEXP, SEXP thetaSEXP, SEXP burnin_propSEXP, SEXP alphaSEXP) {
+Rcpp::List FR_CI_IGP(const arma::vec time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const Rcpp::List Results, const double burnin_prop, const double alpha);
+RcppExport SEXP _NeuralComp_FR_CI_IGP(SEXP timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP ResultsSEXP, SEXP burnin_propSEXP, SEXP alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -111,17 +111,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type basis_coef_samp(basis_coef_sampSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::List >::type Results(ResultsSEXP);
     Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
     Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, basis_coef_samp, theta, burnin_prop, alpha));
+    rcpp_result_gen = Rcpp::wrap(FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, alpha));
     return rcpp_result_gen;
 END_RCPP
 }
 // FR_CI_Competition
-Rcpp::List FR_CI_Competition(const arma::vec time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const arma::mat basis_coef_A_samp, const arma::mat basis_coef_B_samp, const arma::mat theta, const double burnin_prop, const double alpha);
-RcppExport SEXP _NeuralComp_FR_CI_Competition(SEXP timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP basis_coef_A_sampSEXP, SEXP basis_coef_B_sampSEXP, SEXP thetaSEXP, SEXP burnin_propSEXP, SEXP alphaSEXP) {
+Rcpp::List FR_CI_Competition(const arma::vec time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const Rcpp::List Results, const double burnin_prop, const double alpha);
+RcppExport SEXP _NeuralComp_FR_CI_Competition(SEXP timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP ResultsSEXP, SEXP burnin_propSEXP, SEXP alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -129,12 +128,71 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type basis_coef_A_samp(basis_coef_A_sampSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type basis_coef_B_samp(basis_coef_B_sampSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::List >::type Results(ResultsSEXP);
     Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
     Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(FR_CI_Competition(time, basis_degree, boundary_knots, internal_knots, basis_coef_A_samp, basis_coef_B_samp, theta, burnin_prop, alpha));
+    rcpp_result_gen = Rcpp::wrap(FR_CI_Competition(time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
+// WAIC_Competition
+double WAIC_Competition(const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, Rcpp::List Results, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, bool time_inhomogeneous, const double burnin_prop, const double max_time, const int n_eval);
+RcppExport SEXP _NeuralComp_WAIC_Competition(SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP ResultsSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP time_inhomogeneousSEXP, SEXP burnin_propSEXP, SEXP max_timeSEXP, SEXP n_evalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_A(X_ASEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_B(X_BSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_AB(X_ABSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_A(n_ASEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_B(n_BSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_AB(n_ABSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Results(ResultsSEXP);
+    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
+    Rcpp::traits::input_parameter< bool >::type time_inhomogeneous(time_inhomogeneousSEXP);
+    Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
+    Rcpp::traits::input_parameter< const double >::type max_time(max_timeSEXP);
+    Rcpp::traits::input_parameter< const int >::type n_eval(n_evalSEXP);
+    rcpp_result_gen = Rcpp::wrap(WAIC_Competition(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, max_time, n_eval));
+    return rcpp_result_gen;
+END_RCPP
+}
+// WAIC_IGP
+double WAIC_IGP(const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, Rcpp::List Results_A, Rcpp::List Results_B, Rcpp::List Results_AB, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, bool time_inhomogeneous, const double burnin_prop);
+RcppExport SEXP _NeuralComp_WAIC_IGP(SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP Results_ASEXP, SEXP Results_BSEXP, SEXP Results_ABSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP time_inhomogeneousSEXP, SEXP burnin_propSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_A(X_ASEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_B(X_BSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_AB(X_ABSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_A(n_ASEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_B(n_BSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_AB(n_ABSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Results_A(Results_ASEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Results_B(Results_BSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Results_AB(Results_ABSEXP);
+    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
+    Rcpp::traits::input_parameter< bool >::type time_inhomogeneous(time_inhomogeneousSEXP);
+    Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
+    rcpp_result_gen = Rcpp::wrap(WAIC_IGP(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test
+arma::mat test(arma::vec theta, double max_time, int n_eval);
+RcppExport SEXP _NeuralComp_test(SEXP thetaSEXP, SEXP max_timeSEXP, SEXP n_evalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< double >::type max_time(max_timeSEXP);
+    Rcpp::traits::input_parameter< int >::type n_eval(n_evalSEXP);
+    rcpp_result_gen = Rcpp::wrap(test(theta, max_time, n_eval));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -223,8 +281,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_getBSpline", (DL_FUNC) &_NeuralComp_getBSpline, 4},
     {"_NeuralComp_Sampler_Competition", (DL_FUNC) &_NeuralComp_Sampler_Competition, 34},
     {"_NeuralComp_Sampler_IGP", (DL_FUNC) &_NeuralComp_Sampler_IGP, 20},
-    {"_NeuralComp_FR_CI_IGP", (DL_FUNC) &_NeuralComp_FR_CI_IGP, 8},
-    {"_NeuralComp_FR_CI_Competition", (DL_FUNC) &_NeuralComp_FR_CI_Competition, 9},
+    {"_NeuralComp_FR_CI_IGP", (DL_FUNC) &_NeuralComp_FR_CI_IGP, 7},
+    {"_NeuralComp_FR_CI_Competition", (DL_FUNC) &_NeuralComp_FR_CI_Competition, 7},
+    {"_NeuralComp_WAIC_Competition", (DL_FUNC) &_NeuralComp_WAIC_Competition, 14},
+    {"_NeuralComp_WAIC_IGP", (DL_FUNC) &_NeuralComp_WAIC_IGP, 14},
+    {"_NeuralComp_test", (DL_FUNC) &_NeuralComp_test, 3},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},

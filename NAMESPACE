@@ -3,6 +3,8 @@
 export(FR_CI_IGP)
 export(Sampler_Competition)
 export(Sampler_IGP)
+export(WAIC_Competition)
+export(WAIC_IGP)
 export(getBSpline)
 exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp,evalCpp)

@@ -13,7 +13,7 @@ Sampler_IGP(
   internal_knots,
   time_inhomogeneous = TRUE,
   Warm_block1 = 500L,
-  Warm_block2 = 1000L,
+  Warm_block2 = 3000L,
   Leapfrog_steps = 10L,
   I_mean = 40,
   I_shape = 1,

@@ -6,5 +6,6 @@
 #include "NeuralComp/Priors.h"
 #include "NeuralComp/Labels.h"
 #include "NeuralComp/SplinePrior.h"
+#include "NeuralComp/WAIC.h"
 
 #endif
