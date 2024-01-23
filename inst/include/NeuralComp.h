@@ -7,5 +7,6 @@
 #include "NeuralComp/Labels.h"
 #include "NeuralComp/SplinePrior.h"
 #include "NeuralComp/WAIC.h"
+#include "NeuralComp/PosteriorPredictive.h"
 
 #endif

@@ -18,7 +18,7 @@ WAIC_IGP(
   boundary_knots,
   internal_knots,
   time_inhomogeneous = TRUE,
-  burnin_prop = 0.2
+  burnin_prop = 0.5
 )
 }
 \arguments{
@@ -48,7 +48,7 @@ WAIC_IGP(
 
 \item{time_inhomogeneous}{Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)}
 
-\item{burnin_prop}{Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in}
+\item{burnin_prop}{Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in (Note burnin_prop includes warm-up iterations)}
 }
 \value{
 waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
@@ -71,6 +71,44 @@ The following must be true:
 }
 
 \examples{
+##############################
+### Time-Homogeneous Model ###
+##############################
+
+## Load sample data
+dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+
+## set parameters
+MCMC_iters <- 100
+
+basis_degree <- 3
+boundary_knots <- c(0, 1)
+internal_knots <- c(0.25, 0.5, 0.75)
+
+## Warm Blocks should be longer, however for the example, they are short
+Warm_block1 = 50
+Warm_block2 = 50
+
+## Run MCMC chain for A trials
+results_A <- Sampler_IGP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+                         internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+                         time_inhomogeneous = FALSE)
+                       
+## Run MCMC chain for B trials
+results_B<- Sampler_IGP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
+                        internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+                        time_inhomogeneous = FALSE)
+
+## Run MCMC chain for AB trials
+results_AB <- Sampler_IGP(dat$X_AB, dat$n_AB, MCMC_iters, basis_degree, boundary_knots,
+                          internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+                          time_inhomogeneous = FALSE)         
+## Calculate WAIC
+WAIC <- WAIC_IGP(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, results_A,
+                 results_B, results_AB, basis_degree, boundary_knots, internal_knots,
+                 time_inhomogeneous = FALSE)
+
+
 ################################
 ### Time-Inhomogeneous Model ###
 ################################
@@ -88,13 +126,19 @@ internal_knots <- c(0.25, 0.5, 0.75)
 Warm_block1 = 50
 Warm_block2 = 50
 
-# Run MCMC chain
-results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
-                               MCMC_iters, basis_degree, boundary_knots, internal_knots,
-                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+## Run MCMC chain for A trials
+results_A <- Sampler_IGP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+                         internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+                       
+## Run MCMC chain for B trials
+results_B<- Sampler_IGP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
+                        internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 
-# Get CI
-time <- seq(0, 1, 0.01)
-CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+## Run MCMC chain for AB trials
+results_AB <- Sampler_IGP(dat$X_AB, dat$n_AB, MCMC_iters, basis_degree, boundary_knots,
+                          internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+
+WAIC <- WAIC_IGP(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, results_A,
+                 results_B, results_AB, basis_degree, boundary_knots, internal_knots)
 
 }

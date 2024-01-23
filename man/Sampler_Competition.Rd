@@ -173,7 +173,7 @@ internal_knots <- c(0.25, 0.5, 0.75)
 Warm_block1 = 50
 Warm_block2 = 50
 
-# Run MCMC chain
+## Run MCMC chain
 results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
@@ -197,7 +197,7 @@ internal_knots <- c(0.25, 0.5, 0.75)
 Warm_block1 = 50
 Warm_block2 = 50
 
-# Run MCMC chain
+## Run MCMC chain
 results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)

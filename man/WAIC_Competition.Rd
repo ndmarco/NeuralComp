@@ -16,7 +16,7 @@ WAIC_Competition(
   boundary_knots,
   internal_knots,
   time_inhomogeneous = TRUE,
-  burnin_prop = 0.2,
+  burnin_prop = 0.5,
   max_time = 1,
   n_eval = 10000L
 )
@@ -44,7 +44,7 @@ WAIC_Competition(
 
 \item{time_inhomogeneous}{Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)}
 
-\item{burnin_prop}{Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in}
+\item{burnin_prop}{Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in (Note burnin_prop includes warm-up iterations)}
 
 \item{max_time}{Double containing parameter for estimating the probability of switching states (max_time should be large enough so that the probability of observing an ISI greater than this is negligible)}
 
@@ -70,6 +70,35 @@ The following must be true:
 }
 
 \examples{
+##############################
+### Time-Homogeneous Model ###
+##############################
+
+## Load sample data
+dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+
+## set parameters
+MCMC_iters <- 100
+
+basis_degree <- 3
+boundary_knots <- c(0, 1)
+internal_knots <- c(0.25, 0.5, 0.75)
+
+## Warm Blocks should be longer, however for the example, they are short
+Warm_block1 = 50
+Warm_block2 = 50
+
+## Run MCMC chain
+results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+                               MCMC_iters, basis_degree, boundary_knots, internal_knots,
+                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+                               time_inhomogeneous = FALSE)
+                               
+## Calculate WAIC
+WAIC <- WAIC_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
+                         results, basis_degree, boundary_knots, internal_knots,
+                         time_inhomogeneous = FALSE)
+
 ################################
 ### Time-Inhomogeneous Model ###
 ################################
@@ -87,13 +116,13 @@ internal_knots <- c(0.25, 0.5, 0.75)
 Warm_block1 = 50
 Warm_block2 = 50
 
-# Run MCMC chain
+## Run MCMC chain
 results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 
-# Get CI
-time <- seq(0, 1, 0.01)
-CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+## Calculate WAIC
+WAIC <- WAIC_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
+                       results, basis_degree, boundary_knots, internal_knots)
 
 }
