@@ -151,7 +151,7 @@ getBSpline <- function(time, basis_degree, boundary_knots, internal_knots) {
 #'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 #' 
 #' @export
-Sampler_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, Warm_block1 = 500L, Warm_block2 = 3000L, Leapfrog_steps = 10L, I_A_mean = 40, I_A_shape = 1, I_B_mean = 40, I_B_shape = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, delta_shape = 0.01, delta_rate = 0.1, step_size_theta = 0.001, step_size_FR = 0.001, delta_proposal_mean = -2, delta_proposal_sd = 0.3, alpha_labels = 0.2, alpha = 1, beta = 0.005, delta_adaption_block = 100L, Mass_adaption_block = 500L, M_proposal = 10L) {
+Sampler_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, Warm_block1 = 500L, Warm_block2 = 2000L, Leapfrog_steps = 10L, I_A_mean = 40, I_A_shape = 1, I_B_mean = 40, I_B_shape = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, delta_shape = 0.01, delta_rate = 0.1, step_size_theta = 0.001, step_size_FR = 0.001, delta_proposal_mean = -2, delta_proposal_sd = 0.3, alpha_labels = 0.2, alpha = 1, beta = 0.005, delta_adaption_block = 100L, Mass_adaption_block = 500L, M_proposal = 10L) {
     .Call('_NeuralComp_Sampler_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_A_mean, I_A_shape, I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, step_size_theta, step_size_FR, delta_proposal_mean, delta_proposal_sd, alpha_labels, alpha, beta, delta_adaption_block, Mass_adaption_block, M_proposal)
 }
 
@@ -255,7 +255,7 @@ Sampler_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basi
 #'                        internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 #' 
 #' @export
-Sampler_IGP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, Warm_block1 = 500L, Warm_block2 = 3000L, Leapfrog_steps = 10L, I_mean = 40, I_shape = 1, sigma_mean = 6.32, sigma_shape = 1, step_size_theta = 0.001, step_size_FR = 0.001, alpha = 1, beta = 0.005, Mass_adaption_block = 500L, M_proposal = 10L) {
+Sampler_IGP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, Warm_block1 = 500L, Warm_block2 = 2000L, Leapfrog_steps = 10L, I_mean = 40, I_shape = 1, sigma_mean = 6.32, sigma_shape = 1, step_size_theta = 0.001, step_size_FR = 0.001, alpha = 1, beta = 0.005, Mass_adaption_block = 500L, M_proposal = 10L) {
     .Call('_NeuralComp_Sampler_IGP', PACKAGE = 'NeuralComp', X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_mean, I_shape, sigma_mean, sigma_shape, step_size_theta, step_size_FR, alpha, beta, Mass_adaption_block, M_proposal)
 }
 
