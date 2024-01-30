@@ -786,7 +786,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     delta_proposal_sdi = 0.005;
   }
   
-  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.05));
+  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.001));
   
   
   for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
@@ -807,7 +807,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
         }
       }
       if((i % theta_adaptation_block) == 0){
-        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.05));
+        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.001));
       }
     }
     
@@ -858,8 +858,10 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.6){
         step_size_theta = step_size_theta * 0.8;
-      }else if(prop_accept_10_theta > 0.80){
+      }else if(prop_accept_10_theta > 0.8){
         step_size_theta = step_size_theta * 1.2;
+      }else if(prop_accept_10_theta > 0.9){
+        step_size_theta = step_size_theta * 1.5;
       }
     }
   }
@@ -1100,13 +1102,13 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     delta_proposal_sdi = 0.005;
   }
   
-  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.05));
+  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.001));
   arma::mat ph_basis = arma::zeros(std::ceil(0.5 *Warm_block1), basis_coef_A.n_cols + basis_coef_B.n_cols);
   ph_basis.submat(0, 0, std::ceil(0.5 *Warm_block1) - 1, basis_coef_A.n_cols-1) = basis_coef_A.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0, 
                   Warm_block1 - 1, basis_coef_A.n_cols - 1);
   ph_basis.submat(0, basis_coef_A.n_cols, std::ceil(0.5 *Warm_block1) - 1, basis_coef_A.n_cols + basis_coef_B.n_cols - 1) = basis_coef_B.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0, 
                   Warm_block1 - 1, basis_coef_B.n_cols - 1);
-  Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis) + arma::diagmat(arma::ones(ph_basis.n_cols) * 0.05));
+  Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis) + arma::diagmat(arma::ones(ph_basis.n_cols) * 0.001));
   
   
   for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
@@ -1129,13 +1131,13 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
         }
       }
       if((i % theta_adaptation_block) == 0){
-        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.05));
+        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.001));
         arma::mat ph_basis1 = arma::zeros(i-theta_adaptation_block, basis_coef_A.n_cols + basis_coef_B.n_cols);
         ph_basis1.submat(0, 0, theta_adaptation_block - 1, basis_coef_A.n_cols-1) = basis_coef_A.submat(i- theta_adaptation_block, 0, 
                          i - 1, basis_coef_A.n_cols - 1);
         ph_basis1.submat(0, basis_coef_A.n_cols, theta_adaptation_block - 1, basis_coef_A.n_cols + basis_coef_B.n_cols - 1) = basis_coef_B.submat(i- theta_adaptation_block, 0, 
                          i - 1, basis_coef_B.n_cols - 1);
-        Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis1) + arma::diagmat(arma::ones(ph_basis1.n_cols) * 0.05));
+        Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis1) + arma::diagmat(arma::ones(ph_basis1.n_cols) * 0.001));
       }
     }
     
@@ -1201,6 +1203,8 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
         step_size_FR = step_size_FR * 0.8;
       }else if(prop_accept_10 > 0.8){
         step_size_FR = step_size_FR * 1.2;
+      }else if(prop_accept_10 > 0.9){
+        step_size_FR = step_size_FR * 1.5;
       }
       
       // adjust step size for I_A, I_B, sigma_A, sigma_B
@@ -1211,6 +1215,8 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.8){
         step_size_theta = step_size_theta * 1.2;
+      }else if(prop_accept_10_theta > 0.9){
+        step_size_theta = step_size_theta * 1.5;
       }
     }
   }
@@ -1386,8 +1392,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
   
   
   
-  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.05));
-  
+  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.001));
   
   for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
     if((i % 25) == 0){
@@ -1399,7 +1404,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
     
     if(i > Warm_block1){
       if((i % theta_adaptation_block) == 0){
-        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.05));
+        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.001));
       }
     }
     
@@ -1429,6 +1434,8 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.8){
         step_size_theta = step_size_theta * 1.2;
+      }else if(prop_accept_10_theta > 0.9){
+        step_size_theta = step_size_theta * 1.5;
       }
     }
   }
@@ -1569,11 +1576,11 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
     
   }
   
-  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 1))+ arma::diagmat(arma::ones(theta.n_cols) * 0.05));
+  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 - 1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.001));
   arma::mat ph_basis = arma::zeros(std::ceil(0.5 *Warm_block1), basis_coef.n_cols);
   ph_basis.submat(0, 0, std::ceil(0.5 *Warm_block1) - 1, basis_coef.n_cols-1) = basis_coef.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0, 
                   Warm_block1 - 1, basis_coef.n_cols - 1);
-  Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis) + arma::diagmat(arma::ones(ph_basis.n_cols) * 0.05));
+  Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis) + arma::diagmat(arma::ones(ph_basis.n_cols) * 0.001));
   
   
   for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
@@ -1588,11 +1595,11 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
     
     if(i > Warm_block1){
       if((i % theta_adaptation_block) == 0){
-        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.05));
+        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.001));
         arma::mat ph_basis1 = arma::zeros(i-theta_adaptation_block, basis_coef.n_cols);
         ph_basis1.submat(0, 0, theta_adaptation_block - 1, basis_coef.n_cols-1) = basis_coef.submat(i- theta_adaptation_block, 0, 
                          i - 1, basis_coef.n_cols - 1);
-        Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis1) + arma::diagmat(arma::ones(ph_basis1.n_cols) * 0.05));
+        Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis1) + arma::diagmat(arma::ones(ph_basis1.n_cols) * 0.001));
       }
     }
     
@@ -1632,6 +1639,8 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
         step_size_FR = step_size_FR * 0.8;
       }else if(prop_accept_10 > 0.8){
         step_size_FR = step_size_FR * 1.2;
+      }else if(prop_accept_10 > 0.9){
+        step_size_FR = step_size_FR * 1.5;
       }
       
       // adjust step size for I_A, I_B, sigma_A, sigma_B
@@ -1642,6 +1651,8 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.8){
         step_size_theta = step_size_theta * 1.2;
+      }else if(prop_accept_10_theta > 0.9){
+        step_size_theta = step_size_theta * 1.5;
       }
     }
   }

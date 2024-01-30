@@ -49,9 +49,9 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
     if(time_inhomogeneous == true){
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
-      arma::mat bspline_mat{bspline.basis(true)};
-      ISI_A = rinv_gauss((1/(theta(i,0) + arma::dot(bspline_mat.row(0), basis_coef_A.row(i)))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
-      ISI_B = rinv_gauss((1/(theta(i,1) + arma::dot(bspline_mat.row(0), basis_coef_B.row(i)))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
+      arma::mat bspline_mat{bspline.basis(false)};
+      ISI_A = rinv_gauss((1/(theta(i,0) * std::exp(arma::dot(bspline_mat.row(0), basis_coef_A.row(i))))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
+      ISI_B = rinv_gauss((1/(theta(i,1) * std::exp(arma::dot(bspline_mat.row(0), basis_coef_B.row(i))))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
     }else{
       ISI_A = rinv_gauss((1/(theta(i,0))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
       ISI_B = rinv_gauss((1/(theta(i,1))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
@@ -74,13 +74,13 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
       if(time_inhomogeneous == true){
         bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                     boundary_knots);
-        arma::mat bspline_mat{bspline.basis(true)};
+        arma::mat bspline_mat{bspline.basis(false)};
         if(labels_i(j - 1) == 0){
-          ISI_A = rinv_gauss((1/(theta(i,0) + arma::dot(bspline_mat.row(0), basis_coef_A.row(i)))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
-          ISI_B = theta(i,4) + rinv_gauss((1/(theta(i,1) + arma::dot(bspline_mat.row(0), basis_coef_B.row(i)))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
+          ISI_A = rinv_gauss((1/(theta(i,0) * std::exp(arma::dot(bspline_mat.row(0), basis_coef_A.row(i))))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
+          ISI_B = theta(i,4) + rinv_gauss((1/(theta(i,1) * std::exp(arma::dot(bspline_mat.row(0), basis_coef_B.row(i))))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
         }else{
-          ISI_A = theta(i,4) + rinv_gauss((1/(theta(i,0) + arma::dot(bspline_mat.row(0), basis_coef_A.row(i)))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
-          ISI_B = rinv_gauss((1/(theta(i,1) + arma::dot(bspline_mat.row(0), basis_coef_B.row(i)))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
+          ISI_A = theta(i,4) + rinv_gauss((1/(theta(i,0) * std::exp(arma::dot(bspline_mat.row(0), basis_coef_A.row(i))))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
+          ISI_B = rinv_gauss((1/(theta(i,1) * std::exp(arma::dot(bspline_mat.row(0), basis_coef_B.row(i))))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
         }
       }else{
         if(labels_i(j - 1) == 0){
@@ -156,8 +156,8 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
     if(time_inhomogeneous == true){
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
-      arma::mat bspline_mat{bspline.basis(true)};
-      ISI_A = rinv_gauss((1/(theta(i,0) + arma::dot(bspline_mat.row(0), basis_coef_A.row(i)))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
+      arma::mat bspline_mat{bspline.basis(false)};
+      ISI_A = rinv_gauss((1/(theta(i,0) * std::exp(arma::dot(bspline_mat.row(0), basis_coef_A.row(i))))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
     }else{
       ISI_A = rinv_gauss((1/(theta(i,0))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
     }
@@ -171,8 +171,8 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
       if(time_inhomogeneous == true){
         bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                     boundary_knots);
-        arma::mat bspline_mat{bspline.basis(true)};
-        ISI_A = rinv_gauss((1/(theta(i,0) + arma::dot(bspline_mat.row(0), basis_coef_A.row(i)))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
+        arma::mat bspline_mat{bspline.basis(false)};
+        ISI_A = rinv_gauss((1/(theta(i,0) * std::exp(arma::dot(bspline_mat.row(0), basis_coef_A.row(i))))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
       }else{
         ISI_A = rinv_gauss((1/(theta(i,0))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
       }
@@ -193,8 +193,8 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
     if(time_inhomogeneous == true){
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
-      arma::mat bspline_mat1{bspline.basis(true)};
-      ISI_B = rinv_gauss((1/(theta(i,1) + arma::dot(bspline_mat1.row(0), basis_coef_B.row(i)))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
+      arma::mat bspline_mat1{bspline.basis(false)};
+      ISI_B = rinv_gauss((1/(theta(i,1) * std::exp(arma::dot(bspline_mat1.row(0), basis_coef_B.row(i))))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
     }else{
       ISI_B = rinv_gauss((1/(theta(i,1))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
     }
@@ -207,8 +207,8 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
       if(time_inhomogeneous == true){
         bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                     boundary_knots);
-        arma::mat bspline_mat1{bspline.basis(true)};
-        ISI_B = rinv_gauss((1/(theta(i,1) + arma::dot(bspline_mat1.row(0), basis_coef_B.row(i)))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
+        arma::mat bspline_mat1{bspline.basis(false)};
+        ISI_B = rinv_gauss((1/(theta(i,1) * std::exp(arma::dot(bspline_mat1.row(0), basis_coef_B.row(i))))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
       }else{
         ISI_B = rinv_gauss((1/(theta(i,1))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
       }

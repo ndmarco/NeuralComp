@@ -51,7 +51,7 @@ arma::mat getBSpline(const arma::vec time,
   
   bspline = splines2::BSpline(time, internal_knots, basis_degree,
                               boundary_knots);
-  arma::mat bspline_mat{bspline.basis(true)};
+  arma::mat bspline_mat{bspline.basis(false)};
   basis_funct = bspline_mat;
   return basis_funct;
 }
@@ -299,7 +299,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
      // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
+     arma::mat bspline_mat{bspline.basis(false)};
      basis_funct_A(i,0) = bspline_mat;
    }
    
@@ -313,7 +313,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
      // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
+     arma::mat bspline_mat{bspline.basis(false)};
      basis_funct_B(i,0) = bspline_mat;
    }
    
@@ -327,7 +327,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
      // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
+     arma::mat bspline_mat{bspline.basis(false)};
      basis_funct_AB(i,0) = bspline_mat;
    }
    
@@ -490,11 +490,10 @@ Rcpp::List Sampler_IGP(const arma::field<arma::vec> X,
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
      // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
+     arma::mat bspline_mat{bspline.basis(false)};
      basis_funct(i,0) = bspline_mat;
    }
    
-   Rcpp::Rcout << "Made it ";
    param = NeuralComp::Mixed_sampler_IGP_int_TI(basis_funct, X, n, MCMC_iters, 
                                             Leapfrog_steps, I_mean, I_shape,
                                             sigma_mean, sigma_shape,
@@ -599,7 +598,7 @@ Rcpp::List FR_CI_IGP(const arma::vec time,
   
   bspline = splines2::BSpline(time, internal_knots, basis_degree,
                               boundary_knots);
-  arma::mat bspline_mat{bspline.basis(true)};
+  arma::mat bspline_mat{bspline.basis(false)};
   basis_funct = bspline_mat;
   
   int n_MCMC = basis_coef_samp.n_rows;
@@ -608,7 +607,7 @@ Rcpp::List FR_CI_IGP(const arma::vec time,
   arma::vec FR_median = arma::zeros(time.n_elem);
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
   for(int i = burnin_num; i < n_MCMC; i++){
-    MCMC_FR.row(i - burnin_num) = theta(i,0) + (basis_funct * basis_coef_samp.row(i).t()).t();
+    MCMC_FR.row(i - burnin_num) = theta(i,0) * arma::exp(basis_funct * basis_coef_samp.row(i).t()).t();
   }
   
   arma::vec p = {alpha/2, 0.5, 1 - (alpha/2)};
@@ -657,7 +656,7 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
   
   bspline = splines2::BSpline(time, internal_knots, basis_degree,
                               boundary_knots);
-  arma::mat bspline_mat{bspline.basis(true)};
+  arma::mat bspline_mat{bspline.basis(false)};
   basis_funct = bspline_mat;
   
   int n_MCMC = basis_coef_A_samp.n_rows;
@@ -669,8 +668,8 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
   arma::vec B_FR_median = arma::zeros(time.n_elem);
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
   for(int i = burnin_num; i < n_MCMC; i++){
-    MCMC_A_FR.row(i - burnin_num) = theta(i,0) + (basis_funct * basis_coef_A_samp.row(i).t()).t();
-    MCMC_B_FR.row(i - burnin_num) = theta(i,1) + (basis_funct * basis_coef_B_samp.row(i).t()).t();
+    MCMC_A_FR.row(i - burnin_num) = theta(i,0) * arma::exp(basis_funct * basis_coef_A_samp.row(i).t()).t();
+    MCMC_B_FR.row(i - burnin_num) = theta(i,1) * arma::exp(basis_funct * basis_coef_B_samp.row(i).t()).t();
   }
   
   arma::vec p = {alpha/2, 0.5, 1 - (alpha/2)};
@@ -861,7 +860,7 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
       // Get Basis matrix
-      arma::mat bspline_mat{bspline.basis(true)};
+      arma::mat bspline_mat{bspline.basis(false)};
       basis_funct_A(i,0) = bspline_mat;
     }
     
@@ -873,7 +872,7 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
       // Get Basis matrix
-      arma::mat bspline_mat{bspline.basis(true)};
+      arma::mat bspline_mat{bspline.basis(false)};
       basis_funct_B(i,0) = bspline_mat;
     }
     
@@ -885,7 +884,7 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
       // Get Basis matrix
-      arma::mat bspline_mat{bspline.basis(true)};
+      arma::mat bspline_mat{bspline.basis(false)};
       basis_funct_AB(i,0) = bspline_mat;
     }
     arma::mat ph = Results["basis_coef_A"];
@@ -1073,7 +1072,7 @@ double WAIC_IGP(const arma::field<arma::vec> X_A,
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
      // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
+     arma::mat bspline_mat{bspline.basis(false)};
      basis_funct_A(i,0) = bspline_mat;
    }
    
@@ -1085,7 +1084,7 @@ double WAIC_IGP(const arma::field<arma::vec> X_A,
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
      // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
+     arma::mat bspline_mat{bspline.basis(false)};
      basis_funct_B(i,0) = bspline_mat;
    }
    
@@ -1097,7 +1096,7 @@ double WAIC_IGP(const arma::field<arma::vec> X_A,
      bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                  boundary_knots);
      // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(true)};
+     arma::mat bspline_mat{bspline.basis(false)};
      basis_funct_AB(i,0) = bspline_mat;
    }
    arma::mat ph = Results_A["basis_coef"];

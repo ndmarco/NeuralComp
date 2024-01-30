@@ -199,30 +199,11 @@ inline double log_prior_FR(const double& I_A_sigma_sq,
                            arma::vec& basis_coef_A,
                            arma::vec& basis_coef_B){
   
-  
-  arma::vec ph_A = arma::ones(basis_coef_A.n_elem) * theta(0);
-  arma::vec ph_B = arma::ones(basis_coef_B.n_elem) * theta(1);
-  
-  ph_A = ph_A + basis_coef_A;
-  ph_B = ph_B + basis_coef_B;
-  
   // I_A prior
   double l_prior =  -((0.5 / I_A_sigma_sq) * arma::dot(basis_coef_A, basis_coef_A)) - (basis_coef_A.n_elem * std::log(std::sqrt(I_A_sigma_sq * 2 * arma::datum::pi)));
-  // adjust for truncation
-  l_prior = l_prior - (basis_coef_A.n_elem * R::pnorm5(theta(0), 0, std::sqrt(I_A_sigma_sq), true, true));
   
   // I_B prior
   l_prior = l_prior - ((0.5 / I_B_sigma_sq) * arma::dot(basis_coef_B , basis_coef_B)) - (basis_coef_B.n_elem * std::log(std::sqrt(I_B_sigma_sq * 2 * arma::datum::pi)));
-  // adjust for truncation
-  l_prior = l_prior - (basis_coef_B.n_elem * R::pnorm5(theta(1), 0, std::sqrt(I_B_sigma_sq), true, true));
-  
-  // make sure in support
-  if(arma::min(ph_A) <= 0){
-    l_prior = -1 * INFINITY;
-  }
-  if(arma::min(ph_B) <= 0){
-    l_prior = -1 * INFINITY;
-  }
   
   return l_prior;
 }
@@ -230,18 +211,10 @@ inline double log_prior_FR(const double& I_A_sigma_sq,
 inline double log_prior_FR1(const double& I_sigma_sq,
                             const arma::vec theta,
                             arma::vec& basis_coef){
-  arma::vec ph = arma::ones(basis_coef.n_elem) * theta(0);
-  ph = ph + basis_coef;
-  
   // I_A prior
   double l_prior =  -((0.5 / I_sigma_sq) * arma::dot(basis_coef, basis_coef))  - (basis_coef.n_elem * std::log(std::sqrt(I_sigma_sq * 2 * arma::datum::pi)));
-  l_prior = l_prior - (basis_coef.n_elem * R::pnorm5(theta(0), 0, std::sqrt(I_sigma_sq), true, true));
   
-  // make sure in support
-  if(arma::min(ph) <= 0){
-    l_prior = -1 * INFINITY;
-  }
-  
+
   return l_prior;
 }
 
@@ -286,30 +259,13 @@ inline a_double log_prior_FR(const double& I_A_sigma_sq,
                              const double& I_B_sigma_sq,
                              arma::vec theta,
                              a_vector basis_coef){
-  bool in_support = true;
-  
-  for(int i = 0; i < (basis_coef.rows() / 2); i++){
-    if(basis_coef(i) + theta(0) <= 0){
-      in_support = false;
-    }
-    if(basis_coef(i + (basis_coef.rows() / 2)) + theta(1) <= 0){
-      in_support = false;
-    }
-  }
   
   // I_A prior
   a_double l_prior =  -((0.5 / I_A_sigma_sq) * norm_AD(basis_coef, true)) - ((basis_coef.rows() / 2) * std::log(std::sqrt(I_A_sigma_sq * 2 * arma::datum::pi)));
-  // adjust for truncation
-  l_prior = l_prior - ((basis_coef.rows() / 2) * R::pnorm5(theta(0), 0, std::sqrt(I_A_sigma_sq), true, true));
   
   // I_B prior
   l_prior = l_prior - ((0.5 / I_B_sigma_sq) * norm_AD(basis_coef, false)) - ((basis_coef.rows() / 2) * std::log(std::sqrt(I_B_sigma_sq * 2 * arma::datum::pi)));
-  // adjust for truncation
-  l_prior = l_prior - ((basis_coef.rows() / 2) * R::pnorm5(theta(1), 0, std::sqrt(I_B_sigma_sq), true, true));
-  
-  if(in_support == false){
-    l_prior = -1 * INFINITY;
-  }
+
   
   return l_prior;
 }
@@ -327,22 +283,9 @@ inline a_double log_prior_FR1(const double& I_sigma_sq,
                               arma::vec theta,
                               a_vector basis_coef){
   
-  bool in_support = true;
-  
-  for(int i = 0; i < basis_coef.rows(); i++){
-    if(basis_coef(i) + theta(0) <= 0){
-      in_support = false;
-    }
-  }
-  
   // I_A prior
   a_double l_prior =  -((0.5 / I_sigma_sq) * norm_AD1(basis_coef)) - (basis_coef.rows() * std::log(std::sqrt(I_sigma_sq * 2 * arma::datum::pi)));
-  // adjust for truncation
-  l_prior = l_prior - (basis_coef.rows() * R::pnorm5(theta(0), 0, std::sqrt(I_sigma_sq), true, true));
-  
-  if(in_support == false){
-    l_prior = -1 * INFINITY;
-  }
+
   
   return l_prior;
 }
@@ -398,34 +341,18 @@ inline double log_prior(const double& I_A_mean,
                         const arma::vec basis_coef_A,
                         const arma::vec basis_coef_B,
                         arma::vec& theta){
-  arma::vec ph_A = arma::ones(basis_coef_A.n_elem) * theta(0);
-  arma::vec ph_B = arma::ones(basis_coef_B.n_elem) * theta(1);
-  
-  ph_A = ph_A + basis_coef_A;
-  ph_B = ph_B + basis_coef_B;
-  
-  double int_lim_A = -1 * arma::min(basis_coef_A);
-  double int_lim_B = -1 * arma::min(basis_coef_B);
   
   // I_A prior
-  double l_prior =   (dinv_gauss(theta(0), I_A_mean, I_A_shape) - pinv_gauss(int_lim_A, I_A_mean, I_A_mean));
+  double l_prior =   (dinv_gauss(theta(0), I_A_mean, I_A_shape));
   
   // I_B prior
-  l_prior = l_prior + (dinv_gauss(theta(1), I_B_mean, I_B_shape) - pinv_gauss(int_lim_B, I_B_mean, I_B_mean));
+  l_prior = l_prior + (dinv_gauss(theta(1), I_B_mean, I_B_shape));
   
   // sigma_A prior
   l_prior = l_prior + dinv_gauss(theta(2), sigma_A_mean, sigma_A_shape);
   
   // sigma_B prior
   l_prior = l_prior + dinv_gauss(theta(3), sigma_B_mean, sigma_B_shape);
-  
-  // make sure in support
-  if(arma::min(ph_A) <= 0){
-    l_prior = -1 * INFINITY;
-  }
-  if(arma::min(ph_B) <= 0){
-    l_prior = -1 * INFINITY;
-  }
   
   
   return l_prior;
@@ -443,35 +370,18 @@ inline a_double log_prior(const double& I_A_mean,
                           const arma::vec basis_coef_A,
                           const arma::vec basis_coef_B,
                           a_vector theta){
-  bool in_support = true;
-  
-  for(int i = 0; i < basis_coef_A.n_elem; i++){
-    if(basis_coef_A(i) + theta(0) <= 0){
-      in_support = false;
-    }
-    if(basis_coef_B(i) + theta(1) <= 0){
-      in_support = false;
-    }
-  }
-  
-  double int_lim_A = -1 * arma::min(basis_coef_A);
-  double int_lim_B = -1 * arma::min(basis_coef_B);
   
   // I_A prior
-  a_double l_prior = (dinv_gauss(theta(0), I_A_mean, I_A_shape) - pinv_gauss(int_lim_A, I_A_mean, I_A_mean));
+  a_double l_prior = (dinv_gauss(theta(0), I_A_mean, I_A_shape));
   
   // I_B prior
-  l_prior = l_prior + (dinv_gauss(theta(1), I_B_mean, I_B_shape) - pinv_gauss(int_lim_B, I_B_mean, I_B_mean));
+  l_prior = l_prior + (dinv_gauss(theta(1), I_B_mean, I_B_shape));
   
   // sigma_A prior
   l_prior = l_prior + dinv_gauss(theta(2), sigma_A_mean, sigma_A_shape);
   
   // sigma_B prior
   l_prior = l_prior + dinv_gauss(theta(3), sigma_B_mean, sigma_B_shape);
-  
-  if(in_support == false){
-    l_prior = -1 * INFINITY;
-  }
   
   return l_prior;
 }
