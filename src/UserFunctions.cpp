@@ -212,8 +212,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
                                double delta_proposal_mean = -2,
                                double delta_proposal_sd = 0.3,
                                double alpha_labels = 0.2,
-                               double alpha = 1,
-                               double beta = 0.005,
+                               double gamma = 1,
                                int delta_adaption_block = 100,
                                int Mass_adaption_block = 500,
                                int M_proposal = 10){
@@ -264,11 +263,8 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
  if(alpha_labels >= 1){
    Rcpp::stop("'alpha_labels' must be between 0 and 1");
  }
- if(alpha <= 0){
-   Rcpp::stop("'alpha' must be between 0 and 1");
- }
- if(beta <= 0){
-   Rcpp::stop("'beta' must be between 0 and 1");
+ if(gamma <= 0){
+   Rcpp::stop("'gamma' must be greater than 0");
  }
  
  Rcpp::List param;
@@ -338,7 +334,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
                                             sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
                                             step_size_theta, step_size_FR,
                                             delta_proposal_mean, delta_proposal_sd, 
-                                            alpha_labels, alpha, beta, delta_adaption_block,
+                                            alpha_labels, gamma, delta_adaption_block,
                                             Mass_adaption_block, M_proposal, 
                                             Warm_block1, Warm_block2);
  }else{
@@ -798,8 +794,9 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
                         const arma::vec internal_knots,
                         const bool time_inhomogeneous = true,
                         const double burnin_prop = 0.5,
-                        const double max_time = 1,
-                        const int n_eval = 10000){
+                        const double max_time = 2,
+                        double n_spike_evals = 25,
+                        const int n_eval = 3000){
   // Check if max_time is large enough
   double max_ISI = 0;
   double max_ISI_i = 0;
@@ -836,6 +833,10 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
   arma::mat basis_coef_A;
   arma::mat basis_coef_B;
   arma::mat theta = Results["theta"];
+  if(time_inhomogeneous == false){
+    n_spike_evals = 1;
+  }
+  double max_spike_time = 0;
   if(time_inhomogeneous == true){
     // Check conditions
     if(basis_degree <  1){
@@ -857,6 +858,9 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
       for(int j = 1; j < n_A(i); j++){
         time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
       }
+      if(time(n_A(i) - 1) > max_spike_time){
+        max_spike_time = time(n_A(i) - 1);
+      }
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
       // Get Basis matrix
@@ -869,6 +873,9 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
       for(int j = 1; j < n_B(i); j++){
         time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
       }
+      if(time(n_B(i) - 1) > max_spike_time){
+        max_spike_time = time(n_B(i) - 1);
+      }
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
       // Get Basis matrix
@@ -880,6 +887,9 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
       arma::vec time = arma::zeros(n_AB(i));
       for(int j = 1; j < n_AB(i); j++){
         time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+      }
+      if(time(n_AB(i) - 1) > max_spike_time){
+        max_spike_time = time(n_AB(i) - 1);
       }
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
@@ -909,7 +919,152 @@ double WAIC_Competition(const arma::field<arma::vec> X_A,
   const arma::field<arma::mat> Labels = Results["labels"];
   double waic = NeuralComp::calc_WAIC_competition(X_A, X_B, X_AB, n_A, n_B, n_AB, theta, basis_coef_A,
                                                   basis_coef_B, basis_funct_A, basis_funct_B, basis_funct_AB,
-                                                  Labels, burnin_prop, max_time, n_eval);
+                                                  Labels, burnin_prop, max_time, max_spike_time, n_spike_evals,
+                                                  n_eval, basis_degree, boundary_knots, internal_knots);
+  return waic;
+}
+
+
+//[[Rcpp::export]]
+double WAIC_Competition_obs(const arma::field<arma::vec> X_A,
+                            const arma::field<arma::vec> X_B,
+                            const arma::field<arma::vec> X_AB,
+                            const arma::vec n_A,
+                            const arma::vec n_B,
+                            const arma::vec n_AB,
+                            Rcpp::List Results,
+                            const int basis_degree,
+                            const arma::vec boundary_knots,
+                            const arma::vec internal_knots,
+                            const bool time_inhomogeneous = true,
+                            const double burnin_prop = 0.5,
+                            const double max_time = 2,
+                            double n_spike_evals = 25,
+                            const int n_eval = 3000){
+  // Check if max_time is large enough
+  double max_ISI = 0;
+  double max_ISI_i = 0;
+  for(int i = 0; i < n_A.n_elem; i++){
+    max_ISI_i = arma::max(X_A(i,0));
+    if(max_ISI < max_ISI_i){
+      max_ISI = max_ISI_i;
+    }
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+    max_ISI_i = arma::max(X_B(i,0));
+    if(max_ISI < max_ISI_i){
+      max_ISI = max_ISI_i;
+    }
+  }
+  for(int i = 0; i < n_AB.n_elem; i++){
+    max_ISI_i = arma::max(X_AB(i,0));
+    if(max_ISI < max_ISI_i){
+      max_ISI = max_ISI_i;
+    }
+  }
+  if(5 * max_ISI > max_time){
+    Rcpp::Rcout << "'max_time' may be too low. 'max_time' has been changed to " << 5 * max_ISI << "\n";
+    max_ISI = 5 * max_ISI;
+  }
+  if(burnin_prop < 0){
+    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }if(burnin_prop >= 1){
+    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }
+  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+  arma::mat basis_coef_A;
+  arma::mat basis_coef_B;
+  arma::mat theta = Results["theta"];
+  if(time_inhomogeneous == false){
+    n_spike_evals = 1;
+  }
+  double max_spike_time = 0;
+  if(time_inhomogeneous == true){
+    // Check conditions
+    if(basis_degree <  1){
+      Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+    }
+    for(int i = 0; i < internal_knots.n_elem; i++){
+      if(boundary_knots(0) >= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+      }
+      if(boundary_knots(1) <= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+      }
+    }
+    
+    //Create B-splines
+    splines2::BSpline bspline;
+    for(int i = 0; i < n_A.n_elem; i++){
+      arma::vec time = arma::zeros(n_A(i));
+      for(int j = 1; j < n_A(i); j++){
+        time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+      }
+      if(time(n_A(i) - 1) > max_spike_time){
+        max_spike_time = time(n_A(i) - 1);
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct_A(i,0) = bspline_mat;
+    }
+    
+    for(int i = 0; i < n_B.n_elem; i++){
+      arma::vec time = arma::zeros(n_B(i));
+      for(int j = 1; j < n_B(i); j++){
+        time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+      }
+      if(time(n_B(i) - 1) > max_spike_time){
+        max_spike_time = time(n_B(i) - 1);
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct_B(i,0) = bspline_mat;
+    }
+    
+    for(int i = 0; i < n_AB.n_elem; i++){
+      arma::vec time = arma::zeros(n_AB(i));
+      for(int j = 1; j < n_AB(i); j++){
+        time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+      }
+      if(time(n_AB(i) - 1) > max_spike_time){
+        max_spike_time = time(n_AB(i) - 1);
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct_AB(i,0) = bspline_mat;
+    }
+    arma::mat ph = Results["basis_coef_A"];
+    basis_coef_A = ph;
+    arma::mat ph1 = Results["basis_coef_B"];
+    basis_coef_B = ph1;
+  }else{
+    for(int i = 0; i < n_A.n_elem; i++){
+      basis_funct_A(i, 0) = arma::zeros(n_A(i), 1);
+    }
+    for(int i = 0; i < n_B.n_elem; i++){
+      basis_funct_B(i, 0) = arma::zeros(n_B(i), 1);
+    }
+    for(int i = 0; i < n_AB.n_elem; i++){
+      basis_funct_AB(i, 0) = arma::zeros(n_AB(i), 1);
+    }
+    basis_coef_A = arma::zeros(theta.n_rows,1);
+    basis_coef_B = arma::zeros(theta.n_rows,1);
+    
+  }
+  
+  const arma::field<arma::mat> Labels = Results["labels"];
+  double waic = NeuralComp::calc_WAIC_competition_observation(X_A, X_B, X_AB, n_A, n_B, n_AB, theta, basis_coef_A,
+                                                  basis_coef_B, basis_funct_A, basis_funct_B, basis_funct_AB,
+                                                  Labels, burnin_prop, max_time, max_spike_time, n_spike_evals,
+                                                  n_eval, basis_degree, boundary_knots, internal_knots);
   return waic;
 }
 
@@ -1129,6 +1284,117 @@ double WAIC_IGP(const arma::field<arma::vec> X_A,
 }
 
 //[[Rcpp::export]]
+double WAIC_IGP_obs(const arma::field<arma::vec> X_A,
+                    const arma::field<arma::vec> X_B,
+                    const arma::field<arma::vec> X_AB,
+                    const arma::vec n_A,
+                    const arma::vec n_B,
+                    const arma::vec n_AB,
+                    Rcpp::List Results_A,
+                    Rcpp::List Results_B,
+                    Rcpp::List Results_AB,
+                    const int basis_degree,
+                    const arma::vec boundary_knots,
+                    const arma::vec internal_knots,
+                    const bool time_inhomogeneous = true,
+                    const double burnin_prop = 0.5){
+  
+  if(burnin_prop < 0){
+    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }if(burnin_prop >= 1){
+    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }
+  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+  arma::mat basis_coef_A;
+  arma::mat basis_coef_B;
+  arma::mat basis_coef_AB;
+  arma::mat theta_A = Results_A["theta"];
+  arma::mat theta_B = Results_B["theta"];
+  arma::mat theta_AB = Results_AB["theta"];
+  if(time_inhomogeneous == true){
+    // Check conditions
+    if(basis_degree <  1){
+      Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+    }
+    for(int i = 0; i < internal_knots.n_elem; i++){
+      if(boundary_knots(0) >= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+      }
+      if(boundary_knots(1) <= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+      }
+    }
+    
+    //Create B-splines
+    splines2::BSpline bspline;
+    for(int i = 0; i < n_A.n_elem; i++){
+      arma::vec time = arma::zeros(n_A(i));
+      for(int j = 1; j < n_A(i); j++){
+        time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct_A(i,0) = bspline_mat;
+    }
+    
+    for(int i = 0; i < n_B.n_elem; i++){
+      arma::vec time = arma::zeros(n_B(i));
+      for(int j = 1; j < n_B(i); j++){
+        time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct_B(i,0) = bspline_mat;
+    }
+    
+    for(int i = 0; i < n_AB.n_elem; i++){
+      arma::vec time = arma::zeros(n_AB(i));
+      for(int j = 1; j < n_AB(i); j++){
+        time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct_AB(i,0) = bspline_mat;
+    }
+    arma::mat ph = Results_A["basis_coef"];
+    basis_coef_A = ph;
+    arma::mat ph1 = Results_B["basis_coef"];
+    basis_coef_B = ph1;
+    arma::mat ph2 = Results_AB["basis_coef"];
+    basis_coef_AB = ph2;
+  }else{
+    for(int i = 0; i < n_A.n_elem; i++){
+      basis_funct_A(i, 0) = arma::zeros(n_A(i), 1);
+    }
+    for(int i = 0; i < n_B.n_elem; i++){
+      basis_funct_B(i, 0) = arma::zeros(n_B(i), 1);
+    }
+    for(int i = 0; i < n_AB.n_elem; i++){
+      basis_funct_AB(i, 0) = arma::zeros(n_AB(i), 1);
+    }
+    basis_coef_A = arma::zeros(theta_A.n_rows,1);
+    basis_coef_B = arma::zeros(theta_B.n_rows,1);
+    basis_coef_AB = arma::zeros(theta_AB.n_rows,1);
+  }
+  
+  double waic = NeuralComp::calc_WAIC_IGP_observation(X_A, X_B, X_AB, n_A, n_B, n_AB, theta_A, 
+                                          basis_coef_A, theta_B, basis_coef_B, 
+                                          theta_AB, basis_coef_AB, basis_funct_A, 
+                                          basis_funct_B, basis_funct_AB, burnin_prop);
+  
+  return waic;
+}
+
+
+//[[Rcpp::export]]
 Rcpp::List Competition_Posterior_Predictive(const double trial_time,
                                             const int basis_degree,
                                             const arma::vec boundary_knots,
@@ -1184,4 +1450,30 @@ arma::vec test(double mean,
   }
   return output;
 }
+
+//[[Rcpp::export]]
+arma::mat approximate_L_given_theta1(arma::vec theta,
+                          arma::vec basis_coef_A,
+                          arma::vec basis_coef_B,
+                          arma::vec basis_func,
+                          double max_time,
+                          int n_eval){
+  arma::mat output = NeuralComp::approximate_L_given_theta(theta, basis_coef_A, basis_coef_B,
+                                                            basis_func, max_time, n_eval);
   
+  return output;
+}
+  
+
+//[[Rcpp::export]]
+arma::mat approximate_L_given_theta2(arma::vec theta,
+                                     arma::vec basis_coef_A,
+                                     arma::vec basis_coef_B,
+                                     arma::vec basis_func,
+                                     double max_time,
+                                     int n_eval){
+  arma::mat output = NeuralComp::approximate_L_given_theta_simpson(theta, basis_coef_A, basis_coef_B,
+                                                           basis_func, max_time, n_eval);
+  
+  return output;
+}

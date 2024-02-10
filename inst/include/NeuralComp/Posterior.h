@@ -312,29 +312,29 @@ inline double log_posterior_FR(arma::field<arma::vec>& Labels,
 }
 
 inline a_double log_posterior_eigen_theta(arma::field<arma::vec>& Labels,
-                                        a_vector theta,
-                                        arma::vec basis_coef_A,
-                                        arma::vec basis_coef_B,
-                                        const arma::field<arma::mat>& basis_funct_A,
-                                        const arma::field<arma::mat>& basis_funct_B,
-                                        const arma::field<arma::mat>& basis_funct_AB,
-                                        const arma::field<arma::vec>& X_A,
-                                        const arma::field<arma::vec>& X_B,
-                                        const arma::field<arma::vec>& X_AB,
-                                        const arma::vec& n_A,
-                                        const arma::vec& n_B,
-                                        const arma::vec& n_AB,
-                                        const double& I_A_mean, 
-                                        const double& I_A_shape,
-                                        const double& I_B_mean,
-                                        const double& I_B_shape,
-                                        const double& sigma_A_mean,
-                                        const double& sigma_A_shape,
-                                        const double& sigma_B_mean,
-                                        const double& sigma_B_shape){
+                                          a_vector theta,
+                                          arma::vec basis_coef_A,
+                                          arma::vec basis_coef_B,
+                                          const arma::field<arma::mat>& basis_funct_A,
+                                          const arma::field<arma::mat>& basis_funct_B,
+                                          const arma::field<arma::mat>& basis_funct_AB,
+                                          const arma::field<arma::vec>& X_A,
+                                          const arma::field<arma::vec>& X_B,
+                                          const arma::field<arma::vec>& X_AB,
+                                          const arma::vec& n_A,
+                                          const arma::vec& n_B,
+                                          const arma::vec& n_AB,
+                                          const double& I_A_mean, 
+                                          const double& I_A_shape,
+                                          const double& I_B_mean,
+                                          const double& I_B_shape,
+                                          const double& sigma_A_mean,
+                                          const double& sigma_A_shape,
+                                          const double& sigma_B_mean,
+                                          const double& sigma_B_shape){
   a_double l_posterior = log_likelihood_eigen_theta(Labels, theta, basis_coef_A, basis_coef_B,
-                                                  basis_funct_A, basis_funct_B, basis_funct_AB,
-                                                  X_A, X_B, X_AB, n_A, n_B, n_AB) +
+                                                    basis_funct_A, basis_funct_B, basis_funct_AB,
+                                                    X_A, X_B, X_AB, n_A, n_B, n_AB) +
                                                     log_prior(I_A_mean, I_A_shape, I_B_mean, I_B_shape,
                                                               sigma_A_mean, sigma_A_shape,
                                                               sigma_B_mean, sigma_B_shape,
@@ -701,7 +701,6 @@ inline arma::vec calc_gradient_eigen_theta_update(arma::field<arma::vec>& Labels
   
   for (int i = 0; i < theta.n_elem; i++){
     x(i) = theta(i);
-    
   }
   
   Eigen::VectorXd res = gr.Jacobian(x);

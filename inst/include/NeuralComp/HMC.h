@@ -721,7 +721,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   for(int i = 1; i < Warm_block1; i++){
     if((i % 25) == 0){
       Rcpp::Rcout << "(Warm Up Block 1) Iteration = " << i << "\n";
-      Rcpp::Rcout << "Avg log likelihood = " << arma::accu(llik.subvec(i-25, i-1)) / 25 << "\n";
+      Rcpp::Rcout << "Avg log joint prob = " << arma::accu(llik.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "Prob_accept theta = " << arma::accu(vec_accept_theta.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "Step Size theta = " << step_size_theta << "\n";
     }
@@ -786,28 +786,28 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     delta_proposal_sdi = 0.005;
   }
   
-  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.001));
+  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)));
   
   
   for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
     if((i % 25) == 0){
       Rcpp::Rcout << "(Warm Up Block 2) Iteration = " << i << "\n";
-      Rcpp::Rcout << "Avg log likelihood = " << arma::accu(llik.subvec(i-25, i-1)) / 25 << "\n";
+      Rcpp::Rcout << "Avg log joint prob = " << arma::accu(llik.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "(mu, sigma) = (" << delta_proposal_meani << ", " << delta_proposal_sdi << ") \n"; 
       Rcpp::Rcout << "Prob_accept theta = " << arma::accu(vec_accept_theta.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "Step Size theta = " << step_size_theta << "\n";
     }
     
     if(i > Warm_block1){
-      if((i % delta_adaption_block) == 0){
+      if(((i - Warm_block1) % delta_adaption_block) == 0){
         delta_proposal_meani = arma::mean(theta.col(4).subvec(i - delta_adaption_block, i - 1));
         delta_proposal_sdi = arma::stddev(theta.col(4).subvec(i - delta_adaption_block, i - 1));
         if(delta_proposal_sdi == 0.00){
           delta_proposal_sdi = 0.005;
         }
       }
-      if((i % theta_adaptation_block) == 0){
-        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.001));
+      if(((i - Warm_block1) % theta_adaptation_block) == 0){
+        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 2)));
       }
     }
     
@@ -869,7 +869,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   for(int i =  Warm_block1 + Warm_block2; i <  Warm_block1 + Warm_block2 + MCMC_iters; i++){
     if((i % 50) == 0){
       Rcpp::Rcout << "Iteration = " << i << "\n";
-      Rcpp::Rcout << "Avg log likelihood = " << arma::accu(llik.subvec(i-50, i-1)) / 50 << "\n";
+      Rcpp::Rcout << "Avg log joint prob = " << arma::accu(llik.subvec(i-50, i-1)) / 50 << "\n";
       Rcpp::Rcout << "Prob_accept theta = " << arma::accu(vec_accept_theta.subvec(i-50, i-1)) / 50 << "\n";
     }
     
@@ -960,8 +960,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
                                        double delta_proposal_mean,
                                        double delta_proposal_sd,
                                        const double alpha_labels,
-                                       const double alpha,
-                                       const double beta,
+                                       const double gamma,
                                        int delta_adaption_block,
                                        int theta_adaptation_block,
                                        int M_proposal,
@@ -971,7 +970,9 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   arma::mat basis_coef_A(MCMC_iters + Warm_block1 + Warm_block2, basis_funct_A(0,0).n_cols, arma::fill::zeros);
   arma::mat basis_coef_B(MCMC_iters + Warm_block1 + Warm_block2, basis_funct_B(0,0).n_cols, arma::fill::zeros);
   arma::vec I_A_sigma_sq(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
+  arma::vec omega_A(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
   arma::vec I_B_sigma_sq(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
+  arma::vec omega_B(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
   arma::vec vec_accept(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec llik(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec lposterior(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
@@ -1011,7 +1012,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   for(int i = 1; i < Warm_block1; i++){
     if((i % 25) == 0){
       Rcpp::Rcout << "(Warm Up Block 1) Iteration = " << i << "\n";
-      Rcpp::Rcout << "Avg log likelihood = " << arma::accu(llik.subvec(i-25, i-1)) / 25 << "\n";
+      Rcpp::Rcout << "Avg log joint prob = " << arma::accu(llik.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "Prob_accept FR = " << arma::accu(vec_accept_FR.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "Prob_accept theta = " << arma::accu(vec_accept_theta.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "Step Size theta = " << step_size_theta << "\n";
@@ -1043,17 +1044,19 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma(basis_coef_A_ph, 0, alpha, beta, i, I_A_sigma_sq);
-    update_I_sigma(basis_coef_B_ph, 0, alpha, beta, i, I_B_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_A_ph, i, omega_A, I_A_sigma_sq);
+    update_omega(gamma, i, omega_A, I_A_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_B_ph, i, omega_B, I_B_sigma_sq);
+    update_omega(gamma, i, omega_B, I_B_sigma_sq);
     
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
-    lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
-               I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
-               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
-               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-               alpha, beta);
+    // lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
+    //            I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
+    //            I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+    //            sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+    //            alpha, beta);
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
@@ -1064,6 +1067,8 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
       basis_coef_B.row(i + 1) = basis_coef_B.row(i);
       I_A_sigma_sq(i + 1) = I_A_sigma_sq(i);
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
+      omega_A(i + 1) = omega_A(i);
+      omega_B(i + 1) = omega_B(i);
       for(int j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
@@ -1102,19 +1107,19 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     delta_proposal_sdi = 0.005;
   }
   
-  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.001));
+  Mass_mat_theta = arma::inv_sympd(arma::diagmat(arma::diagvec(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 2)))));
   arma::mat ph_basis = arma::zeros(std::ceil(0.5 *Warm_block1), basis_coef_A.n_cols + basis_coef_B.n_cols);
-  ph_basis.submat(0, 0, std::ceil(0.5 *Warm_block1) - 1, basis_coef_A.n_cols-1) = basis_coef_A.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0, 
+  ph_basis.submat(0, 0, std::ceil(0.5 *Warm_block1) - 1, basis_coef_A.n_cols-1) = basis_coef_A.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0,
                   Warm_block1 - 1, basis_coef_A.n_cols - 1);
-  ph_basis.submat(0, basis_coef_A.n_cols, std::ceil(0.5 *Warm_block1) - 1, basis_coef_A.n_cols + basis_coef_B.n_cols - 1) = basis_coef_B.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0, 
+  ph_basis.submat(0, basis_coef_A.n_cols, std::ceil(0.5 *Warm_block1) - 1, basis_coef_A.n_cols + basis_coef_B.n_cols - 1) = basis_coef_B.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0,
                   Warm_block1 - 1, basis_coef_B.n_cols - 1);
-  Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis) + arma::diagmat(arma::ones(ph_basis.n_cols) * 0.001));
+  Mass_mat_basis = arma::inv_sympd(arma::diagmat(arma::diagvec(arma::cov(ph_basis))));
   
   
   for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
     if((i % 25) == 0){
       Rcpp::Rcout << "(Warm Up Block 2) Iteration = " << i << "\n";
-      Rcpp::Rcout << "Avg log likelihood = " << arma::accu(llik.subvec(i-25, i-1)) / 25 << "\n";
+      Rcpp::Rcout << "Avg log joint prob = " << arma::accu(llik.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "Prob_accept FR= " << arma::accu(vec_accept_FR.subvec(i-25, i-1)) / 25 << "\n";
       Rcpp::Rcout << "(mu, sigma) = (" << delta_proposal_meani << ", " << delta_proposal_sdi << ") \n"; 
       Rcpp::Rcout << "Prob_accept theta = " << arma::accu(vec_accept_theta.subvec(i-25, i-1)) / 25 << "\n";
@@ -1123,21 +1128,21 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     }
     
     if(i > Warm_block1){
-      if((i % delta_adaption_block) == 0){
+      if(((i - Warm_block1) % delta_adaption_block) == 0){
         delta_proposal_meani = arma::mean(theta.col(4).subvec(i - delta_adaption_block, i - 1));
         delta_proposal_sdi = arma::stddev(theta.col(4).subvec(i - delta_adaption_block, i - 1));
         if(delta_proposal_sdi == 0.00){
           delta_proposal_sdi = 0.005;
         }
       }
-      if((i % theta_adaptation_block) == 0){
-        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 2)) + arma::diagmat(arma::ones(theta.n_cols - 1) * 0.001));
-        arma::mat ph_basis1 = arma::zeros(i-theta_adaptation_block, basis_coef_A.n_cols + basis_coef_B.n_cols);
-        ph_basis1.submat(0, 0, theta_adaptation_block - 1, basis_coef_A.n_cols-1) = basis_coef_A.submat(i- theta_adaptation_block, 0, 
+      if(((i - Warm_block1) % theta_adaptation_block) == 0){
+        Mass_mat_theta = arma::inv_sympd(arma::diagmat(arma::diagvec(arma::cov(theta.submat(i - theta_adaptation_block, 0, i-1, theta.n_cols - 2)))));
+        arma::mat ph_basis1 = arma::zeros(theta_adaptation_block, basis_coef_A.n_cols + basis_coef_B.n_cols);
+        ph_basis1.submat(0, 0, theta_adaptation_block - 1, basis_coef_A.n_cols-1) = basis_coef_A.submat(i- theta_adaptation_block, 0,
                          i - 1, basis_coef_A.n_cols - 1);
-        ph_basis1.submat(0, basis_coef_A.n_cols, theta_adaptation_block - 1, basis_coef_A.n_cols + basis_coef_B.n_cols - 1) = basis_coef_B.submat(i- theta_adaptation_block, 0, 
+        ph_basis1.submat(0, basis_coef_A.n_cols, theta_adaptation_block - 1, basis_coef_A.n_cols + basis_coef_B.n_cols - 1) = basis_coef_B.submat(i- theta_adaptation_block, 0,
                          i - 1, basis_coef_B.n_cols - 1);
-        Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis1) + arma::diagmat(arma::ones(ph_basis1.n_cols) * 0.001));
+        Mass_mat_basis = arma::inv_sympd(arma::diagmat(arma::diagvec(arma::cov(ph_basis1))));
       }
     }
     
@@ -1167,17 +1172,19 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma(basis_coef_A_ph, 0, alpha, beta, i, I_A_sigma_sq);
-    update_I_sigma(basis_coef_B_ph, 0, alpha, beta, i, I_B_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_A_ph, i, omega_A, I_A_sigma_sq);
+    update_omega(gamma, i, omega_A, I_A_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_B_ph, i, omega_B, I_B_sigma_sq);
+    update_omega(gamma, i, omega_B, I_B_sigma_sq);
     
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
-    lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
-               I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
-               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
-               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-               alpha, beta);
+    // lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
+    //            I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
+    //            I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+    //            sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+    //            alpha, beta);
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
@@ -1190,6 +1197,8 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
       basis_coef_B.row(i + 1) = basis_coef_B.row(i);
       I_A_sigma_sq(i + 1) = I_A_sigma_sq(i);
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
+      omega_A(i + 1) = omega_A(i);
+      omega_B(i + 1) = omega_B(i);
       for(int j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
@@ -1224,7 +1233,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   for(int i =  Warm_block1 + Warm_block2; i <  Warm_block1 + Warm_block2 + MCMC_iters; i++){
     if((i % 50) == 0){
       Rcpp::Rcout << "Iteration = " << i << "\n";
-      Rcpp::Rcout << "Avg log likelihood = " << arma::accu(llik.subvec(i-50, i-1)) / 50 << "\n";
+      Rcpp::Rcout << "Avg log joint prob = " << arma::accu(llik.subvec(i-50, i-1)) / 50 << "\n";
       Rcpp::Rcout << "Prob_accept FR = " << arma::accu(vec_accept_FR.subvec(i-50, i-1)) / 50 << "\n";
       Rcpp::Rcout << "Prob_accept theta = " << arma::accu(vec_accept_theta.subvec(i-50, i-1)) / 50 << "\n";
     }
@@ -1258,17 +1267,19 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma(basis_coef_A_ph, 0, alpha, beta, i, I_A_sigma_sq);
-    update_I_sigma(basis_coef_B_ph, 0, alpha, beta, i, I_B_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_A_ph, i, omega_A, I_A_sigma_sq);
+    update_omega(gamma, i, omega_A, I_A_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_B_ph, i, omega_B, I_B_sigma_sq);
+    update_omega(gamma, i, omega_B, I_B_sigma_sq);
     
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
-    lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
-               I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
-               I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
-               sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-               alpha, beta);
+    // lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
+    //            I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
+    //            I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+    //            sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+    //            alpha, beta);
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
@@ -1279,6 +1290,8 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
       basis_coef_B.row(i + 1) = basis_coef_B.row(i);
       I_A_sigma_sq(i + 1) = I_A_sigma_sq(i);
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
+      omega_A(i + 1) = omega_A(i);
+      omega_B(i + 1) = omega_B(i);
       for(int j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
@@ -1302,6 +1315,10 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
                                          Rcpp::Named("basis_coef_B", basis_coef_B),
                                          Rcpp::Named("I_A_sigma_sq", I_A_sigma_sq),
                                          Rcpp::Named("I_B_sigma_sq", I_B_sigma_sq),
+                                         Rcpp::Named("omega_A", omega_A),
+                                         Rcpp::Named("omega_B", omega_B),
+                                         Rcpp::Named("Mass_mat_theta", Mass_mat_theta),
+                                         Rcpp::Named("Mass_mat_bsis", Mass_mat_basis),
                                          Rcpp::Named("LogLik", llik),
                                          Rcpp::Named("LogPosterior", lposterior));
   
@@ -1381,7 +1398,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
         step_size_theta = step_size_theta * 0.1;
       }else if(prop_accept_10_theta<= 0.3){
         step_size_theta = step_size_theta * 0.5;
-      }else if(prop_accept_10_theta <= 0.6){
+      }else if(prop_accept_10_theta <= 0.5){
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.85){
         step_size_theta = step_size_theta * 2;
@@ -1392,7 +1409,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
   
   
   
-  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.001));
+  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 -1, theta.n_cols - 1)));
   
   for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
     if((i % 25) == 0){
@@ -1403,8 +1420,8 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
     }
     
     if(i > Warm_block1){
-      if((i % theta_adaptation_block) == 0){
-        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.001));
+      if(((i - Warm_block1) % theta_adaptation_block) == 0){
+        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 1)));
       }
     }
     
@@ -1430,7 +1447,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
       prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
       if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
-      }else if(prop_accept_10_theta <= 0.6){
+      }else if(prop_accept_10_theta <= 0.5){
         step_size_theta = step_size_theta * 0.8;
       }else if(prop_accept_10_theta > 0.8){
         step_size_theta = step_size_theta * 1.2;
@@ -1576,11 +1593,11 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
     
   }
   
-  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 - 1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.001));
+  Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(Warm_block1 - std::floor(0.5 *Warm_block1),0, Warm_block1 - 1, theta.n_cols - 1)));
   arma::mat ph_basis = arma::zeros(std::ceil(0.5 *Warm_block1), basis_coef.n_cols);
   ph_basis.submat(0, 0, std::ceil(0.5 *Warm_block1) - 1, basis_coef.n_cols-1) = basis_coef.submat(Warm_block1 - std::floor(0.5 *Warm_block1), 0, 
                   Warm_block1 - 1, basis_coef.n_cols - 1);
-  Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis) + arma::diagmat(arma::ones(ph_basis.n_cols) * 0.001));
+  Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis));
   
   
   for(int i =  Warm_block1; i <  Warm_block1 + Warm_block2; i++){
@@ -1594,12 +1611,12 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
     }
     
     if(i > Warm_block1){
-      if((i % theta_adaptation_block) == 0){
-        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 1)) + arma::diagmat(arma::ones(theta.n_cols) * 0.001));
-        arma::mat ph_basis1 = arma::zeros(i-theta_adaptation_block, basis_coef.n_cols);
+      if(((i - Warm_block1) % theta_adaptation_block) == 0){
+        Mass_mat_theta = arma::inv_sympd(arma::cov(theta.submat(i - theta_adaptation_block,0, i-1, theta.n_cols - 1)));
+        arma::mat ph_basis1 = arma::zeros(theta_adaptation_block, basis_coef.n_cols);
         ph_basis1.submat(0, 0, theta_adaptation_block - 1, basis_coef.n_cols-1) = basis_coef.submat(i- theta_adaptation_block, 0, 
                          i - 1, basis_coef.n_cols - 1);
-        Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis1) + arma::diagmat(arma::ones(ph_basis1.n_cols) * 0.001));
+        Mass_mat_basis = arma::inv_sympd(arma::cov(ph_basis1));
       }
     }
     
