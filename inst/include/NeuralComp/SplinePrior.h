@@ -35,7 +35,7 @@ inline void update_I_sigma_cauchy(const arma::vec& basis_coef,
                                   int iter,
                                   arma::vec& omega,
                                   arma::vec& I_sigma){
-  double a = 1 + ((basis_coef.n_elem) / 2);
+  double a =  ((1 + basis_coef.n_elem) / 2);
   double b = (0.5 * arma::dot(basis_coef, basis_coef)) + (1 / omega(iter));
   I_sigma(iter) = 1 / R::rgamma(a, 1/b);
 }
