@@ -253,27 +253,118 @@ inline arma::vec calc_loglikelihood_AB(const arma::vec X_AB,
   return llik;
 }
 
-inline double calc_WAIC_competition(const arma::field<arma::vec> X_A,
-                                    const arma::field<arma::vec> X_B,
-                                    const arma::field<arma::vec> X_AB,
-                                    const arma::vec n_A,
-                                    const arma::vec n_B,
-                                    const arma::vec n_AB,
-                                    const arma::mat theta,
-                                    const arma::mat basis_coef_A,
-                                    const arma::mat basis_coef_B,
-                                    const arma::field<arma::mat> basis_funct_A,
-                                    const arma::field<arma::mat> basis_funct_B,
-                                    const arma::field<arma::mat> basis_funct_AB,
-                                    const arma::field<arma::mat> Labels,
-                                    const double burnin_prop,
-                                    const double max_time,
-                                    const double max_spike_time,
-                                    const int n_spikes_eval,
-                                    const int n_eval,
-                                    const int basis_degree,
-                                    const arma::vec boundary_knots,
-                                    const arma::vec internal_knots){
+
+inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
+                                              const arma::mat theta,
+                                              const arma::mat basis_coef_A,
+                                              const arma::mat basis_coef_B,
+                                              const arma::mat basis_funct_AB,
+                                              const arma::field<arma::mat> Labels,
+                                              const int obs_num,
+                                              const int spike_num,
+                                              const double burnin_prop,
+                                              const int n_MCMC_approx,
+                                              arma::vec& llik,
+                                              arma::vec& llik_sd){
+  int n_MCMC = theta.n_rows;
+  int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
+  arma::vec llik_samples = arma::zeros(n_MCMC_approx);
+  double isi_slow = 0;
+  
+  for(int i = burnin_num; i < n_MCMC; i++){
+    if(Labels(obs_num, 0)(i,spike_num) == 0){
+      // label is A
+      if(spike_num != 0){
+        if(Labels(obs_num, 0)(i,spike_num - 1) == 0){
+          // Condition if spike has not switched (still in A)
+          for(int j = 0; j < n_MCMC_approx; j++){
+            isi_slow = theta(i,4) + rinv_gauss_trunc((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))), pow((1 / theta(i, 3)), 2), X_AB(spike_num) - theta(i, 4), INFINITY);
+            llik_samples(j) = dinv_gauss_trunc(X_AB(spike_num), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))), pow((1 / theta(i, 2)), 2), 0, isi_slow);
+          }
+          if(n_MCMC_approx > 1){
+            llik_sd(i - burnin_num) = arma::stddev(llik_samples);
+          }
+          llik(i - burnin_num) = arma::mean(llik_samples);
+        }else{
+          // Condition if spike has switched from B to A
+          for(int j = 0; j < n_MCMC_approx; j++){
+            isi_slow = rinv_gauss_trunc((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))), pow((1 / theta(i, 3)), 2), X_AB(spike_num), INFINITY);
+            llik_samples(j) = dinv_gauss_trunc(X_AB(spike_num) - theta(i, 4), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))), pow((1 / theta(i, 2)), 2), 0, isi_slow - theta(i,4));
+          }
+          if(n_MCMC_approx > 1){
+            llik_sd(i - burnin_num) = arma::stddev(llik_samples);
+          }
+          llik(i - burnin_num) = arma::mean(llik_samples);
+        }
+      }else{
+        for(int j = 0; j < n_MCMC_approx; j++){
+          isi_slow = rinv_gauss_trunc((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))), pow((1 / theta(i, 3)), 2), X_AB(spike_num), INFINITY);
+          llik_samples(j) = dinv_gauss_trunc(X_AB(spike_num), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))), pow((1 / theta(i, 2)), 2), 0, isi_slow);
+        }
+        if(n_MCMC_approx > 1){
+          llik_sd(i - burnin_num) = arma::stddev(llik_samples);
+        }
+        llik(i - burnin_num) = arma::mean(llik_samples);
+      }
+    }else{
+      // label is B
+      if(spike_num != 0){
+        if(Labels(obs_num, 0)(i, spike_num-1) == 1){
+          // Condition if spike has not switched (still in B)
+          for(int j = 0; j < n_MCMC_approx; j++){
+            isi_slow = theta(i,4) + rinv_gauss_trunc((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))), pow((1 / theta(i, 2)), 2), X_AB(spike_num) - theta(i, 4), INFINITY);
+            llik_samples(j) = dinv_gauss_trunc(X_AB(spike_num), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))), pow((1 / theta(i, 3)), 2), 0, isi_slow);
+          }
+          if(n_MCMC_approx > 1){
+            llik_sd(i - burnin_num) = arma::stddev(llik_samples);
+          }
+          llik(i - burnin_num) = arma::mean(llik_samples);
+        }else{
+          // Condition if spike has switched from A to B
+          for(int j = 0; j < n_MCMC_approx; j++){
+            isi_slow = rinv_gauss_trunc((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))), pow((1 / theta(i, 2)), 2), X_AB(spike_num), INFINITY);
+            llik_samples(j) = dinv_gauss_trunc(X_AB(spike_num) - theta(i,4), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))), pow((1 / theta(i, 3)), 2), 0, isi_slow - theta(i,4));
+          }
+          if(n_MCMC_approx > 1){
+            llik_sd(i - burnin_num) = arma::stddev(llik_samples);
+          }
+          llik(i - burnin_num) = arma::mean(llik_samples);
+        }
+      }else{
+        for(int j = 0; j < n_MCMC_approx; j++){
+          isi_slow = rinv_gauss_trunc((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))), pow((1 / theta(i, 2)), 2), X_AB(spike_num), INFINITY);
+          llik_samples(j) = dinv_gauss_trunc(X_AB(spike_num), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))), pow((1 / theta(i, 3)), 2), 0, isi_slow);
+        }
+        if(n_MCMC_approx > 1){
+          llik_sd(i - burnin_num) = arma::stddev(llik_samples);
+        }
+        llik(i - burnin_num) = arma::mean(llik_samples);
+      }
+    }
+  }
+}
+
+inline arma::field<arma::mat> calc_WAIC_competition(const arma::field<arma::vec> X_A,
+                                                    const arma::field<arma::vec> X_B,
+                                                    const arma::field<arma::vec> X_AB,
+                                                    const arma::vec n_A,
+                                                    const arma::vec n_B,
+                                                    const arma::vec n_AB,
+                                                    const arma::mat theta,
+                                                    const arma::mat basis_coef_A,
+                                                    const arma::mat basis_coef_B,
+                                                    const arma::field<arma::mat> basis_funct_A,
+                                                    const arma::field<arma::mat> basis_funct_B,
+                                                    const arma::field<arma::mat> basis_funct_AB,
+                                                    const arma::field<arma::mat> Labels,
+                                                    const double burnin_prop,
+                                                    const double max_time,
+                                                    const double max_spike_time,
+                                                    const int n_spikes_eval,
+                                                    const int n_eval,
+                                                    const int basis_degree,
+                                                    const arma::vec boundary_knots,
+                                                    const arma::vec internal_knots){
   int n_MCMC = theta.n_rows;
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
   
@@ -401,8 +492,115 @@ inline double calc_WAIC_competition(const arma::field<arma::vec> X_A,
   
   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
   
-  return waic;
+  return llik_AB;
 }
+
+
+inline arma::field<arma::mat> calc_WAIC_competition_approx(const arma::field<arma::vec> X_A,
+                                                           const arma::field<arma::vec> X_B,
+                                                           const arma::field<arma::vec> X_AB,
+                                                           const arma::vec n_A,
+                                                           const arma::vec n_B,
+                                                           const arma::vec n_AB,
+                                                           const arma::mat theta,
+                                                           const arma::mat basis_coef_A,
+                                                           const arma::mat basis_coef_B,
+                                                           const arma::field<arma::mat> basis_funct_A,
+                                                           const arma::field<arma::mat> basis_funct_B,
+                                                           const arma::field<arma::mat> basis_funct_AB,
+                                                           const arma::field<arma::mat> Labels,
+                                                           const double burnin_prop,
+                                                           const int n_MCMC_approx,
+                                                           const int basis_degree,
+                                                           const arma::vec boundary_knots,
+                                                           const arma::vec internal_knots){
+  int n_MCMC = theta.n_rows;
+  int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
+  
+  // Placeholder for log-likelihood by observation
+  arma::field<arma::mat> llik_A(n_A.n_elem, 1); 
+  arma::field<arma::mat> llik_B(n_B.n_elem, 1);
+  arma::field<arma::mat> llik_AB(n_AB.n_elem, 1);
+  arma::field<arma::mat> llik_AB_sd(n_AB.n_elem, 1);
+
+  for(int i = 0; i < n_AB.n_elem; i++){
+    llik_AB(i,0) = arma::zeros(n_MCMC - burnin_num, n_AB(i));
+    llik_AB_sd(i,0) = arma::zeros(n_MCMC - burnin_num, n_AB(i));
+  }
+  
+  // calculate log-likelihood for A
+  for(int i = 0; i < n_A.n_elem; i++){
+    llik_A(i,0) = calc_loglikelihood_A(X_A(i,0), theta, basis_coef_A, 
+           basis_funct_A(i,0), burnin_prop);
+  }
+  
+  // calculate log-likelihood for B
+  for(int i = 0; i < n_B.n_elem; i++){
+    llik_B(i,0) = calc_loglikelihood_B(X_B(i,0), theta, basis_coef_B, 
+           basis_funct_B(i,0), burnin_prop);
+  }
+  
+  Rcpp::List output;
+  
+  // calculate log-likelihood for AB
+  for(int i = 0; i < n_AB.n_elem; i++){
+    arma::vec llik_ph = arma::zeros(n_MCMC - burnin_num);
+    arma::vec llik_sd_ph = arma::zeros(n_MCMC - burnin_num);
+    for(int j = 0; j < n_AB(i); j++){
+      calc_loglikelihood_AB_MCMC_approx(X_AB(i,0), theta, basis_coef_A, basis_coef_B,
+                                        basis_funct_AB(i,0), Labels, i, j, burnin_prop,
+                                        n_MCMC_approx, llik_ph, llik_sd_ph);
+    
+      llik_AB(i,0).col(j) = llik_ph;
+      llik_AB_sd(i,0).col(j) = llik_sd_ph;
+    }
+    Rcpp::Rcout << "Calculated loglikelihood for observation " << i << "\n";
+  }
+  
+  // calculate log pointwise predictive density
+  double llpd = 0;
+  for(int i = 0; i < n_A.n_elem; i++){
+    for(int j = 0; j < n_A(i); j++){
+      llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+    }
+  }
+  
+  for(int i = 0; i < n_B.n_elem; i++){
+    for(int j = 0; j < n_B(i); j++){
+      llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+    }
+  }
+  for(int i = 0; i < n_AB.n_elem; i++){
+    for(int j = 0; j < n_AB(i); j++){
+      llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+    }
+  }
+  Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+  
+  double pwaic = 0;
+  for(int i = 0; i < n_A.n_elem; i++){
+    for(int j = 0; j < n_A(i); j++){
+      pwaic = pwaic + (arma::var(llik_A(i,0).col(j)));
+    }
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+    for(int j = 0; j < n_B(i); j++){
+      pwaic = pwaic + (arma::var(llik_B(i,0).col(j)));
+    }
+  }
+  for(int i = 0; i < n_AB.n_elem; i++){
+    for(int j = 0; j < n_AB(i); j++){
+      pwaic = pwaic + (arma::var(llik_AB(i,0).col(j)) - arma::mean(arma::square(llik_AB_sd(i,0).col(j)) / n_MCMC_approx));
+    }
+  }
+  Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
+  double waic = -2 * (llpd - pwaic);
+  
+  Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
+  
+  return llik_AB;
+}
+
 
 
 inline double calc_WAIC_competition_observation(const arma::field<arma::vec> X_A,

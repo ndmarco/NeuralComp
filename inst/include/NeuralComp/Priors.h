@@ -31,6 +31,8 @@ inline arma::vec inv_transform_pars(arma::vec& theta){
   return invtrans_theta;
 }
 
+
+
 // Returns log pdf of inverse Gaussian distribution
 // x: random variable
 // mean: mean of inverse Gaussian
@@ -141,7 +143,79 @@ inline a_double pinv_gauss(const a_double x,
   return lcdf;
 }
 
+// quantile function for inverse gaussian distribution
+inline double qinv_gauss(const double p,
+                         const double mean,
+                         const double shape){
+  // initialize starting point
+  double m = mean * (std::sqrt((1 + std::pow((3 * mean) / (2 * shape), 2.0))) - ((3 * mean) / (2 * shape)));
+  if((1 - pinv_gauss(m, mean, shape)) < 0.00001){
+    double gamma_scale = (mean * mean) / shape;
+    double gamma_shape =  mean / gamma_scale;
+    m = R::qgamma(p, gamma_shape, gamma_scale, true, false);
+  }
+  
+  // Newton's Method
+  int i = 0;
+  double delta = p - (1 - std::exp(pinv_gauss(m, mean, shape)));
+  double movement = 1;
+  while ((i < 100) && (std::abs(movement) > 1e-10)){
+    if(delta < 1e-5){
+      movement = (delta / std::exp(dinv_gauss(m, mean, shape)));
+      m = m + movement;
+    }else{
+      movement = (delta * std::exp(std::log(p) + std::log(1 - (delta / 2)))) / std::exp(dinv_gauss(m, mean, shape));
+      m = m + movement;
+    }
+    delta = p - (1 - std::exp(pinv_gauss(m, mean, shape)));
+    i = i + 1;
+  }
+  
+  return m;
+}
 
+inline double dinv_gauss_trunc(const double x,
+                               const double mean,
+                               const double shape,
+                               const double lower_trunc,
+                               const double upper_trunc){
+  double p_lower = 0;
+  double p_upper = 1;
+  if(lower_trunc > 0){
+    p_lower = 1 - std::exp(pinv_gauss(lower_trunc, mean, shape));
+  }
+  if(upper_trunc != INFINITY){
+    p_upper = 1 - std::exp(pinv_gauss(upper_trunc, mean, shape));
+  }
+  double log_p_diff = std::log(p_upper - p_lower);
+  double lpdf = dinv_gauss(x, mean, shape) - log_p_diff;
+  if(x < lower_trunc){
+    lpdf = -1 * INFINITY;
+  }
+  if(x > upper_trunc){
+    lpdf = -1 * INFINITY;
+  }
+  return lpdf;
+}
+  
+  
+inline double rinv_gauss_trunc(const double mean,
+                               const double shape,
+                               const double lower_trunc,
+                               const double upper_trunc){
+  double u = R::runif(0,1);
+  double p_lower = 0;
+  double p_upper = 1;
+  if(lower_trunc > 0){
+    p_lower = 1 - std::exp(pinv_gauss(lower_trunc, mean, shape));
+  }
+  if(upper_trunc != INFINITY){
+    p_upper = 1 - std::exp(pinv_gauss(upper_trunc, mean, shape));
+  }
+  double p_comb = p_lower + u*(p_upper - p_lower);
+  return qinv_gauss(p_comb, mean, shape);
+}
+  
 // return sample from inverse gaussian
 inline double rinv_gauss(const double mean,
                          const double shape){

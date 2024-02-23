@@ -1180,11 +1180,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB);
-    // lposterior(i) = log_posterior_model_TI(llik(i), theta_exp, basis_coef_A_ph, basis_coef_B_ph,
-    //            I_A_sigma_sq(i), I_B_sigma_sq(i), I_A_mean, I_A_shape,
-    //            I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
-    //            sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-    //            alpha, beta);
+
     
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();

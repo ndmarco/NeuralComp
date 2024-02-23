@@ -418,6 +418,10 @@ WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degr
     .Call('_NeuralComp_WAIC_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, max_time, n_spike_evals, n_eval)
 }
 
+WAIC_Competition_Approx <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5, n_MCMC_approx = 5L) {
+    .Call('_NeuralComp_WAIC_Competition_Approx', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, n_MCMC_approx)
+}
+
 WAIC_Competition_obs <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5, max_time = 2, n_spike_evals = 25, n_eval = 3000L) {
     .Call('_NeuralComp_WAIC_Competition_obs', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, max_time, n_spike_evals, n_eval)
 }
@@ -543,12 +547,16 @@ test <- function(mean, shape) {
     .Call('_NeuralComp_test', PACKAGE = 'NeuralComp', mean, shape)
 }
 
-approximate_L_given_theta1 <- function(theta, basis_coef_A, basis_coef_B, basis_func, max_time, n_eval) {
-    .Call('_NeuralComp_approximate_L_given_theta1', PACKAGE = 'NeuralComp', theta, basis_coef_A, basis_coef_B, basis_func, max_time, n_eval)
+FFBS_seperate1 <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, basis_degree, boundary_knots, internal_knots, init_theta, basis_coef_A, basis_coef_B, MCMC_iters, delta_sigma = 0.01, delta_shape = 0.01, delta_rate = 0.1, Warm_block1 = 500L, Warm_block2 = 1000L, delta_adaption_block = 500L) {
+    .Call('_NeuralComp_FFBS_seperate1', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, basis_degree, boundary_knots, internal_knots, init_theta, basis_coef_A, basis_coef_B, MCMC_iters, delta_sigma, delta_shape, delta_rate, Warm_block1, Warm_block2, delta_adaption_block)
 }
 
-approximate_L_given_theta2 <- function(theta, basis_coef_A, basis_coef_B, basis_func, max_time, n_eval) {
-    .Call('_NeuralComp_approximate_L_given_theta2', PACKAGE = 'NeuralComp', theta, basis_coef_A, basis_coef_B, basis_func, max_time, n_eval)
+FFBS_joint1 <- function(X_AB, n_AB, basis_degree, boundary_knots, internal_knots, init_theta, basis_coef_A, basis_coef_B, MCMC_iters, delta_proposal_mean = -2, delta_proposal_sd = 0.3, alpha_labels = 0.2, M_proposal = 10L, delta_shape = 0.01, delta_rate = 0.1, Warm_block1 = 500L, Warm_block2 = 1000L, delta_adaption_block = 500L) {
+    .Call('_NeuralComp_FFBS_joint1', PACKAGE = 'NeuralComp', X_AB, n_AB, basis_degree, boundary_knots, internal_knots, init_theta, basis_coef_A, basis_coef_B, MCMC_iters, delta_proposal_mean, delta_proposal_sd, alpha_labels, M_proposal, delta_shape, delta_rate, Warm_block1, Warm_block2, delta_adaption_block)
+}
+
+qinv_gauss1 <- function(p, mean, shape) {
+    .Call('_NeuralComp_qinv_gauss1', PACKAGE = 'NeuralComp', p, mean, shape)
 }
 
 rcpparma_hello_world <- function() {
