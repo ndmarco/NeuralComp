@@ -44,8 +44,8 @@ inline double dinv_gauss(const double x,
   if(mean > 0){
     if(shape > 0){
       if(x > 0){
-        lpdf = 0.5 * std::log(shape) - 0.5 * std::log(arma::datum::pi * 2 * pow(x, 3.0)) - 
-          ((shape * pow(x - mean, 2.0)) / (2 * pow(mean, 2.0) * x));
+        lpdf = 0.5 * std::log(shape) - 0.5 * std::log(arma::datum::pi * 2 * std::pow(x, 3.0)) - 
+          ((shape * std::pow(x - mean, 2.0)) / (2 * std::pow(mean, 2.0) * x));
       }
     }
   }
@@ -63,7 +63,7 @@ inline a_double dinv_gauss(const double x,
   if(mean > 0){
     if(shape > 0){
       if(x > 0){
-        lpdf = 0.5 * CppAD::log(shape) - 0.5 * std::log(arma::datum::pi * 2 * pow(x, 3.0)) - 
+        lpdf = 0.5 * CppAD::log(shape) - 0.5 * std::log(arma::datum::pi * 2 * std::pow(x, 3.0)) - 
           ((shape * (x - mean) * (x - mean) ) / (2 * (mean) * (mean) * x));
       }
     }
@@ -78,7 +78,7 @@ inline a_double dinv_gauss(const a_double x,
   if(mean > 0){
     if(shape > 0){
       if(x > 0){
-        lpdf = 0.5 * CppAD::log(shape) - 0.5 * CppAD::log(arma::datum::pi * 2 * pow(x, 3.0)) - 
+        lpdf = 0.5 * CppAD::log(shape) - 0.5 * CppAD::log(arma::datum::pi * 2 * (x * x * x)) - 
           ((shape * (x - mean) * (x - mean) ) / (2 * (mean) * (mean) * x));
       }
     }

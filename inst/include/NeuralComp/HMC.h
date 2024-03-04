@@ -36,13 +36,13 @@ inline void leapfrog_step_FR(arma::field<arma::vec>& Labels,
   arma::vec position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   arma::vec position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
-  if(step_num != (num_leapfrog - 1)){
+  //if(step_num != (num_leapfrog - 1)){
     momentum = momentum + step_size * 
       trans_calc_gradient_eigen_basis_update(Labels, position_theta, position_basis_coef_A, 
                                              position_basis_coef_B, basis_funct_A, basis_funct_B,
                                              basis_funct_AB, X_A, X_B, X_AB, n_A,
                                              n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, gr);
-  }
+  //}
 }
 
 inline void leapfrog_step_theta(arma::field<arma::vec>& Labels,
@@ -109,12 +109,12 @@ inline void leapfrog_step_IGP_theta(const arma::field<arma::mat>& basis_funct,
   arma::vec position_theta = position.subvec(basis_funct(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef = position.subvec(0, basis_funct(0,0).n_cols - 1);
   // update momentum
-  if(step_num != (num_leapfrog - 1)){
+  //if(step_num != (num_leapfrog - 1)){
     momentum = momentum + step_size * 
       trans_calc_gradient_eigen_IGP_theta_update(position_theta, position_basis_coef, 
                                                  basis_funct, X, n, I_mean, I_shape,
                                                  sigma_mean, sigma_shape, gr);
-  }
+  //}
   
 }
 
@@ -136,11 +136,11 @@ inline void leapfrog_step_IGP_basis(const arma::field<arma::mat>& basis_funct,
   arma::vec position_theta = position.subvec(basis_funct(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef = position.subvec(0, basis_funct(0,0).n_cols - 1);
   // update momentum
-  if(step_num != (num_leapfrog - 1)){
+  //if(step_num != (num_leapfrog - 1)){
     momentum = momentum + step_size * 
       trans_calc_gradient_eigen_IGP_basis_update(position_theta, position_basis_coef, 
                                                  basis_funct, X, n, I_sigma_sq, gr);
-  }
+  //}
   
 }
 

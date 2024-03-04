@@ -20,32 +20,32 @@ namespace NeuralComp {
 //     if(spike_num != 0){
 //       if(Labels(spike_num-1) == 0){
 //         // Condition if spike has not switched (still in A)
-//         log_p = log_p + pinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//           dinv_gauss(X_AB(spike_num), (1 / theta(0)), pow((1 / theta(2)), 2));
+//         log_p = log_p + pinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//           dinv_gauss(X_AB(spike_num), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //       }else{
 //         // Condition if spike has switched from B to A
-//         log_p = log_p + pinv_gauss(X_AB(spike_num), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//           dinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2));
+//         log_p = log_p + pinv_gauss(X_AB(spike_num), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//           dinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //       }
 //     }else{
-//       log_p = log_p + pinv_gauss(X_AB(spike_num), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//         dinv_gauss(X_AB(spike_num), (1 / theta(0)), pow((1 / theta(2)), 2));
+//       log_p = log_p + pinv_gauss(X_AB(spike_num), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//         dinv_gauss(X_AB(spike_num), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //     }
 //   }else{
 //     // label is B
 //     if(spike_num != 0){
 //       if(Labels(spike_num-1) == 1){
 //         // Condition if spike has not switched (still in B)
-//         log_p = log_p + pinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//           dinv_gauss(X_AB(spike_num), (1 / theta(1)), pow((1 / theta(3)), 2));
+//         log_p = log_p + pinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//           dinv_gauss(X_AB(spike_num), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //       }else{
 //         // Condition if spike has switched from A to B
-//         log_p = log_p + pinv_gauss(X_AB(spike_num), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//           dinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2));
+//         log_p = log_p + pinv_gauss(X_AB(spike_num), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//           dinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //       }
 //     }else{
-//       log_p = log_p + pinv_gauss(X_AB(spike_num), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//         dinv_gauss(X_AB(spike_num), (1 / theta(1)), pow((1 / theta(3)), 2));
+//       log_p = log_p + pinv_gauss(X_AB(spike_num), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//         dinv_gauss(X_AB(spike_num), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //     }
 //   }
 //   
@@ -56,32 +56,32 @@ namespace NeuralComp {
 //       if((spike_num + 1) != 0){
 //         if(Labels(spike_num) == 0){
 //           // Condition if spike has not switched (still in A)
-//           log_p = log_p + pinv_gauss(X_AB(spike_num + 1) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//             dinv_gauss(X_AB(spike_num + 1), (1 / theta(0)), pow((1 / theta(2)), 2));
+//           log_p = log_p + pinv_gauss(X_AB(spike_num + 1) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//             dinv_gauss(X_AB(spike_num + 1), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //         }else{
 //           // Condition if spike has switched from B to A
-//           log_p = log_p + pinv_gauss(X_AB(spike_num + 1), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//             dinv_gauss(X_AB(spike_num + 1) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2));
+//           log_p = log_p + pinv_gauss(X_AB(spike_num + 1), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//             dinv_gauss(X_AB(spike_num + 1) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //         }
 //       }else{
-//         log_p = log_p + pinv_gauss(X_AB(spike_num + 1), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//           dinv_gauss(X_AB(spike_num + 1), (1 / theta(0)), pow((1 / theta(2)), 2));
+//         log_p = log_p + pinv_gauss(X_AB(spike_num + 1), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//           dinv_gauss(X_AB(spike_num + 1), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //       }
 //     }else{
 //       // label is B
 //       if((spike_num + 1) != 0){
 //         if(Labels(spike_num) == 1){
 //           // Condition if spike has not switched (still in B)
-//           log_p = log_p + pinv_gauss(X_AB(spike_num + 1) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//             dinv_gauss(X_AB(spike_num + 1), (1 / theta(1)), pow((1 / theta(3)), 2));
+//           log_p = log_p + pinv_gauss(X_AB(spike_num + 1) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//             dinv_gauss(X_AB(spike_num + 1), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //         }else{
 //           // Condition if spike has switched from B to A
-//           log_p = log_p + pinv_gauss(X_AB(spike_num + 1), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//             dinv_gauss(X_AB(spike_num + 1) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2));
+//           log_p = log_p + pinv_gauss(X_AB(spike_num + 1), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//             dinv_gauss(X_AB(spike_num + 1) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //         }
 //       }else{
-//         log_p = log_p + pinv_gauss(X_AB(spike_num + 1), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//           dinv_gauss(X_AB(spike_num + 1), (1 / theta(1)), pow((1 / theta(3)), 2));
+//         log_p = log_p + pinv_gauss(X_AB(spike_num + 1), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//           dinv_gauss(X_AB(spike_num + 1), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //       }
 //     }
 //   }
@@ -161,18 +161,18 @@ namespace NeuralComp {
 //   arma::mat P_mat(2, 2, arma::fill::zeros);
 //   arma::vec eval = arma::linspace(0, step_size * num_evals, num_evals);
 //   for(int i = 0; i < num_evals; i++){
-//     P_mat(0,0) = P_mat(0,0) + std::exp(pinv_gauss(eval(i) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//       dinv_gauss(eval(i), (1 / theta(0)), pow((1 / theta(2)), 2))) * step_size;
-//     P_mat(1,1) = P_mat(1,1) + std::exp(pinv_gauss(eval(i) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//       dinv_gauss(eval(i), (1 / theta(1)), pow((1 / theta(3)), 2))) * step_size;
+//     P_mat(0,0) = P_mat(0,0) + std::exp(pinv_gauss(eval(i) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//       dinv_gauss(eval(i), (1 / theta(0)), std::pow((1 / theta(2)), 2))) * step_size;
+//     P_mat(1,1) = P_mat(1,1) + std::exp(pinv_gauss(eval(i) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//       dinv_gauss(eval(i), (1 / theta(1)), std::pow((1 / theta(3)), 2))) * step_size;
 //   }
 //   
 //   eval = arma::linspace(theta(4), step_size * num_evals + theta(4), num_evals);
 //   for(int i = 0; i < num_evals; i++){
-//     P_mat(0,1) = P_mat(0,1) + std::exp(pinv_gauss(eval(i), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//       dinv_gauss(eval(i) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2))) * step_size;
-//     P_mat(1,0) = P_mat(1,0) + std::exp(pinv_gauss(eval(i), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//       dinv_gauss(eval(i) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2))) * step_size;
+//     P_mat(0,1) = P_mat(0,1) + std::exp(pinv_gauss(eval(i), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//       dinv_gauss(eval(i) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2))) * step_size;
+//     P_mat(1,0) = P_mat(1,0) + std::exp(pinv_gauss(eval(i), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//       dinv_gauss(eval(i) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2))) * step_size;
 //   }
 //   
 //   P_mat(0,0) = P_mat(0,0) / (P_mat(0,0) + P_mat(0,1)) ;
@@ -191,19 +191,19 @@ namespace NeuralComp {
 //   
 //   if(label_next == 0){
 //     if(label == 0){
-//       log_p = pinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//         dinv_gauss(X_AB(spike_num), (1 / theta(0)), pow((1 / theta(2)), 2));
+//       log_p = pinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//         dinv_gauss(X_AB(spike_num), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //     }else{
-//       log_p = pinv_gauss(X_AB(spike_num), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//         dinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2));
+//       log_p = pinv_gauss(X_AB(spike_num), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//         dinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //     }
 //   }else{
 //     if(label == 0){
-//       log_p = pinv_gauss(X_AB(spike_num), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//         dinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2));
+//       log_p = pinv_gauss(X_AB(spike_num), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//         dinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //     }else{
-//       log_p = pinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//         dinv_gauss(X_AB(spike_num), (1 / theta(1)), pow((1 / theta(3)), 2));
+//       log_p = pinv_gauss(X_AB(spike_num) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//         dinv_gauss(X_AB(spike_num), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //     }
 //   }
 //   
@@ -237,19 +237,19 @@ inline double prob_transition_TI(double label,
   
   if(label_next == 0){
     if(label == 0){
-      log_p = pinv_gauss(X_AB(spike_num) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-        dinv_gauss(X_AB(spike_num), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A)))), pow((1 / theta(2)), 2));
+      log_p = pinv_gauss(X_AB(spike_num) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+        dinv_gauss(X_AB(spike_num), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
     }else{
-      log_p = pinv_gauss(X_AB(spike_num), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-        dinv_gauss(X_AB(spike_num) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A)))), pow((1 / theta(2)), 2));
+      log_p = pinv_gauss(X_AB(spike_num), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+        dinv_gauss(X_AB(spike_num) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
     }
   }else{
     if(label == 0){
-      log_p = pinv_gauss(X_AB(spike_num), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-        dinv_gauss(X_AB(spike_num) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B)))), pow((1 / theta(3)), 2));
+      log_p = pinv_gauss(X_AB(spike_num), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+        dinv_gauss(X_AB(spike_num) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B)))), std::pow((1 / theta(3)), 2.0));
     }else{
-      log_p = pinv_gauss(X_AB(spike_num) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-        dinv_gauss(X_AB(spike_num), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B)))), pow((1 / theta(3)), 2));
+      log_p = pinv_gauss(X_AB(spike_num) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+        dinv_gauss(X_AB(spike_num), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B)))), std::pow((1 / theta(3)), 2.0));
     }
   }
   
@@ -278,10 +278,10 @@ inline double update_prob_TI(double Labels,
 //   arma::mat Prob_mat(X_AB.n_elem, 2, arma::fill::zeros);
 //   
 //   // Initialize probability of initial state in A or B
-//   Prob_mat(0,0) = std::exp(pinv_gauss(X_AB(0), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//     dinv_gauss(X_AB(0), (1 / theta(0)), pow((1 / theta(2)), 2)));
-//   Prob_mat(0,1) = std::exp(pinv_gauss(X_AB(0), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//     dinv_gauss(X_AB(0), (1 / theta(1)), pow((1 / theta(3)), 2)));
+//   Prob_mat(0,0) = std::exp(pinv_gauss(X_AB(0), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//     dinv_gauss(X_AB(0), (1 / theta(0)), std::pow((1 / theta(2)), 2)));
+//   Prob_mat(0,1) = std::exp(pinv_gauss(X_AB(0), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//     dinv_gauss(X_AB(0), (1 / theta(1)), std::pow((1 / theta(3)), 2)));
 //   Prob_mat(0,0) = Prob_mat(0,0) / (Prob_mat(0,0) + Prob_mat(0,1));
 //   Prob_mat(0,1) =  1 - Prob_mat(0,0);
 //   
@@ -442,32 +442,32 @@ inline arma::field<arma::vec> prior_Labels(const arma::vec& n_AB,
 //       if(j != 0){
 //         if(Labels(j-1) == 0){
 //           // Condition if spike has not switched (still in A)
-//           posterior = posterior + pinv_gauss(X_AB(j) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//             dinv_gauss(X_AB(j), (1 / theta(0)), pow((1 / theta(2)), 2));
+//           posterior = posterior + pinv_gauss(X_AB(j) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//             dinv_gauss(X_AB(j), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //         }else{
 //           // Condition if spike has switched from B to A
-//           posterior = posterior + pinv_gauss(X_AB(j), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//             dinv_gauss(X_AB(j) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2));
+//           posterior = posterior + pinv_gauss(X_AB(j), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//             dinv_gauss(X_AB(j) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //         }
 //       }else{
-//         posterior = posterior + pinv_gauss(X_AB(j), (1 / theta(1)), pow((1 / theta(3)), 2)) +
-//           dinv_gauss(X_AB(j), (1 / theta(0)), pow((1 / theta(2)), 2));
+//         posterior = posterior + pinv_gauss(X_AB(j), (1 / theta(1)), std::pow((1 / theta(3)), 2)) +
+//           dinv_gauss(X_AB(j), (1 / theta(0)), std::pow((1 / theta(2)), 2));
 //       }
 //     }else{
 //       // label is B
 //       if(j != 0){
 //         if(Labels(j-1) == 1){
 //           // Condition if spike has not switched (still in A)
-//           posterior = posterior + pinv_gauss(X_AB(j) - theta(4), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//             dinv_gauss(X_AB(j), (1 / theta(1)), pow((1 / theta(3)), 2));
+//           posterior = posterior + pinv_gauss(X_AB(j) - theta(4), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//             dinv_gauss(X_AB(j), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //         }else{
 //           // Condition if spike has switched from B to A
-//           posterior = posterior + pinv_gauss(X_AB(j), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//             dinv_gauss(X_AB(j) - theta(4), (1 / theta(1)), pow((1 / theta(3)), 2));
+//           posterior = posterior + pinv_gauss(X_AB(j), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//             dinv_gauss(X_AB(j) - theta(4), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //         }
 //       }else{
-//         posterior = posterior + pinv_gauss(X_AB(j), (1 / theta(0)), pow((1 / theta(2)), 2)) +
-//           dinv_gauss(X_AB(j), (1 / theta(1)), pow((1 / theta(3)), 2));
+//         posterior = posterior + pinv_gauss(X_AB(j), (1 / theta(0)), std::pow((1 / theta(2)), 2)) +
+//           dinv_gauss(X_AB(j), (1 / theta(1)), std::pow((1 / theta(3)), 2));
 //       }
 //     }
 //   }
@@ -488,32 +488,32 @@ inline double posterior_Labels_TI(arma::vec& Labels,
       if(j != 0){
         if(Labels(j-1) == 0){
           // Condition if spike has not switched (still in A)
-          posterior = posterior + pinv_gauss(X_AB(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-            dinv_gauss(X_AB(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+          posterior = posterior + pinv_gauss(X_AB(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+            dinv_gauss(X_AB(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
         }else{
           // Condition if spike has switched from B to A
-          posterior = posterior + pinv_gauss(X_AB(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-            dinv_gauss(X_AB(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+          posterior = posterior + pinv_gauss(X_AB(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+            dinv_gauss(X_AB(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
         }
       }else{
-        posterior = posterior + pinv_gauss(X_AB(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-          dinv_gauss(X_AB(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+        posterior = posterior + pinv_gauss(X_AB(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+          dinv_gauss(X_AB(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
       }
     }else{
       // label is B
       if(j != 0){
         if(Labels(j-1) == 1){
           // Condition if spike has not switched (still in A)
-          posterior = posterior + pinv_gauss(X_AB(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-            dinv_gauss(X_AB(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+          posterior = posterior + pinv_gauss(X_AB(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+            dinv_gauss(X_AB(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0));
         }else{
           // Condition if spike has switched from B to A
-          posterior = posterior + pinv_gauss(X_AB(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-            dinv_gauss(X_AB(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+          posterior = posterior + pinv_gauss(X_AB(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+            dinv_gauss(X_AB(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0));
         }
       }else{
-        posterior = posterior + pinv_gauss(X_AB(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-          dinv_gauss(X_AB(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+        posterior = posterior + pinv_gauss(X_AB(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+          dinv_gauss(X_AB(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0));
       }
     }
   }
@@ -802,10 +802,10 @@ inline arma::field<arma::mat> forward_filtration_delta_int(arma::vec& theta,
   arma::mat Prob_mat_normalization(X_AB.n_elem, 1, arma::fill::zeros);
 
   // Initialize probability of initial state in A or B
-  Prob_mat(0,0) = std::exp(pinv_gauss(X_AB(0), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-    dinv_gauss(X_AB(0), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_A)))), pow((1 / theta(2)), 2)));
-  Prob_mat(0,1) = std::exp(pinv_gauss(X_AB(0), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-    dinv_gauss(X_AB(0), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_B)))), pow((1 / theta(3)), 2)));
+  Prob_mat(0,0) = std::exp(pinv_gauss(X_AB(0), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+    dinv_gauss(X_AB(0), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)));
+  Prob_mat(0,1) = std::exp(pinv_gauss(X_AB(0), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+    dinv_gauss(X_AB(0), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)));
   Prob_mat_normalization(0,0) = (Prob_mat(0,0) + Prob_mat(0,1));
   Prob_mat(0,0) = Prob_mat(0,0) / Prob_mat_normalization(0,0);
   Prob_mat(0,1) =  1 - Prob_mat(0,0);

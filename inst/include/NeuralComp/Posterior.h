@@ -28,7 +28,7 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
   for(int i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_A(i,0).row(j), basis_coef_A)))),
-                                               pow((1 / theta(2)), 2));
+                                               std::pow((1 / theta(2)), 2.0));
     }
   }
   
@@ -36,7 +36,7 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
   for(int i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_B(i,0).row(j), basis_coef_B)))),
-                                                   pow((1 / theta(3)), 2));
+                                                   std::pow((1 / theta(3)), 2.0));
     }
   }
 
@@ -49,32 +49,32 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
           if(Labels(i,0)(j-1) == 0){
             // Condition if spike has not switched (still in A)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))),
-                                                     pow((1 / theta(3)), 2)) +
-              dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+                                                     std::pow((1 / theta(3)), 2.0)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
         }
       }else{
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
             // Condition if spike has not switched (still in B)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0));
           }else{
             // Condition if spike has switched from A to B
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), std::pow((1 / theta(3)), 2.0));
         }
       }
     }
@@ -105,7 +105,7 @@ inline a_double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
   for(int i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_A(i,0).row(j), basis_coef_A)))),
-                                               pow((1 / theta(2)), 2));
+                                               (1 / theta(2)) * (1 / theta(2)));
     }
   }
   
@@ -113,7 +113,7 @@ inline a_double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
   for(int i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_B(i,0).row(j), basis_coef_B)))),
-                                               pow((1 / theta(3)), 2));
+                                               (1 / theta(3)) * (1 / theta(3)));
     }
   }
   
@@ -126,32 +126,32 @@ inline a_double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
           if(Labels(i,0)(j-1) == 0){
             // Condition if spike has not switched (still in A)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))),
-                                                     pow((1 / theta(3)), 2)) +
-                                                       dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+                                                     (1 / theta(3)) * (1 / theta(3))) +
+                                                       dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2)));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3))) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2)));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3))) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2)));
         }
       }else{
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
             // Condition if spike has not switched (still in B)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2))) +
+              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3)));
           }else{
             // Condition if spike has switched from A to B
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2))) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3)));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), pow((1 / theta(2)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), pow((1 / theta(3)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2))) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(j), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3)));
         }
       }
     }
@@ -179,7 +179,7 @@ inline a_double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
   for(int i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_A(i,0).row(j), basis_coef, true)))),
-                                               pow((1 / theta(2)), 2));
+                                               std::pow((1 / theta(2)), 2.0));
     }
   }
   
@@ -187,7 +187,7 @@ inline a_double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
   for(int i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_B(i,0).row(j), basis_coef, false)))),
-                                               pow((1 / theta(3)), 2));
+                                               std::pow((1 / theta(3)), 2.0));
     }
   }
   
@@ -200,32 +200,32 @@ inline a_double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
           if(Labels(i,0)(j-1) == 0){
             // Condition if spike has not switched (still in A)
             l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))),
-                                                     pow((1 / theta(3)), 2)) +
-                                                       dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), pow((1 / theta(2)), 2));
+                                                     std::pow((1 / theta(3)), 2.0)) +
+                                                       dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), std::pow((1 / theta(2)), 2.0));
           }else{
             // Condition if spike has switched from B to A
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), pow((1 / theta(3)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), pow((1 / theta(2)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), std::pow((1 / theta(3)), 2.0)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), std::pow((1 / theta(2)), 2.0));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), pow((1 / theta(3)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), pow((1 / theta(2)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), std::pow((1 / theta(3)), 2.0)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), std::pow((1 / theta(2)), 2.0));
         }
       }else{
         // label is B
         if(j != 0){
           if(Labels(i,0)(j-1) == 1){
             // Condition if spike has not switched (still in B)
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), pow((1 / theta(2)), 2)) +
-              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), pow((1 / theta(3)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), std::pow((1 / theta(2)), 2.0)) +
+              dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), std::pow((1 / theta(3)), 2.0));
           }else{
             // Condition if spike has switched from A to B
-            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), pow((1 / theta(2)), 2)) +
-              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), pow((1 / theta(3)), 2));
+            l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), std::pow((1 / theta(2)), 2.0)) +
+              dinv_gauss(X_AB(i,0)(j) - theta(4), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), std::pow((1 / theta(3)), 2.0));
           }
         }else{
-          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), pow((1 / theta(2)), 2)) +
-            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), pow((1 / theta(3)), 2));
+          l_likelihood = l_likelihood + pinv_gauss(X_AB(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, true)))), std::pow((1 / theta(2)), 2.0)) +
+            dinv_gauss(X_AB(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(j), basis_coef, false)))), std::pow((1 / theta(3)), 2.0));
         }
       }
     }
@@ -244,7 +244,7 @@ inline double log_likelihood_IGP_theta(arma::vec theta,
   for(int i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct(i,0).row(j), basis_coef)))),
-                                               pow((1 / theta(1)), 2));
+                                               std::pow((1 / theta(1)), 2.0));
     }
   }
   
@@ -262,7 +262,7 @@ inline a_double log_likelihood_eigen_IGP_theta(a_vector theta,
   for(int i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct(i,0).row(j), basis_coef)))),
-                                               pow((1 / theta(1)), 2));
+                                               (1 / theta(1)) * (1 / theta(1)));
     }
   }
   
@@ -280,7 +280,7 @@ inline a_double log_likelihood_eigen_IGP_basis(arma::vec theta,
   for(int i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD1(basis_funct(i,0).row(j), basis_coef)))),
-                                               pow((1 / theta(1)), 2));
+                                               std::pow((1 / theta(1)), 2.0));
     }
   }
   
