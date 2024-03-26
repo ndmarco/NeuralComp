@@ -17,8 +17,9 @@ WAIC_Competition(
   internal_knots,
   time_inhomogeneous = TRUE,
   burnin_prop = 0.5,
-  max_time = 1,
-  n_eval = 10000L
+  max_time = 2,
+  n_spike_evals = 25,
+  n_eval = 3000L
 )
 }
 \arguments{

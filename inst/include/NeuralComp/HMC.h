@@ -36,6 +36,7 @@ inline void leapfrog_step_FR(arma::field<arma::vec>& Labels,
   arma::vec position_theta = position.subvec(basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols, position.n_elem - 1);
   arma::vec position_basis_coef_A = position.subvec(0, basis_funct_A(0,0).n_cols - 1);
   arma::vec position_basis_coef_B = position.subvec(basis_funct_A(0,0).n_cols, basis_funct_B(0,0).n_cols + basis_funct_A(0,0).n_cols - 1);
+    
   //if(step_num != (num_leapfrog - 1)){
     momentum = momentum + step_size * 
       trans_calc_gradient_eigen_basis_update(Labels, position_theta, position_basis_coef_A, 
@@ -510,7 +511,7 @@ inline void HMC_step_FR(arma::field<arma::vec>& Labels,
                                   Labels, basis_funct_A, basis_funct_B, basis_funct_AB,
                                   X_A, X_B, X_AB, n_A, n_B, n_AB,
                                   I_A_sigma_sq, I_B_sigma_sq, Mass_mat);
-  
+
   if(std::log(R::runif(0,1)) < accept){
     num_accept = 1;
     basis_coef_A = prop_position.subvec(0, basis_coef_A.n_elem -1);
@@ -960,12 +961,14 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
                                        double delta_proposal_mean,
                                        double delta_proposal_sd,
                                        const double alpha_labels,
+                                       const double nu,
                                        const double gamma,
                                        int delta_adaption_block,
                                        int theta_adaptation_block,
                                        int M_proposal,
                                        int Warm_block1,
                                        int Warm_block2){
+  
   arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 5, arma::fill::ones);
   arma::mat basis_coef_A(MCMC_iters + Warm_block1 + Warm_block2, basis_funct_A(0,0).n_cols, arma::fill::zeros);
   arma::mat basis_coef_B(MCMC_iters + Warm_block1 + Warm_block2, basis_funct_B(0,0).n_cols, arma::fill::zeros);
@@ -1044,10 +1047,10 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma_cauchy(basis_coef_A_ph, i, omega_A, I_A_sigma_sq);
-    update_omega(gamma, i, omega_A, I_A_sigma_sq);
-    update_I_sigma_cauchy(basis_coef_B_ph, i, omega_B, I_B_sigma_sq);
-    update_omega(gamma, i, omega_B, I_B_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_A_ph, i, nu, omega_A, I_A_sigma_sq);
+    update_omega(nu, gamma, i, omega_A, I_A_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_B_ph, i, nu, omega_B, I_B_sigma_sq);
+    update_omega(nu, gamma, i, omega_B, I_B_sigma_sq);
     
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
@@ -1172,10 +1175,10 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma_cauchy(basis_coef_A_ph, i, omega_A, I_A_sigma_sq);
-    update_omega(gamma, i, omega_A, I_A_sigma_sq);
-    update_I_sigma_cauchy(basis_coef_B_ph, i, omega_B, I_B_sigma_sq);
-    update_omega(gamma, i, omega_B, I_B_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_A_ph, i, nu, omega_A, I_A_sigma_sq);
+    update_omega(nu, gamma, i, omega_A, I_A_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_B_ph, i, nu, omega_B, I_B_sigma_sq);
+    update_omega(nu, gamma, i, omega_B, I_B_sigma_sq);
     
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
@@ -1263,10 +1266,10 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma_cauchy(basis_coef_A_ph, i, omega_A, I_A_sigma_sq);
-    update_omega(gamma, i, omega_A, I_A_sigma_sq);
-    update_I_sigma_cauchy(basis_coef_B_ph, i, omega_B, I_B_sigma_sq);
-    update_omega(gamma, i, omega_B, I_B_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_A_ph, i, nu, omega_A, I_A_sigma_sq);
+    update_omega(nu, gamma, i, omega_A, I_A_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_B_ph, i, nu, omega_B, I_B_sigma_sq);
+    update_omega(nu, gamma, i, omega_B, I_B_sigma_sq);
     
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
@@ -1496,14 +1499,15 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
                                            const double sigma_shape,
                                            double& step_size_theta,
                                            double& step_size_FR,
-                                           const double alpha,
-                                           const double beta,
+                                           const double nu,
+                                           const double gamma,
                                            int theta_adaptation_block,
                                            int Warm_block1,
                                            int Warm_block2){
   arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 2, arma::fill::ones);
   arma::mat basis_coef(MCMC_iters + Warm_block1 + Warm_block2, basis_funct(0,0).n_cols, arma::fill::zeros);
   arma::vec I_sigma_sq(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
+  arma::vec omega(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::ones);
   arma::vec vec_accept(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec llik(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec lposterior(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
@@ -1546,12 +1550,13 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma(basis_coef_ph, 0, alpha, beta, i, I_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_ph, i, nu, omega, I_sigma_sq);
+    update_omega(nu, gamma, i, omega, I_sigma_sq);
     
     llik(i) = log_likelihood_IGP_theta(theta_exp, basis_coef_ph, basis_funct, X, n);
     lposterior(i) = log_posterior_IGP_model_TI(llik(i), theta_exp, basis_coef_ph,
                I_sigma_sq(i), I_mean, I_shape, 
-               sigma_mean, sigma_shape, alpha, beta);
+               sigma_mean, sigma_shape, nu, gamma);
     
     theta.row(i) = theta_ph.t();
     basis_coef.row(i) = basis_coef_ph.t();
@@ -1628,12 +1633,13 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma(basis_coef_ph, 0, alpha, beta, i, I_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_ph, i, nu, omega, I_sigma_sq);
+    update_omega(nu, gamma, i, omega, I_sigma_sq);
     
     llik(i) = log_likelihood_IGP_theta(theta_exp, basis_coef_ph, basis_funct, X, n);
     lposterior(i) = log_posterior_IGP_model_TI(llik(i), theta_exp, basis_coef_ph,
                I_sigma_sq(i), I_mean, I_shape, 
-               sigma_mean, sigma_shape, alpha, beta);
+               sigma_mean, sigma_shape, nu, gamma);
     
     theta.row(i) = theta_ph.t();
     basis_coef.row(i) = basis_coef_ph.t();
@@ -1693,12 +1699,13 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
     theta_exp = arma::exp(theta_ph);
     
     // update sigma hyperparameters
-    update_I_sigma(basis_coef_ph, 0, alpha, beta, i, I_sigma_sq);
+    update_I_sigma_cauchy(basis_coef_ph, i, nu, omega, I_sigma_sq);
+    update_omega(nu, gamma, i, omega, I_sigma_sq);
     
     llik(i) = log_likelihood_IGP_theta(theta_exp, basis_coef_ph, basis_funct, X, n);
     lposterior(i) = log_posterior_IGP_model_TI(llik(i), theta_exp, basis_coef_ph,
                I_sigma_sq(i), I_mean, I_shape, 
-               sigma_mean, sigma_shape, alpha, beta);
+               sigma_mean, sigma_shape, nu, gamma);
     
     theta.row(i) = theta_ph.t();
     basis_coef.row(i) = basis_coef_ph.t();

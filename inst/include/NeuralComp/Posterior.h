@@ -1143,8 +1143,8 @@ inline double log_posterior_IGP_model_TI(double log_lik,
                                          const double& I_shape,
                                          const double& sigma_mean,
                                          const double& sigma_shape,
-                                         const double alpha,
-                                         const double beta){
+                                         const double nu,
+                                         const double gamma){
   double lposterior = log_lik;
   
   // prior on I and sigma
@@ -1153,7 +1153,7 @@ inline double log_posterior_IGP_model_TI(double log_lik,
   // prior on b-splines
   lposterior = lposterior + log_prior_FR1(I_sigma_sq, theta, basis_coef);
   // prior on I_sigma_sq
-  lposterior = lposterior + R::dgamma(1/I_sigma_sq, alpha, 1/ beta, true);
+  lposterior = lposterior + R::dt(I_sigma_sq / gamma, nu, true) + std::log(2 / gamma);
   
   
   return lposterior;

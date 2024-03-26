@@ -17,7 +17,7 @@ Sampler_Competition(
   internal_knots,
   time_inhomogeneous = TRUE,
   Warm_block1 = 500L,
-  Warm_block2 = 3000L,
+  Warm_block2 = 2000L,
   Leapfrog_steps = 10L,
   I_A_mean = 40,
   I_A_shape = 1,
@@ -34,8 +34,7 @@ Sampler_Competition(
   delta_proposal_mean = -2,
   delta_proposal_sd = 0.3,
   alpha_labels = 0.2,
-  alpha = 1,
-  beta = 0.005,
+  gamma = 1,
   delta_adaption_block = 100L,
   Mass_adaption_block = 500L,
   M_proposal = 10L
@@ -100,11 +99,11 @@ Sampler_Competition(
 
 \item{alpha_labels}{Double containing probability that proposed new deltas come from the prior on delta instead of adapted lognormal distribution}
 
+\item{M_proposal}{Integer containing the number of deltas proposed when sampling delta}
+
 \item{alpha}{Double containing the value for the shape parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared}
 
 \item{beta}{Double containing the value for the scale parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared}
-
-\item{M_proposal}{Integer containing the number of deltas proposed when sampling delta}
 
 \item{delta_adaptation_block}{Integer containing how often the delta sampling parameters should be updated in Warm_block2}
 

@@ -33,20 +33,22 @@ inline void update_I_sigma(const arma::vec& basis_coef,
 
 inline void update_I_sigma_cauchy(const arma::vec& basis_coef,
                                   int iter,
+                                  const double nu,
                                   arma::vec& omega,
                                   arma::vec& I_sigma){
-  double a =  ((1 + basis_coef.n_elem) / 2);
-  double b = (0.5 * arma::dot(basis_coef, basis_coef)) + (1 / omega(iter));
+  double a =  ((nu + basis_coef.n_elem) / 2);
+  double b = (0.5 * arma::dot(basis_coef, basis_coef)) + (nu / omega(iter));
   I_sigma(iter) = 1 / R::rgamma(a, 1/b);
 }
 
-inline void update_omega(const double gamma,
+inline void update_omega(const double nu,
+                         const double gamma,
                          int iter,
                          arma::vec& omega,
                          arma::vec& I_sigma){
-  
-  double b = (1 / I_sigma(iter)) + (1 / (gamma * gamma));
-  omega(iter) = 1 / R::rgamma(1, 1/b);
+  double a = (nu + 1) / 2;
+  double b = (nu / I_sigma(iter)) + (1 / (gamma * gamma));
+  omega(iter) = 1 / R::rgamma(a, 1/b);
 }
 
 
