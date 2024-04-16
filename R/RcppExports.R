@@ -424,26 +424,6 @@ WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degr
     .Call('_NeuralComp_WAIC_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, method, burnin_prop, max_time, n_spike_evals, n_eval, n_MCMC_approx, n_MCMC_approx2, n_MCMC_approx_fast, n_samples_var)
 }
 
-WAIC_Competition_Approx <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5, n_MCMC_approx = 5L, n_MCMC_approx2 = 10L, n_samples_var = 2L) {
-    .Call('_NeuralComp_WAIC_Competition_Approx', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, n_MCMC_approx, n_MCMC_approx2, n_samples_var)
-}
-
-WAIC_Competition_Approx2 <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5, n_MCMC_approx = 5L, n_MCMC_approx2 = 10L) {
-    .Call('_NeuralComp_WAIC_Competition_Approx2', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, n_MCMC_approx, n_MCMC_approx2)
-}
-
-WAIC_Competition_Approx2_IS <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5, n_MCMC_approx = 50L, n_MCMC_approx2 = 10L, n_samples_var = 2L) {
-    .Call('_NeuralComp_WAIC_Competition_Approx2_IS', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, n_MCMC_approx, n_MCMC_approx2, n_samples_var)
-}
-
-WAIC_Competition_Approx2_direct <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5, n_MCMC_approx = 50L, n_samples_var = 2L) {
-    .Call('_NeuralComp_WAIC_Competition_Approx2_direct', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, n_MCMC_approx, n_samples_var)
-}
-
-WAIC_Competition_obs <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5, max_time = 2, n_spike_evals = 25, n_eval = 3000L) {
-    .Call('_NeuralComp_WAIC_Competition_obs', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop, max_time, n_spike_evals, n_eval)
-}
-
 WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5) {
     .Call('_NeuralComp_WAIC_Competition_Marginal', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
@@ -557,36 +537,8 @@ WAIC_IGP <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Resul
     .Call('_NeuralComp_WAIC_IGP', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
 
-WAIC_IGP_obs <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5) {
-    .Call('_NeuralComp_WAIC_IGP_obs', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
-}
-
 Competition_Posterior_Predictive <- function(trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.5, time_inhomogeneous = TRUE) {
     .Call('_NeuralComp_Competition_Posterior_Predictive', PACKAGE = 'NeuralComp', trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, time_inhomogeneous)
-}
-
-FFBS_seperate1 <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, basis_degree, boundary_knots, internal_knots, init_theta, basis_coef_A, basis_coef_B, MCMC_iters, delta_sigma = 0.01, delta_shape = 0.01, delta_rate = 0.1, Warm_block1 = 500L, Warm_block2 = 1000L, delta_adaption_block = 500L) {
-    .Call('_NeuralComp_FFBS_seperate1', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, basis_degree, boundary_knots, internal_knots, init_theta, basis_coef_A, basis_coef_B, MCMC_iters, delta_sigma, delta_shape, delta_rate, Warm_block1, Warm_block2, delta_adaption_block)
-}
-
-FFBS_joint1 <- function(X_AB, n_AB, basis_degree, boundary_knots, internal_knots, init_theta, basis_coef_A, basis_coef_B, MCMC_iters, delta_proposal_mean = -2, delta_proposal_sd = 0.3, alpha_labels = 0.2, M_proposal = 10L, delta_shape = 0.01, delta_rate = 0.1, Warm_block1 = 500L, Warm_block2 = 1000L, delta_adaption_block = 500L) {
-    .Call('_NeuralComp_FFBS_joint1', PACKAGE = 'NeuralComp', X_AB, n_AB, basis_degree, boundary_knots, internal_knots, init_theta, basis_coef_A, basis_coef_B, MCMC_iters, delta_proposal_mean, delta_proposal_sd, alpha_labels, M_proposal, delta_shape, delta_rate, Warm_block1, Warm_block2, delta_adaption_block)
-}
-
-qinv_gauss1 <- function(p, mean, shape) {
-    .Call('_NeuralComp_qinv_gauss1', PACKAGE = 'NeuralComp', p, mean, shape)
-}
-
-rtilted_prob <- function(mean1, sigma1, mean2, sigma2, theta1, theta2) {
-    .Call('_NeuralComp_rtilted_prob', PACKAGE = 'NeuralComp', mean1, sigma1, mean2, sigma2, theta1, theta2)
-}
-
-test <- function(x) {
-    .Call('_NeuralComp_test', PACKAGE = 'NeuralComp', x)
-}
-
-test1 <- function(x) {
-    .Call('_NeuralComp_test1', PACKAGE = 'NeuralComp', x)
 }
 
 rcpparma_hello_world <- function() {
