@@ -34,6 +34,7 @@ Sampler_Competition(
   delta_proposal_mean = -2,
   delta_proposal_sd = 0.3,
   alpha_labels = 0.2,
+  nu = 3,
   gamma = 1,
   delta_adaption_block = 100L,
   Mass_adaption_block = 500L,

@@ -716,7 +716,6 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   arma::vec vec_accept_theta(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::mat Mass_mat_theta = arma::diagmat(arma::ones(theta.n_cols-1));
   arma::mat Mass_mat_basis = arma::diagmat(arma::ones(basis_coef_A.n_cols + basis_coef_B.n_cols));
-  double prop_accept_10 = 0;
   double prop_accept_10_theta = 0;
   
   for(int i = 1; i < Warm_block1; i++){
@@ -1362,7 +1361,6 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
   arma::vec vec_accept_theta(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::mat Mass_mat_theta = arma::diagmat(arma::ones(theta.n_cols));
   arma::mat Mass_mat_basis = arma::diagmat(arma::ones(basis_coef.n_cols));
-  double prop_accept_10 = 0;
   double prop_accept_10_theta = 0;
   
   for(int i = 1; i < Warm_block1; i++){

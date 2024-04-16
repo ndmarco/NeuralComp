@@ -16,10 +16,15 @@ WAIC_Competition(
   boundary_knots,
   internal_knots,
   time_inhomogeneous = TRUE,
+  method = "sampling_fast",
   burnin_prop = 0.5,
   max_time = 2,
   n_spike_evals = 25,
-  n_eval = 3000L
+  n_eval = 3000L,
+  n_MCMC_approx = 5L,
+  n_MCMC_approx2 = 20L,
+  n_MCMC_approx_fast = 100L,
+  n_samples_var = 2L
 )
 }
 \arguments{
@@ -45,11 +50,17 @@ WAIC_Competition(
 
 \item{time_inhomogeneous}{Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)}
 
+\item{method}{String containing method used to calculate WAIC (sampling, sampling_fast, numerical_approx, marginal)}
+
 \item{burnin_prop}{Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in (Note burnin_prop includes warm-up iterations)}
 
-\item{max_time}{Double containing parameter for estimating the probability of switching states (max_time should be large enough so that the probability of observing an ISI greater than this is negligible)}
+\item{max_time}{Double containing parameter for estimating the probability of switching states used only for numerical_approx method (max_time should be large enough so that the probability of observing an ISI greater than this is negligible)}
 
-\item{n_eval}{Integer containing parameter for estimating the probability of switching states (the larger the number the more computationally expensive, but more accurate)}
+\item{n_eval}{Integer containing parameter for estimating the probability of switching states used only for numerical_approx method (the larger the number the more computationally expensive, but more accurate)}
+
+\item{n_MCMC_approx}{number of y_tilde samples drawn when using sampling method (denoted M_Y_tilde in the manuscript)}
+
+\item{n_MCMC_approx2}{number of x_tilde samples drawn when using sampling method (denoted M_X_tilde in the manuscript)}
 }
 \value{
 waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
@@ -59,6 +70,8 @@ This function calculates the Watanabe-Akaike information criterion (WAIC) for
 the drift-diffusion competition model. This function will use the output from
 \code{Sampler_Competition}. The WAIC is defined on the deviance scale as waic = -2(lppd - p),
 where lppd is the log pointwise predictive density, and p is the effective number of parameters.
+The WAIC can be calculated using four different ways, as specified in the supplemental materials
+of the accompaning manuscript.
 }
 \section{Warning}{
 

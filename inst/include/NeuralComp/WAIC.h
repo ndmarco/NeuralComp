@@ -361,8 +361,7 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
   arma::vec denom = arma::zeros(n_MCMC_approx);
   arma::mat denomi = arma::zeros(n_MCMC_approx, n_samples_var - 1);
   double numerator = 0;
-  double isi_slow = 0;
-  arma::vec weights = arma::ones(n_MCMC_approx);
+  double isi_fast = 0;
   for(int i = burnin_num; i < n_MCMC; i++){
     if(Labels(obs_num, 0)(i,spike_num) == 0){
       // label is A
@@ -370,10 +369,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
         if(Labels(obs_num, 0)(i,spike_num - 1) == 0){
           // Condition if spike has not switched (still in A)
           for(int j = 0; j < n_MCMC_approx; j++){
-            isi_slow = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                  std::pow((1 / theta(i, 2)), 2));
-            denom(j) = std::exp(pinv_gauss(isi_slow - theta(i, 4), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                       std::pow((1 / theta(i, 3)), 2)));
+            isi_fast = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                  std::pow((1 / theta(i, 2)), 2.0));
+            denom(j) = std::exp(pinv_gauss(isi_fast - theta(i, 4), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                       std::pow((1 / theta(i, 3)), 2.0)));
             
           }
           numerator = (pinv_gauss(X_AB(spike_num) - theta(i, 4), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
@@ -383,10 +382,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
           ph_sd(0) = llik(i - burnin_num);
           for(int k = 0; k < (n_samples_var - 1); k++){
             for(int j = 0; j < n_MCMC_approx; j++){
-              isi_slow = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                    std::pow((1 / theta(i, 2)), 2));
-              denomi(j,k) = std::exp(pinv_gauss(isi_slow - theta(i, 4), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                     std::pow((1 / theta(i, 3)), 2)));
+              isi_fast = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                    std::pow((1 / theta(i, 2)), 2.0));
+              denomi(j,k) = std::exp(pinv_gauss(isi_fast - theta(i, 4), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                     std::pow((1 / theta(i, 3)), 2.0)));
             }
             ph_sd(k + 1) = numerator - std::log(arma::mean(denomi.col(k)));
           }
@@ -395,10 +394,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
         }else{
           // Condition if spike has switched from B to A
           for(int j = 0; j < n_MCMC_approx; j++){
-            isi_slow = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                  std::pow((1 / theta(i, 2)), 2)) + theta(i, 4);
-            denom(j) = std::exp(pinv_gauss(isi_slow, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                            std::pow((1 / theta(i, 3)), 2)));
+            isi_fast = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                  std::pow((1 / theta(i, 2)), 2.0)) + theta(i, 4);
+            denom(j) = std::exp(pinv_gauss(isi_fast, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                            std::pow((1 / theta(i, 3)), 2.0)));
           }
           numerator = (pinv_gauss(X_AB(spike_num), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
                                   std::pow((1 / theta(i, 3)), 2.0)) +
@@ -407,10 +406,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
           ph_sd(0) = llik(i - burnin_num);
           for(int k = 0; k < (n_samples_var - 1); k++){
             for(int j = 0; j < n_MCMC_approx; j++){
-              isi_slow = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                    std::pow((1 / theta(i, 2)), 2)) + theta(i, 4);
-              denomi(j,k) = std::exp(pinv_gauss(isi_slow, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                     std::pow((1 / theta(i, 3)), 2)));
+              isi_fast = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                    std::pow((1 / theta(i, 2)), 2.0)) + theta(i, 4);
+              denomi(j,k) = std::exp(pinv_gauss(isi_fast, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                     std::pow((1 / theta(i, 3)), 2.0)));
             }
             ph_sd(k + 1) = numerator - std::log(arma::mean(denomi.col(k)));
           }
@@ -418,10 +417,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
         }
       }else{
         for(int j = 0; j < n_MCMC_approx; j++){
-          isi_slow = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                std::pow((1 / theta(i, 2)), 2));
-          denom(j) = std::exp(pinv_gauss(isi_slow, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                          std::pow((1 / theta(i, 3)), 2)));
+          isi_fast = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                std::pow((1 / theta(i, 2)), 2.0));
+          denom(j) = std::exp(pinv_gauss(isi_fast, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                          std::pow((1 / theta(i, 3)), 2.0)));
         }
         numerator = (pinv_gauss(X_AB(spike_num), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
                                 std::pow((1 / theta(i, 3)), 2.0)) +
@@ -430,10 +429,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
         ph_sd(0) = llik(i - burnin_num);
         for(int k = 0; k < (n_samples_var - 1); k++){
           for(int j = 0; j < n_MCMC_approx; j++){
-            isi_slow = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                  std::pow((1 / theta(i, 2)), 2));
-            denomi(j,k) = std::exp(pinv_gauss(isi_slow, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                   std::pow((1 / theta(i, 3)), 2)));
+            isi_fast = rinv_gauss((1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                  std::pow((1 / theta(i, 2)), 2.0));
+            denomi(j,k) = std::exp(pinv_gauss(isi_fast, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                   std::pow((1 / theta(i, 3)), 2.0)));
           }
           ph_sd(k + 1) = numerator - std::log(arma::mean(denomi.col(k)));
         }
@@ -445,10 +444,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
         if(Labels(obs_num, 0)(i, spike_num-1) == 1){
           // Condition if spike has not switched (still in B)
           for(int j = 0; j < n_MCMC_approx; j++){
-            isi_slow = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                  std::pow((1 / theta(i, 3)), 2));
-            denom(j) = std::exp(pinv_gauss(isi_slow - theta(i, 4), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                            std::pow((1 / theta(i, 2)), 2)));
+            isi_fast = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                  std::pow((1 / theta(i, 3)), 2.0));
+            denom(j) = std::exp(pinv_gauss(isi_fast - theta(i, 4), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                            std::pow((1 / theta(i, 2)), 2.0)));
           }
           numerator = (pinv_gauss(X_AB(spike_num) - theta(i, 4), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
                                   std::pow((1 / theta(i, 2)), 2.0)) +
@@ -457,10 +456,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
           ph_sd(0) = llik(i - burnin_num);
           for(int k = 0; k < (n_samples_var - 1); k++){
             for(int j = 0; j < n_MCMC_approx; j++){
-              isi_slow = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                    std::pow((1 / theta(i, 3)), 2));
-              denomi(j,k) = std::exp(pinv_gauss(isi_slow - theta(i, 4), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                     std::pow((1 / theta(i, 2)), 2)));
+              isi_fast = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                    std::pow((1 / theta(i, 3)), 2.0));
+              denomi(j,k) = std::exp(pinv_gauss(isi_fast - theta(i, 4), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                     std::pow((1 / theta(i, 2)), 2.0)));
             }
             ph_sd(k + 1) = numerator - std::log(arma::mean(denomi.col(k)));
           }
@@ -468,10 +467,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
         }else{
           // Condition if spike has switched from A to B
           for(int j = 0; j < n_MCMC_approx; j++){
-            isi_slow = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                  std::pow((1 / theta(i, 3)), 2)) + theta(i, 4);
-            denom(j) = std::exp(pinv_gauss(isi_slow, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                                             std::pow((1 / theta(i, 2)), 2)));
+            isi_fast = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                  std::pow((1 / theta(i, 3)), 2.0)) + theta(i, 4);
+            denom(j) = std::exp(pinv_gauss(isi_fast, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                                             std::pow((1 / theta(i, 2)), 2.0)));
           }
           numerator = (pinv_gauss(X_AB(spike_num), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
                                         std::pow((1 / theta(i, 2)), 2.0)) +
@@ -480,10 +479,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
           ph_sd(0) = llik(i - burnin_num);
           for(int k = 0; k < (n_samples_var - 1); k++){
             for(int j = 0; j < n_MCMC_approx; j++){
-              isi_slow = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                    std::pow((1 / theta(i, 3)), 2)) + theta(i, 4);
-              denomi(j,k) = std::exp(pinv_gauss(isi_slow, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                     std::pow((1 / theta(i, 2)), 2)));
+              isi_fast = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                    std::pow((1 / theta(i, 3)), 2.0)) + theta(i, 4);
+              denomi(j,k) = std::exp(pinv_gauss(isi_fast, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                     std::pow((1 / theta(i, 2)), 2.0)));
             }
             ph_sd(k + 1) = numerator - std::log(arma::mean(denomi.col(k)));
           }
@@ -491,10 +490,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
         }
       }else{
         for(int j = 0; j < n_MCMC_approx; j++){
-          isi_slow = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                std::pow((1 / theta(i, 3)), 2));
-          denom(j) =  std::exp(pinv_gauss(isi_slow, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                                           std::pow((1 / theta(i, 2)), 2)));
+          isi_fast = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                std::pow((1 / theta(i, 3)), 2.0));
+          denom(j) = std::exp(pinv_gauss(isi_fast, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                              std::pow((1 / theta(i, 2)), 2.0)));
         }
         numerator = (pinv_gauss(X_AB(spike_num), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
                                         std::pow((1 / theta(i, 2)), 2.0)) +
@@ -503,10 +502,10 @@ inline void calc_loglikelihood_AB_MCMC_approx4(const arma::vec X_AB,
         ph_sd(0) = llik(i - burnin_num);
         for(int k = 0; k < (n_samples_var - 1); k++){
           for(int j = 0; j < n_MCMC_approx; j++){
-            isi_slow = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
-                                  std::pow((1 / theta(i, 3)), 2));
-            denomi(j,k) = std::exp(pinv_gauss(isi_slow, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
-                                   std::pow((1 / theta(i, 2)), 2)));
+            isi_fast = rinv_gauss((1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_B.row(i))))),
+                                  std::pow((1 / theta(i, 3)), 2.0));
+            denomi(j,k) = std::exp(pinv_gauss(isi_fast, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_AB.row(spike_num), basis_coef_A.row(i))))),
+                                   std::pow((1 / theta(i, 2)), 2.0)));
           }
           ph_sd(k + 1) = numerator - std::log(arma::mean(denomi.col(k)));
         }
@@ -1935,28 +1934,22 @@ inline arma::mat calc_loglikelihood_IGP(const arma::vec X,
   return llik;
 }
 
-inline double calc_WAIC_IGP(const arma::field<arma::vec> X_A,
-                            const arma::field<arma::vec> X_B,
-                            const arma::field<arma::vec> X_AB,
-                            const arma::vec n_A,
-                            const arma::vec n_B,
-                            const arma::vec n_AB,
-                            const arma::mat theta_A,
-                            const arma::mat basis_coef_A,
-                            const arma::mat theta_B,
-                            const arma::mat basis_coef_B,
-                            const arma::mat theta_AB,
-                            const arma::mat basis_coef_AB,
-                            const arma::field<arma::mat> basis_funct_A,
-                            const arma::field<arma::mat> basis_funct_B,
-                            const arma::field<arma::mat> basis_funct_AB,
-                            const double burnin_prop){
-  int n_MCMC_A = theta_A.n_rows;
-  int burnin_num_A = n_MCMC_A - std::floor((1 - burnin_prop) * n_MCMC_A);
-  int n_MCMC_B = theta_B.n_rows;
-  int burnin_num_B = n_MCMC_B - std::floor((1 - burnin_prop) * n_MCMC_B);
-  int n_MCMC_AB = theta_AB.n_rows;
-  int burnin_num_AB = n_MCMC_AB - std::floor((1 - burnin_prop) * n_MCMC_AB);
+inline Rcpp::List calc_WAIC_IGP(const arma::field<arma::vec> X_A,
+                                const arma::field<arma::vec> X_B,
+                                const arma::field<arma::vec> X_AB,
+                                const arma::vec n_A,
+                                const arma::vec n_B,
+                                const arma::vec n_AB,
+                                const arma::mat theta_A,
+                                const arma::mat basis_coef_A,
+                                const arma::mat theta_B,
+                                const arma::mat basis_coef_B,
+                                const arma::mat theta_AB,
+                                const arma::mat basis_coef_AB,
+                                const arma::field<arma::mat> basis_funct_A,
+                                const arma::field<arma::mat> basis_funct_B,
+                                const arma::field<arma::mat> basis_funct_AB,
+                                const double burnin_prop){
   
   // Placeholder for log-likelihood by observation
   arma::field<arma::mat> llik_A(n_A.n_elem, 1); 
@@ -2021,7 +2014,13 @@ inline double calc_WAIC_IGP(const arma::field<arma::vec> X_A,
   
   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
   
-  return waic;
+  Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
+                                          Rcpp::Named("llpd", llpd),
+                                          Rcpp::Named("Effective_pars", pwaic),
+                                          Rcpp::Named("llik_A", llik_A),
+                                          Rcpp::Named("llik_B", llik_B),
+                                          Rcpp::Named("llik_AB", llik_AB));
+  return output1;
 }
 
 inline double calc_WAIC_IGP_observation(const arma::field<arma::vec> X_A,
@@ -2147,6 +2146,16 @@ inline void calc_loglikelihood_AB_Marginal(const arma::vec X_AB,
   }
 }
 
+inline double calc_log_mean(arma::vec x){
+  double max_val = x.max();
+  double inner_sum = 0;
+  for(int i = 0; i < x.n_elem; i++){
+    inner_sum = inner_sum + std::exp(x(i) - max_val);
+  }
+  double output = max_val + std::log(inner_sum) - std::log(x.n_elem);
+  return output;
+}
+
 inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_A,
                                                  const arma::field<arma::vec> X_B,
                                                  const arma::field<arma::vec> X_AB,
@@ -2171,12 +2180,10 @@ inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_
   arma::field<arma::mat> llik_B(n_B.n_elem, 1);
   arma::field<arma::vec> llik_AB(n_AB.n_elem, 1);
   
-  Rcpp::Rcout << "Made it 1";
   for(int i = 0; i < n_AB.n_elem; i++){
     llik_AB(i,0) = arma::zeros(n_MCMC - burnin_num);
   }
   
-  Rcpp::Rcout << "Made it 2";
   // calculate log-likelihood for A
   for(int i = 0; i < n_A.n_elem; i++){
     llik_A(i,0) = calc_loglikelihood_A(X_A(i,0), theta, basis_coef_A, 
@@ -2193,11 +2200,9 @@ inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_
   
   // calculate log-likelihood for AB
   for(int i = 0; i < n_AB.n_elem; i++){
-    for(int j = 0; j < n_AB(i); j++){
-      calc_loglikelihood_AB_Marginal(X_AB(i,0), theta, basis_coef_A, basis_coef_B,
-                                        basis_funct_AB(i,0), burnin_prop,
-                                        llik_AB(i,0));
-    }
+    calc_loglikelihood_AB_Marginal(X_AB(i,0), theta, basis_coef_A, basis_coef_B,
+                                   basis_funct_AB(i,0), burnin_prop,
+                                   llik_AB(i,0));
     Rcpp::Rcout << "Calculated loglikelihood for observation " << i << "\n";
   }
   
@@ -2220,14 +2225,14 @@ inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_
   // calculate log pointwise predictive density
   double llpd = 0;
   for(int i = 0; i < n_A.n_elem; i++){
-    llpd = llpd + std::log(arma::mean(arma::exp(llik_A_obs.col(i))));
+    llpd = llpd + calc_log_mean(llik_A_obs.col(i));
   }
   
   for(int i = 0; i < n_B.n_elem; i++){
-    llpd = llpd + std::log(arma::mean(arma::exp(llik_B_obs.col(i))));
+    llpd = llpd + calc_log_mean(llik_B_obs.col(i));
   }
   for(int i = 0; i < n_AB.n_elem; i++){
-    llpd = llpd + std::log(arma::mean(arma::exp(llik_AB_obs.col(i))));
+    llpd = llpd + + calc_log_mean(llik_AB_obs.col(i));
   }
   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
   
@@ -2249,6 +2254,7 @@ inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_
   
   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
                                           Rcpp::Named("llpd", llpd),
+                                          Rcpp::Named("Effective_pars", pwaic),
                                           Rcpp::Named("llik_A", llik_A_obs),
                                           Rcpp::Named("llik_B", llik_B_obs),
                                           Rcpp::Named("llik_AB", llik_AB_obs));
