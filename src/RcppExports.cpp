@@ -212,8 +212,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // Competition_Posterior_Predictive
-Rcpp::List Competition_Posterior_Predictive(const double trial_time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, Rcpp::List Results, const double burnin_prop, const bool time_inhomogeneous);
-RcppExport SEXP _NeuralComp_Competition_Posterior_Predictive(SEXP trial_timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP ResultsSEXP, SEXP burnin_propSEXP, SEXP time_inhomogeneousSEXP) {
+Rcpp::List Competition_Posterior_Predictive(const double trial_time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, Rcpp::List Results, const double burnin_prop, const bool time_inhomogeneous, const int n_samples);
+RcppExport SEXP _NeuralComp_Competition_Posterior_Predictive(SEXP trial_timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP ResultsSEXP, SEXP burnin_propSEXP, SEXP time_inhomogeneousSEXP, SEXP n_samplesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -224,7 +224,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type Results(ResultsSEXP);
     Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
     Rcpp::traits::input_parameter< const bool >::type time_inhomogeneous(time_inhomogeneousSEXP);
-    rcpp_result_gen = Rcpp::wrap(Competition_Posterior_Predictive(trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, time_inhomogeneous));
+    Rcpp::traits::input_parameter< const int >::type n_samples(n_samplesSEXP);
+    rcpp_result_gen = Rcpp::wrap(Competition_Posterior_Predictive(trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, time_inhomogeneous, n_samples));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test
+bool test();
+RcppExport SEXP _NeuralComp_test() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(test());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -318,7 +329,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_WAIC_Competition", (DL_FUNC) &_NeuralComp_WAIC_Competition, 20},
     {"_NeuralComp_WAIC_Competition_Marginal", (DL_FUNC) &_NeuralComp_WAIC_Competition_Marginal, 12},
     {"_NeuralComp_WAIC_IGP", (DL_FUNC) &_NeuralComp_WAIC_IGP, 14},
-    {"_NeuralComp_Competition_Posterior_Predictive", (DL_FUNC) &_NeuralComp_Competition_Posterior_Predictive, 7},
+    {"_NeuralComp_Competition_Posterior_Predictive", (DL_FUNC) &_NeuralComp_Competition_Posterior_Predictive, 8},
+    {"_NeuralComp_test", (DL_FUNC) &_NeuralComp_test, 0},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},

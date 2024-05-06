@@ -648,6 +648,7 @@ inline void calc_loglikelihood_AB_MCMC_approx2(const arma::vec X_AB,
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
   arma::vec llik_samples = arma::zeros(n_MCMC_approx);
   arma::vec weights = arma::ones(n_MCMC_approx);
+  bool weights_zero = false;
   double isi_slow = 0;
   for(int i = burnin_num; i < n_MCMC; i++){
     if(Labels(obs_num, 0)(i,spike_num) == 0){
@@ -767,6 +768,7 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
   arma::mat llik_samplesi = arma::zeros(n_MCMC_approx, n_samples_var - 1);
   arma::vec weights = arma::ones(n_MCMC_approx);
   arma::mat weightsi = arma::ones(n_MCMC_approx, n_samples_var - 1);
+  bool weights_zero = false;
   double isi_slow = 0;
   for(int i = burnin_num; i < n_MCMC; i++){
     if(Labels(obs_num, 0)(i,spike_num) == 0){
@@ -782,7 +784,9 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                     theta(i,2), theta(i,4), 0, n_MCMC_approx2);
           }
           llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
-          
+          if(std::exp(llik(i - burnin_num)) == 0){
+            weights_zero = true;
+          }
           //calculate sd
           for(int k = 0; k < (n_samples_var - 1); k++){
             for(int j = 0; j < n_MCMC_approx; j++){
@@ -793,7 +797,22 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                       theta(i,2), theta(i,4), 0, n_MCMC_approx2);
             }
           }
-          llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+          if(weights_zero == true){
+            for(int k = 0; k < (n_samples_var - 1); k++){
+              if(weights_zero == true){
+                llik_samples = llik_samplesi.col(k);
+                weights = weightsi.col(k);
+                llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
+                if(std::exp(llik(i - burnin_num)) == 0){
+                  weights_zero = true;
+                }
+              }
+            }
+            llik_sd(i - burnin_num)  = 0;
+          }else{
+            llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+          }
+          weights_zero = false;
         }else{
           // Condition if spike has switched from B to A
           for(int j = 0; j < n_MCMC_approx; j++){
@@ -804,6 +823,9 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                     theta(i,2), 0, theta(i,4), n_MCMC_approx2);
           }
           llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
+          if(std::exp(llik(i - burnin_num)) == 0){
+            weights_zero = true;
+          }
           
           //calculate sd
           for(int k = 0; k < (n_samples_var - 1); k++){
@@ -815,7 +837,22 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                       theta(i,2), 0, theta(i,4), n_MCMC_approx2);
             }
           }
-          llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+          if(weights_zero == true){
+            for(int k = 0; k < (n_samples_var - 1); k++){
+              if(weights_zero == true){
+                llik_samples = llik_samplesi.col(k);
+                weights = weightsi.col(k);
+                llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
+                if(std::exp(llik(i - burnin_num)) == 0){
+                  weights_zero = true;
+                }
+              }
+            }
+            llik_sd(i - burnin_num)  = 0;
+          }else{
+            llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+          }
+          weights_zero = false;
         }
       }else{
         for(int j = 0; j < n_MCMC_approx; j++){
@@ -826,7 +863,9 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                   theta(i,2), 0, 0, n_MCMC_approx2);
         }
         llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
-        llik_sd(i - burnin_num) = weighted_sd(llik_samples, weights, std::exp(llik(i - burnin_num)));
+        if(std::exp(llik(i - burnin_num)) == 0){
+          weights_zero = true;
+        }
         
         //calculate sd
         for(int k = 0; k < (n_samples_var - 1); k++){
@@ -838,7 +877,22 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                     theta(i,2), 0, 0, n_MCMC_approx2);
           }
         }
-        llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+        if(weights_zero == true){
+          for(int k = 0; k < (n_samples_var - 1); k++){
+            if(weights_zero == true){
+              llik_samples = llik_samplesi.col(k);
+              weights = weightsi.col(k);
+              llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
+              if(std::exp(llik(i - burnin_num)) == 0){
+                weights_zero = true;
+              }
+            }
+          }
+          llik_sd(i - burnin_num)  = 0;
+        }else{
+          llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+        }
+        weights_zero = false;
       }
     }else{
       // label is B
@@ -853,7 +907,9 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                     theta(i,3), theta(i,4), 0, n_MCMC_approx2);
           }
           llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
-          
+          if(std::exp(llik(i - burnin_num)) == 0){
+            weights_zero = true;
+          }
           //calculate sd
           for(int k = 0; k < (n_samples_var - 1); k++){
             for(int j = 0; j < n_MCMC_approx; j++){
@@ -864,7 +920,22 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                       theta(i,3), theta(i,4), 0, n_MCMC_approx2);
             }
           }
-          llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+          if(weights_zero == true){
+            for(int k = 0; k < (n_samples_var - 1); k++){
+              if(weights_zero == true){
+                llik_samples = llik_samplesi.col(k);
+                weights = weightsi.col(k);
+                llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
+                if(std::exp(llik(i - burnin_num)) == 0){
+                  weights_zero = true;
+                }
+              }
+            }
+            llik_sd(i - burnin_num)  = 0;
+          }else{
+            llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+          }
+          weights_zero = false;
         }else{
           // Condition if spike has switched from A to B
           for(int j = 0; j < n_MCMC_approx; j++){
@@ -875,7 +946,9 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                     theta(i,3), 0, theta(i,4), n_MCMC_approx2);
           }
           llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
-          
+          if(std::exp(llik(i - burnin_num)) == 0){
+            weights_zero = true;
+          }
           //calculate sd
           for(int k = 0; k < (n_samples_var - 1); k++){
             for(int j = 0; j < n_MCMC_approx; j++){
@@ -886,7 +959,22 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                       theta(i,3), 0, theta(i,4), n_MCMC_approx2);
             }
           }
-          llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+          if(weights_zero == true){
+            for(int k = 0; k < (n_samples_var - 1); k++){
+              if(weights_zero == true){
+                llik_samples = llik_samplesi.col(k);
+                weights = weightsi.col(k);
+                llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
+                if(std::exp(llik(i - burnin_num)) == 0){
+                  weights_zero = true;
+                }
+              }
+            }
+            llik_sd(i - burnin_num)  = 0;
+          }else{
+            llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+          }
+          weights_zero = false;
         }
       }else{
         for(int j = 0; j < n_MCMC_approx; j++){
@@ -897,7 +985,9 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                   theta(i,3), 0, 0, n_MCMC_approx2);
         }
         llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
-        
+        if(std::exp(llik(i - burnin_num)) == 0){
+          weights_zero = true;
+        }
         //calculate sd
         for(int k = 0; k < (n_samples_var - 1); k++){
           for(int j = 0; j < n_MCMC_approx; j++){
@@ -908,7 +998,22 @@ inline void calc_loglikelihood_AB_MCMC_approx(const arma::vec X_AB,
                     theta(i,3), 0, 0, n_MCMC_approx2);
           }
         }
-        llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+        if(weights_zero == true){
+          for(int k = 0; k < (n_samples_var - 1); k++){
+            if(weights_zero == true){
+              llik_samples = llik_samplesi.col(k);
+              weights = weightsi.col(k);
+              llik(i - burnin_num) = std::log(weighted_mean(llik_samples, weights));
+              if(std::exp(llik(i - burnin_num)) == 0){
+                weights_zero = true;
+              }
+            }
+          }
+          llik_sd(i - burnin_num)  = 0;
+        }else{
+          llik_sd(i - burnin_num) = calc_unbiased_sd(llik_samples, weights, llik_samplesi, weightsi);
+        }
+        weights_zero = false;
       }
     }
   }

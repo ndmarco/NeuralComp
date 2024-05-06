@@ -151,7 +151,7 @@ getBSpline <- function(time, basis_degree, boundary_knots, internal_knots) {
 #'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 #' 
 #' @export
-Sampler_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, Warm_block1 = 500L, Warm_block2 = 2000L, Leapfrog_steps = 10L, I_A_mean = 40, I_A_shape = 1, I_B_mean = 40, I_B_shape = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, delta_shape = 0.01, delta_rate = 0.1, step_size_theta = 0.001, step_size_FR = 0.001, delta_proposal_mean = -2, delta_proposal_sd = 0.3, alpha_labels = 0.2, nu = 3, gamma = 1, delta_adaption_block = 100L, Mass_adaption_block = 500L, M_proposal = 10L) {
+Sampler_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, Warm_block1 = 500L, Warm_block2 = 2000L, Leapfrog_steps = 10L, I_A_mean = 40, I_A_shape = 1, I_B_mean = 40, I_B_shape = 1, sigma_A_mean = 6.32, sigma_A_shape = 1, sigma_B_mean = 6.32, sigma_B_shape = 1, delta_shape = 0.01, delta_rate = 0.1, step_size_theta = 0.001, step_size_FR = 0.001, delta_proposal_mean = -2, delta_proposal_sd = 0.3, alpha_labels = 0.2, nu = 5, gamma = 2, delta_adaption_block = 100L, Mass_adaption_block = 500L, M_proposal = 10L) {
     .Call('_NeuralComp_Sampler_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_A_mean, I_A_shape, I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, step_size_theta, step_size_FR, delta_proposal_mean, delta_proposal_sd, alpha_labels, nu, gamma, delta_adaption_block, Mass_adaption_block, M_proposal)
 }
 
@@ -420,7 +420,7 @@ FR_CI_Competition <- function(time, basis_degree, boundary_knots, internal_knots
 #'                        results, basis_degree, boundary_knots, internal_knots)
 #' 
 #' @export
-WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, method = "sampling_fast", burnin_prop = 0.5, max_time = 2, n_spike_evals = 25, n_eval = 3000L, n_MCMC_approx = 5L, n_MCMC_approx2 = 20L, n_MCMC_approx_fast = 100L, n_samples_var = 2L) {
+WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, method = "sampling_fast", burnin_prop = 0.5, max_time = 2, n_spike_evals = 25, n_eval = 3000L, n_MCMC_approx = 5L, n_MCMC_approx2 = 30L, n_MCMC_approx_fast = 100L, n_samples_var = 2L) {
     .Call('_NeuralComp_WAIC_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, method, burnin_prop, max_time, n_spike_evals, n_eval, n_MCMC_approx, n_MCMC_approx2, n_MCMC_approx_fast, n_samples_var)
 }
 
@@ -537,8 +537,12 @@ WAIC_IGP <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Resul
     .Call('_NeuralComp_WAIC_IGP', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
 
-Competition_Posterior_Predictive <- function(trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.5, time_inhomogeneous = TRUE) {
-    .Call('_NeuralComp_Competition_Posterior_Predictive', PACKAGE = 'NeuralComp', trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, time_inhomogeneous)
+Competition_Posterior_Predictive <- function(trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.5, time_inhomogeneous = TRUE, n_samples = 10000L) {
+    .Call('_NeuralComp_Competition_Posterior_Predictive', PACKAGE = 'NeuralComp', trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, time_inhomogeneous, n_samples)
+}
+
+test <- function() {
+    .Call('_NeuralComp_test', PACKAGE = 'NeuralComp')
 }
 
 rcpparma_hello_world <- function() {

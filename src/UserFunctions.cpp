@@ -212,8 +212,8 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
                                double delta_proposal_mean = -2,
                                double delta_proposal_sd = 0.3,
                                double alpha_labels = 0.2,
-                               double nu = 3,
-                               double gamma = 1,
+                               double nu = 5,
+                               double gamma = 2,
                                int delta_adaption_block = 100,
                                int Mass_adaption_block = 500,
                                int M_proposal = 10){
@@ -806,7 +806,7 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
                             double n_spike_evals = 25,
                             const int n_eval = 3000,
                             const int n_MCMC_approx = 5,
-                            const int n_MCMC_approx2 = 20,
+                            const int n_MCMC_approx2 = 30,
                             const int n_MCMC_approx_fast = 100,
                             const int n_samples_var = 2){
   if(burnin_prop < 0){
@@ -1969,7 +1969,8 @@ Rcpp::List Competition_Posterior_Predictive(const double trial_time,
                                             const arma::vec internal_knots,
                                             Rcpp::List Results,
                                             const double burnin_prop = 0.5,
-                                            const bool time_inhomogeneous = true){
+                                            const bool time_inhomogeneous = true,
+                                            const int n_samples = 10000){
   // check parameters
   if(burnin_prop < 0){
     Rcpp::stop("'burnin_prop' must be between 0 and 1");
@@ -2003,7 +2004,7 @@ Rcpp::List Competition_Posterior_Predictive(const double trial_time,
   
   Rcpp::List output = NeuralComp::posterior_pred_samples(theta, basis_coef_A, basis_coef_B,
                                                          basis_degree, boundary_knots, internal_knots,
-                                                         burnin_prop, trial_time, time_inhomogeneous);
+                                                         burnin_prop, trial_time, time_inhomogeneous, n_samples);
 
   return output;
 }
@@ -2133,3 +2134,13 @@ Rcpp::List Competition_Posterior_Predictive(const double trial_time,
 //   return output;
 // }
 
+
+//[[Rcpp::export]]
+bool test(){
+  bool output = false;
+  double ph = std::log(0);
+  if(std::exp(ph) == 0){
+    output = true;
+  }
+  return output;
+}

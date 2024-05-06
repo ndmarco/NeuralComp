@@ -16,15 +16,16 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
                                          const arma::vec& internal_knots,
                                          const double burnin_prop,
                                          const double trial_time,
-                                         const bool time_inhomogeneous){
+                                         const bool time_inhomogeneous,
+                                         const int number_samples){
   int n_MCMC = theta.n_rows;
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
-  arma::field<arma::vec> posterior_predictive_samples_AB(n_MCMC - burnin_num, 1);
-  arma::field<arma::vec> posterior_predictive_labels(n_MCMC - burnin_num, 1);
-  arma::vec n_AB_posterior_predictive = arma::zeros(n_MCMC - burnin_num);
-  arma::vec n_switches = arma::zeros(n_MCMC - burnin_num);
-  arma::field<arma::vec> switch_times(n_MCMC - burnin_num, 1);
-  arma::field<arma::vec> switch_states(n_MCMC - burnin_num, 1);
+  arma::field<arma::vec> posterior_predictive_samples_AB(number_samples, 1);
+  arma::field<arma::vec> posterior_predictive_labels(number_samples, 1);
+  arma::vec n_AB_posterior_predictive = arma::zeros(number_samples);
+  arma::vec n_switches = arma::zeros(number_samples);
+  arma::field<arma::vec> switch_times(number_samples, 1);
+  arma::field<arma::vec> switch_states(number_samples, 1);
   arma::vec samples_i;
   arma::vec labels_i;
   arma::vec switch_times_i;
@@ -35,9 +36,10 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
   splines2::BSpline bspline;
   arma::vec time = arma::zeros(1);
   int j;
-  
+  int i;
   // Sample AB process
-  for(int i = burnin_num; i < n_MCMC; i++){
+  for(int l = 0; l < number_samples; l++){
+    i = arma::randi(arma::distr_param(burnin_num, n_MCMC-1));
     j = 0;
     total_time = 0;
     samples_i = arma::vec(1);
@@ -96,14 +98,14 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
         labels_i.resize(j + 1);
         samples_i.resize(j + 1);
         if(labels_i(j - 1) != 0){
-          n_switches(i - burnin_num) = n_switches(i - burnin_num) + 1;
-          switch_states_i.resize(n_switches(i - burnin_num) + 1);
-          switch_times_i.resize(n_switches(i - burnin_num) + 1);
-          switch_states_i(n_switches(i - burnin_num)) = 0;
-          if(n_switches(i - burnin_num) == 1){
+          n_switches(l) = n_switches(l) + 1;
+          switch_states_i.resize(n_switches(l) + 1);
+          switch_times_i.resize(n_switches(l) + 1);
+          switch_states_i(n_switches(l)) = 0;
+          if(n_switches(l) == 1){
             switch_times_i(0) = total_time - ISI_A;
           }else{
-            switch_times_i(n_switches(i - burnin_num) - 1) = total_time - ISI_A - arma::accu(switch_times_i.subvec(0,n_switches(i - burnin_num) - 2));
+            switch_times_i(n_switches(l) - 1) = total_time - ISI_A - arma::accu(switch_times_i.subvec(0,n_switches(l) - 2));
           }
         }
         labels_i(j) = 0;
@@ -114,14 +116,14 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
         labels_i.resize(j + 1);
         samples_i.resize(j + 1);
         if(labels_i(j - 1) != 1){
-          n_switches(i- burnin_num) = n_switches(i - burnin_num) + 1;
-          switch_states_i.resize(n_switches(i - burnin_num) + 1);
-          switch_times_i.resize(n_switches(i - burnin_num) + 1);
-          switch_states_i(n_switches(i - burnin_num)) = 1;
-          if(n_switches(i - burnin_num) == 1){
+          n_switches(l) = n_switches(l) + 1;
+          switch_states_i.resize(n_switches(l) + 1);
+          switch_times_i.resize(n_switches(l) + 1);
+          switch_states_i(n_switches(l)) = 1;
+          if(n_switches(l) == 1){
             switch_times_i(0) = total_time - ISI_B;
           }else{
-            switch_times_i(n_switches(i - burnin_num) - 1) = total_time - ISI_B - arma::accu(switch_times_i.subvec(0,n_switches(i - burnin_num) - 2));
+            switch_times_i(n_switches(l) - 1) = total_time - ISI_B - arma::accu(switch_times_i.subvec(0,n_switches(l) - 2));
           }
         }
         labels_i(j) = 1;
@@ -129,24 +131,25 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
         j = j + 1;
       }
     }
-    if(n_switches(i - burnin_num) == 0){
+    if(n_switches(l) == 0){
       switch_times_i(0) =  total_time;
     }else{
-      switch_times_i(n_switches(i - burnin_num)) = total_time - arma::accu(switch_times_i.subvec(0, n_switches(i - burnin_num) - 1));
+      switch_times_i(n_switches(l)) = total_time - arma::accu(switch_times_i.subvec(0, n_switches(l) - 1));
     }
-    posterior_predictive_samples_AB(i - burnin_num, 0) = samples_i;
-    posterior_predictive_labels(i - burnin_num, 0) = labels_i;
-    n_AB_posterior_predictive(i - burnin_num) = j;
-    switch_times(i - burnin_num, 0) = switch_times_i;
-    switch_states(i - burnin_num, 0) = switch_states_i;
+    posterior_predictive_samples_AB(l, 0) = samples_i;
+    posterior_predictive_labels(l, 0) = labels_i;
+    n_AB_posterior_predictive(l) = j;
+    switch_times(l, 0) = switch_times_i;
+    switch_states(l, 0) = switch_states_i;
   }
   
   // Sample A process and B Process
-  arma::field<arma::vec> posterior_predictive_samples_A(n_MCMC - burnin_num, 1);
-  arma::vec n_A_posterior_predictive = arma::zeros(n_MCMC - burnin_num);
-  arma::field<arma::vec> posterior_predictive_samples_B(n_MCMC - burnin_num, 1);
-  arma::vec n_B_posterior_predictive = arma::zeros(n_MCMC - burnin_num);
-  for(int i = burnin_num; i < n_MCMC; i++){
+  arma::field<arma::vec> posterior_predictive_samples_A(number_samples, 1);
+  arma::vec n_A_posterior_predictive = arma::zeros(number_samples);
+  arma::field<arma::vec> posterior_predictive_samples_B(number_samples, 1);
+  arma::vec n_B_posterior_predictive = arma::zeros(number_samples);
+  for(int l = 0; l < number_samples; l++){
+    i = arma::randi(arma::distr_param(burnin_num, n_MCMC-1));
     j = 0;
     total_time = 0;
     samples_i = arma::vec(1);
@@ -181,8 +184,8 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
       samples_i(j) = ISI_A;
       j = j + 1;
     }
-    posterior_predictive_samples_A(i - burnin_num, 0) = samples_i;
-    n_A_posterior_predictive(i - burnin_num) = j;
+    posterior_predictive_samples_A(l, 0) = samples_i;
+    n_A_posterior_predictive(l) = j;
     
     j = 0;
     total_time = 0;
@@ -217,8 +220,8 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
       samples_i(j) = ISI_B;
       j = j + 1;
     }
-    posterior_predictive_samples_B(i - burnin_num, 0) = samples_i;
-    n_B_posterior_predictive(i - burnin_num) = j;
+    posterior_predictive_samples_B(l, 0) = samples_i;
+    n_B_posterior_predictive(l) = j;
   }
   
   
