@@ -22,7 +22,7 @@ WAIC_Competition(
   n_spike_evals = 25,
   n_eval = 3000L,
   n_MCMC_approx = 5L,
-  n_MCMC_approx2 = 20L,
+  n_MCMC_approx2 = 30L,
   n_MCMC_approx_fast = 100L,
   n_samples_var = 2L
 )

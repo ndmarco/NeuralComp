@@ -155,13 +155,13 @@ Sampler_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basi
     .Call('_NeuralComp_Sampler_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_A_mean, I_A_shape, I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, step_size_theta, step_size_FR, delta_proposal_mean, delta_proposal_sd, alpha_labels, nu, gamma, delta_adaption_block, Mass_adaption_block, M_proposal)
 }
 
-#' Sampler for Inverse Gamma Renewal Process
+#' Sampler for IIGPP model
 #' 
-#' Conducts MCMC to get posterior samples from an inverse Gaussian renewal process.
+#' Conducts MCMC to get posterior samples from an (inhomogeneous) inverse Gaussian point process.
 #' This function can fit a time-homogeneous model, as well as a time-inhomogeneous 
 #' model.
 #' 
-#' @name Sampler_IGP
+#' @name Sampler_IIGPP
 #' @param X List of vectors containing the ISIs the trials
 #' @param n Vector containing number of spikes for the trials
 #' @param MCMC_iters Integer containing the number of MCMC_iterations excluding warm up blocks
@@ -228,9 +228,9 @@ Sampler_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basi
 #' Warm_block2 = 50
 #' 
 #' ## Run MCMC chain
-#' results <- Sampler_IGP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
-#'                        internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-#'                        time_inhomogeneous = FALSE)
+#' results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+#'                          internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+#'                          time_inhomogeneous = FALSE)
 #' 
 #' 
 #' ################################
@@ -251,20 +251,20 @@ Sampler_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basi
 #' Warm_block2 = 50
 #' 
 #' ## Run MCMC chain
-#' results <- Sampler_IGP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots, 
-#'                        internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#' results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots, 
+#'                          internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 #' 
 #' @export
-Sampler_IGP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, Warm_block1 = 500L, Warm_block2 = 2000L, Leapfrog_steps = 10L, I_mean = 40, I_shape = 1, sigma_mean = 6.32, sigma_shape = 1, step_size_theta = 0.001, step_size_FR = 0.001, alpha = 1, beta = 0.005, Mass_adaption_block = 500L, M_proposal = 10L) {
-    .Call('_NeuralComp_Sampler_IGP', PACKAGE = 'NeuralComp', X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_mean, I_shape, sigma_mean, sigma_shape, step_size_theta, step_size_FR, alpha, beta, Mass_adaption_block, M_proposal)
+Sampler_IIGPP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, Warm_block1 = 500L, Warm_block2 = 2000L, Leapfrog_steps = 10L, I_mean = 40, I_shape = 1, sigma_mean = 6.32, sigma_shape = 1, step_size_theta = 0.001, step_size_FR = 0.001, nu = 5, gamma = 2, Mass_adaption_block = 500L, M_proposal = 10L) {
+    .Call('_NeuralComp_Sampler_IIGPP', PACKAGE = 'NeuralComp', X, n, MCMC_iters, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_mean, I_shape, sigma_mean, sigma_shape, step_size_theta, step_size_FR, nu, gamma, Mass_adaption_block, M_proposal)
 }
 
-#' Constructs CI for IGP Firing Rate
+#' Constructs CI for IIGPP Firing Rate
 #' 
-#' Constructs credible intervals for the time-inhomgeneous mean parameter (I) of the
-#' inverse Gaussian renewal process.
+#' Constructs credible intervals for the time-inhomgeneous mean parameter (I) of the inhomogeneous
+#' inverse Gaussian point process.
 #' 
-#' @name FR_CI_IGP
+#' @name FR_CI_IIGPP
 #' @param time Vector of time points at which pointwise credible intervals will be constructed
 #' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
 #' @param boundary_knots Vector of two elements specifying the boundary knots
@@ -314,11 +314,11 @@ Sampler_IGP <- function(X, n, MCMC_iters, basis_degree, boundary_knots, internal
 #' 
 #' ## Get CI
 #' time <- seq(0, 1, 0.01)
-#' CI <- FR_CI_IGP(time, basis_degree, boundary_knots, internal_knots, results)
+#' CI <- FR_CI_IIGPP(time, basis_degree, boundary_knots, internal_knots, results)
 #' 
 #' @export
-FR_CI_IGP <- function(time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.3, alpha = 0.05) {
-    .Call('_NeuralComp_FR_CI_IGP', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, alpha)
+FR_CI_IIGPP <- function(time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.3, alpha = 0.05) {
+    .Call('_NeuralComp_FR_CI_IIGPP', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, alpha)
 }
 
 FR_CI_Competition <- function(time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.3, alpha = 0.05) {
@@ -424,19 +424,19 @@ WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degr
     .Call('_NeuralComp_WAIC_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, method, burnin_prop, max_time, n_spike_evals, n_eval, n_MCMC_approx, n_MCMC_approx2, n_MCMC_approx_fast, n_samples_var)
 }
 
-WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5) {
+WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
     .Call('_NeuralComp_WAIC_Competition_Marginal', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
 
 #' Calculates WAIC for the Inverse Gaussian Renewal Process
 #' 
 #' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
-#' the inverse Gaussian renewal process. This function will use the output from
+#' the (inhomogeneous) inverse Gaussian point process. This function will use the output from
 #' \code{Sampler_IGP} fit for the A, B, and AB data. The WAIC is defined on the 
 #' deviance scale as waic = -2(lppd - p), where lppd is the log pointwise 
 #' predictive density, and p is the effective number of parameters.
 #' 
-#' @name WAIC_IGP
+#' @name WAIC_IIGPP
 #' @param X_A List of vectors containing the ISIs of A trials
 #' @param X_B List of vectors containing the ISIs of B trials
 #' @param X_AB List of vectors containing the ISIs of AB trials
@@ -481,23 +481,23 @@ WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, b
 #' Warm_block2 = 50
 #' 
 #' ## Run MCMC chain for A trials
-#' results_A <- Sampler_IGP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
-#'                          internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-#'                          time_inhomogeneous = FALSE)
+#' results_A <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+#'                            internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+#'                            time_inhomogeneous = FALSE)
 #'                        
 #' ## Run MCMC chain for B trials
-#' results_B<- Sampler_IGP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
-#'                         internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-#'                         time_inhomogeneous = FALSE)
+#' results_B<- Sampler_IIGPP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
+#'                           internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+#'                           time_inhomogeneous = FALSE)
 #'
 #' ## Run MCMC chain for AB trials
-#' results_AB <- Sampler_IGP(dat$X_AB, dat$n_AB, MCMC_iters, basis_degree, boundary_knots,
-#'                           internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-#'                           time_inhomogeneous = FALSE)         
+#' results_AB <- Sampler_IIGPP(dat$X_AB, dat$n_AB, MCMC_iters, basis_degree, boundary_knots,
+#'                             internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+#'                             time_inhomogeneous = FALSE)         
 #' ## Calculate WAIC
-#' WAIC <- WAIC_IGP(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, results_A,
-#'                  results_B, results_AB, basis_degree, boundary_knots, internal_knots,
-#'                  time_inhomogeneous = FALSE)
+#' WAIC <- WAIC_IIGPP(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, results_A,
+#'                    results_B, results_AB, basis_degree, boundary_knots, internal_knots,
+#'                    time_inhomogeneous = FALSE)
 #' 
 #' 
 #' ################################
@@ -518,31 +518,35 @@ WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, b
 #' Warm_block2 = 50
 #' 
 #' ## Run MCMC chain for A trials
-#' results_A <- Sampler_IGP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
-#'                          internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#' results_A <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+#'                            internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 #'                        
 #' ## Run MCMC chain for B trials
-#' results_B<- Sampler_IGP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
-#'                         internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
-#'
-#' ## Run MCMC chain for AB trials
-#' results_AB <- Sampler_IGP(dat$X_AB, dat$n_AB, MCMC_iters, basis_degree, boundary_knots,
+#' results_B<- Sampler_IIGPP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
 #'                           internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 #'
-#' WAIC <- WAIC_IGP(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, results_A,
-#'                  results_B, results_AB, basis_degree, boundary_knots, internal_knots)
+#' ## Run MCMC chain for AB trials
+#' results_AB <- Sampler_IIGPP(dat$X_AB, dat$n_AB, MCMC_iters, basis_degree, boundary_knots,
+#'                             internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#'
+#' WAIC <- WAIC_IIGPP(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, results_A,
+#'                    results_B, results_AB, basis_degree, boundary_knots, internal_knots)
 #' 
 #' @export
-WAIC_IGP <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.5) {
-    .Call('_NeuralComp_WAIC_IGP', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
+WAIC_IIGPP <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
+    .Call('_NeuralComp_WAIC_IIGPP', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
 
-Competition_Posterior_Predictive <- function(trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.5, time_inhomogeneous = TRUE, n_samples = 10000L) {
+Competition_Posterior_Predictive <- function(trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.2, time_inhomogeneous = TRUE, n_samples = 10000L) {
     .Call('_NeuralComp_Competition_Posterior_Predictive', PACKAGE = 'NeuralComp', trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, time_inhomogeneous, n_samples)
 }
 
-test <- function() {
-    .Call('_NeuralComp_test', PACKAGE = 'NeuralComp')
+KL_divergence_A_B <- function(Results_A, Results_B, time_grid, basis_degree, boundary_knots, internal_knots, burnin_prop = 0.2, time_inhomogeneous = TRUE, n_MC_samples = 10L) {
+    .Call('_NeuralComp_KL_divergence_A_B', PACKAGE = 'NeuralComp', Results_A, Results_B, time_grid, basis_degree, boundary_knots, internal_knots, burnin_prop, time_inhomogeneous, n_MC_samples)
+}
+
+bootstrap_test_unimodality <- function(obs_dat, eval_grid = NULL, h_grid = NULL, n_boot = 10000L) {
+    .Call('_NeuralComp_bootstrap_test_unimodality', PACKAGE = 'NeuralComp', obs_dat, eval_grid, h_grid, n_boot)
 }
 
 rcpparma_hello_world <- function() {

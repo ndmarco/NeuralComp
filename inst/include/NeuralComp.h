@@ -8,5 +8,7 @@
 #include "NeuralComp/SplinePrior.h"
 #include "NeuralComp/WAIC.h"
 #include "NeuralComp/PosteriorPredictive.h"
+#include "NeuralComp/Unimodality.h"
+#include "NeuralComp/Sample.h"
 
 #endif
