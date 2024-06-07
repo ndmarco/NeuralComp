@@ -2,7 +2,8 @@
 % Please edit documentation in R/RcppExports.R
 \name{WAIC_Competition}
 \alias{WAIC_Competition}
-\title{Calculates WAIC for the Competition Model}
+\alias{WAIC_Competition_Marginal}
+\title{Calculates WAIC for the Competition Model (Conditional)}
 \usage{
 WAIC_Competition(
   X_A,
@@ -25,6 +26,21 @@ WAIC_Competition(
   n_MCMC_approx2 = 30L,
   n_MCMC_approx_fast = 100L,
   n_samples_var = 2L
+)
+
+WAIC_Competition_Marginal(
+  X_A,
+  X_B,
+  X_AB,
+  n_A,
+  n_B,
+  n_AB,
+  Results,
+  basis_degree,
+  boundary_knots,
+  internal_knots,
+  time_inhomogeneous = TRUE,
+  burnin_prop = 0.2
 )
 }
 \arguments{
@@ -63,17 +79,50 @@ WAIC_Competition(
 \item{n_MCMC_approx2}{number of x_tilde samples drawn when using sampling method (denoted M_X_tilde in the manuscript)}
 }
 \value{
-waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
+List containing:
+\describe{
+  \item{\code{WAIC}}{Estimate of WAIC}
+  \item{\code{LPPD}}{Estimate of LPPD}
+  \item{\code{Effective_pars}}{Estimated Effective number of parameters}
+  \item{\code{llik_A}}{Log-likelihood for A trial spike trains}
+  \item{\code{llik_B}}{Log-likelihood for B trial spike trains}
+  \item{\code{llik_AB}}{Log-likelihood for AB trial spike trains}
+}
+
+List containing:
+\describe{
+  \item{\code{WAIC}}{Estimate of WAIC}
+  \item{\code{LPPD}}{Estimate of LPPD}
+  \item{\code{Effective_pars}}{Estimated Effective number of parameters}
+  \item{\code{llik_A}}{Log-likelihood for A trial spike trains}
+  \item{\code{llik_B}}{Log-likelihood for B trial spike trains}
+  \item{\code{llik_AB}}{Log-likelihood for AB trial spike trains}
+}
 }
 \description{
 This function calculates the Watanabe-Akaike information criterion (WAIC) for 
-the drift-diffusion competition model. This function will use the output from
+the drift-diffusion competition model using the conditional likelihood. This function will use the output from
 \code{Sampler_Competition}. The WAIC is defined on the deviance scale as waic = -2(lppd - p),
 where lppd is the log pointwise predictive density, and p is the effective number of parameters.
 The WAIC can be calculated using four different ways, as specified in the supplemental materials
-of the accompaning manuscript.
+of the accompanying manuscript. The conditional WAIC is akin to leave-one-spike-out cross validation (asymptotically).
+
+This function calculates the Watanabe-Akaike information criterion (WAIC) for 
+the drift-diffusion competition model using the marginal likelihood (marginalizing out the labels).
+ This function will use the output from 
+\code{Sampler_Competition}. The WAIC is defined on the deviance scale as waic = -2(lppd - p),
+where lppd is the log pointwise predictive density, and p is the effective number of parameters.
+The Marginal WAIC is akin to leave-one-spike-train-out cross validation (asymptotically).
 }
 \section{Warning}{
+
+The following must be true:
+\describe{
+  \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+  \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+  \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+}
+
 
 The following must be true:
 \describe{
@@ -138,5 +187,60 @@ results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat
 ## Calculate WAIC
 WAIC <- WAIC_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
                        results, basis_degree, boundary_knots, internal_knots)
+
+##############################
+### Time-Homogeneous Model ###
+##############################
+
+## Load sample data
+dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+
+## set parameters
+MCMC_iters <- 100
+
+basis_degree <- 3
+boundary_knots <- c(0, 1)
+internal_knots <- c(0.25, 0.5, 0.75)
+
+## Warm Blocks should be longer, however for the example, they are short
+Warm_block1 = 50
+Warm_block2 = 50
+
+## Run MCMC chain
+results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+                               MCMC_iters, basis_degree, boundary_knots, internal_knots,
+                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+                               time_inhomogeneous = FALSE)
+                               
+## Calculate WAIC
+WAIC <- WAIC_Competition_Marginal(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
+                                  results, basis_degree, boundary_knots, internal_knots,
+                                  time_inhomogeneous = FALSE)
+
+################################
+### Time-Inhomogeneous Model ###
+################################
+
+## Load sample data
+dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+
+## set parameters
+MCMC_iters <- 100
+basis_degree <- 3
+boundary_knots <- c(0, 1)
+internal_knots <- c(0.25, 0.5, 0.75)
+
+## Warm Blocks should be longer, however for the example, they are short
+Warm_block1 = 50
+Warm_block2 = 50
+
+## Run MCMC chain
+results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+                               MCMC_iters, basis_degree, boundary_knots, internal_knots,
+                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+
+## Calculate WAIC
+WAIC <- WAIC_Competition_Marginal(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
+                                  results, basis_degree, boundary_knots, internal_knots)
 
 }

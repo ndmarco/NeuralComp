@@ -5,7 +5,7 @@
 #' 
 #' Creates B-spline basis functions evaluated at the time points of interest.
 #' 
-#' @name getBSpline
+#' @name GetBSpline
 #' @param time Vector of time points of interest
 #' @param basis_degree Integer indicating the degree of B-splines
 #' @param boundary_knots Vector of two elements specifying the boundary knots
@@ -18,11 +18,11 @@
 #' boundary_knots <- c(0, 1)
 #' internal_knots <- c(0.25, 0.5, 0.75)
 #' 
-#' B <- getBSpline(time, basis_degree, boundary_knots, internal_knots)
+#' B <- GetBSpline(time, basis_degree, boundary_knots, internal_knots)
 #' 
 #' @export
-getBSpline <- function(time, basis_degree, boundary_knots, internal_knots) {
-    .Call('_NeuralComp_getBSpline', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots)
+GetBSpline <- function(time, basis_degree, boundary_knots, internal_knots) {
+    .Call('_NeuralComp_GetBSpline', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots)
 }
 
 #' Sampler for Drift-Diffusion Competition Model
@@ -325,14 +325,14 @@ FR_CI_Competition <- function(time, basis_degree, boundary_knots, internal_knots
     .Call('_NeuralComp_FR_CI_Competition', PACKAGE = 'NeuralComp', time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, alpha)
 }
 
-#' Calculates WAIC for the Competition Model
+#' Calculates WAIC for the Competition Model (Conditional)
 #' 
 #' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
-#' the drift-diffusion competition model. This function will use the output from
+#' the drift-diffusion competition model using the conditional likelihood. This function will use the output from
 #' \code{Sampler_Competition}. The WAIC is defined on the deviance scale as waic = -2(lppd - p),
 #' where lppd is the log pointwise predictive density, and p is the effective number of parameters.
 #' The WAIC can be calculated using four different ways, as specified in the supplemental materials
-#' of the accompaning manuscript.
+#' of the accompanying manuscript. The conditional WAIC is akin to leave-one-spike-out cross validation (asymptotically).
 #' 
 #' @name WAIC_Competition
 #' @param X_A List of vectors containing the ISIs of A trials
@@ -352,8 +352,15 @@ FR_CI_Competition <- function(time, basis_degree, boundary_knots, internal_knots
 #' @param n_eval Integer containing parameter for estimating the probability of switching states used only for numerical_approx method (the larger the number the more computationally expensive, but more accurate)
 #' @param n_MCMC_approx number of y_tilde samples drawn when using sampling method (denoted M_Y_tilde in the manuscript)
 #' @param n_MCMC_approx2 number of x_tilde samples drawn when using sampling method (denoted M_X_tilde in the manuscript)
-#' 
-#' @returns waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
+#' @returns List containing:
+#' \describe{
+#'   \item{\code{WAIC}}{Estimate of WAIC}
+#'   \item{\code{LPPD}}{Estimate of LPPD}
+#'   \item{\code{Effective_pars}}{Estimated Effective number of parameters}
+#'   \item{\code{llik_A}}{Log-likelihood for A trial spike trains}
+#'   \item{\code{llik_B}}{Log-likelihood for B trial spike trains}
+#'   \item{\code{llik_AB}}{Log-likelihood for AB trial spike trains}
+#' }
 #' 
 #' @section Warning:
 #' The following must be true:
@@ -424,11 +431,108 @@ WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degr
     .Call('_NeuralComp_WAIC_Competition', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, method, burnin_prop, max_time, n_spike_evals, n_eval, n_MCMC_approx, n_MCMC_approx2, n_MCMC_approx_fast, n_samples_var)
 }
 
+#' Calculates WAIC for the Competition Model (Marginal)
+#' 
+#' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
+#' the drift-diffusion competition model using the marginal likelihood (marginalizing out the labels).
+#'  This function will use the output from 
+#' \code{Sampler_Competition}. The WAIC is defined on the deviance scale as waic = -2(lppd - p),
+#' where lppd is the log pointwise predictive density, and p is the effective number of parameters.
+#' The Marginal WAIC is akin to leave-one-spike-train-out cross validation (asymptotically).
+#' 
+#' @name WAIC_Competition
+#' @param X_A List of vectors containing the ISIs of A trials
+#' @param X_B List of vectors containing the ISIs of B trials
+#' @param X_AB List of vectors containing the ISIs of AB trials
+#' @param n_A Vector containing number of spikes for each A trial
+#' @param n_B Vector containing number of spikes for each B trial
+#' @param n_AB Vector containing number of spikes for each AB trial
+#' @param Results List produced from running \code{Sampler_Competition}
+#' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+#' @param boundary_knots Vector of two elements specifying the boundary knots
+#' @param internal_knots Vector containing the desired internal knots of the B-splines
+#' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
+#' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in (Note burnin_prop includes warm-up iterations)
+#' @returns List containing:
+#' \describe{
+#'   \item{\code{WAIC}}{Estimate of WAIC}
+#'   \item{\code{LPPD}}{Estimate of LPPD}
+#'   \item{\code{Effective_pars}}{Estimated Effective number of parameters}
+#'   \item{\code{llik_A}}{Log-likelihood for A trial spike trains}
+#'   \item{\code{llik_B}}{Log-likelihood for B trial spike trains}
+#'   \item{\code{llik_AB}}{Log-likelihood for AB trial spike trains}
+#' }
+#' 
+#' @section Warning:
+#' The following must be true:
+#' \describe{
+#'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+#'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+#'   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+#' }
+#' 
+#' @examples
+#' ##############################
+#' ### Time-Homogeneous Model ###
+#' ##############################
+#' 
+#' ## Load sample data
+#' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## set parameters
+#' MCMC_iters <- 100
+#' 
+#' basis_degree <- 3
+#' boundary_knots <- c(0, 1)
+#' internal_knots <- c(0.25, 0.5, 0.75)
+#' 
+#' ## Warm Blocks should be longer, however for the example, they are short
+#' Warm_block1 = 50
+#' Warm_block2 = 50
+#' 
+#' ## Run MCMC chain
+#' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+#'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+#'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+#'                                time_inhomogeneous = FALSE)
+#'                                
+#' ## Calculate WAIC
+#' WAIC <- WAIC_Competition_Marginal(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
+#'                                   results, basis_degree, boundary_knots, internal_knots,
+#'                                   time_inhomogeneous = FALSE)
+#' 
+#' ################################
+#' ### Time-Inhomogeneous Model ###
+#' ################################
+#' 
+#' ## Load sample data
+#' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## set parameters
+#' MCMC_iters <- 100
+#' basis_degree <- 3
+#' boundary_knots <- c(0, 1)
+#' internal_knots <- c(0.25, 0.5, 0.75)
+#' 
+#' ## Warm Blocks should be longer, however for the example, they are short
+#' Warm_block1 = 50
+#' Warm_block2 = 50
+#' 
+#' ## Run MCMC chain
+#' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+#'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+#'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#' 
+#' ## Calculate WAIC
+#' WAIC <- WAIC_Competition_Marginal(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
+#'                                   results, basis_degree, boundary_knots, internal_knots)
+#' 
+#' @export
 WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
     .Call('_NeuralComp_WAIC_Competition_Marginal', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
 
-#' Calculates WAIC for the Inverse Gaussian Renewal Process
+#' Calculates WAIC for the IIGPP Model
 #' 
 #' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
 #' the (inhomogeneous) inverse Gaussian point process. This function will use the output from
@@ -443,15 +547,23 @@ WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, b
 #' @param n_A Vector containing number of spikes for each A trial
 #' @param n_B Vector containing number of spikes for each B trial
 #' @param n_AB Vector containing number of spikes for each AB trial
-#' @param Results_A List produced from running \code{Sampler_Competition} for A trials
-#' @param Results_B List produced from running \code{Sampler_Competition} for B trials
-#' @param Results_AB List produced from running \code{Sampler_Competition} for AB trials
+#' @param Results_A List produced from running \code{Sampler_IIGPP} for A trials
+#' @param Results_B List produced from running \code{Sampler_IIGPP} for B trials
+#' @param Results_AB List produced from running \code{Sampler_IIGPP} for AB trials
 #' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
 #' @param boundary_knots Vector of two elements specifying the boundary knots
 #' @param internal_knots Vector containing the desired internal knots of the B-splines
 #' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
 #' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in (Note burnin_prop includes warm-up iterations)
-#' @returns waic Double containing the value of the Watanabe-Akaike information criterion on the deviance scale
+#' @returns List containing:
+#' \describe{
+#'   \item{\code{WAIC}}{Estimate of WAIC}
+#'   \item{\code{LPPD}}{Estimate of LPPD}
+#'   \item{\code{Effective_pars}}{Estimated Effective number of parameters}
+#'   \item{\code{llik_A}}{Log-likelihood for A trial spike trains}
+#'   \item{\code{llik_B}}{Log-likelihood for B trial spike trains}
+#'   \item{\code{llik_AB}}{Log-likelihood for AB trial spike trains}
+#' }
 #' 
 #' @section Warning:
 #' The following must be true:
@@ -537,16 +649,243 @@ WAIC_IIGPP <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Res
     .Call('_NeuralComp_WAIC_IIGPP', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
 
+#' Posterior Predictive Sampling for Competition Model
+#' 
+#' This function generates posterior predictive samples of scientific interest from
+#' the competition model. Specifically, this function allows you to obtain (1) posterior
+#' predictive samples from the A condition, B condition, and AB conditions (2) posterior
+#' predictive samples of spike counts under the A condition, B condition, and AB conditions, 
+#' (3) posterior predictive samples of time spent encoding each state (4) posterior predictive 
+#' samples for the number of switches in a trial. This function is to be used after running
+#' \code{Sampler_Competition}.
+#' 
+#' @name Competition_Posterior_Predictive
+#' @param trial_time Double containing length of trial to simulate
+#' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+#' @param boundary_knots Vector of two elements specifying the boundary knots
+#' @param internal_knots Vector containing the desired internal knots of the B-splines
+#' @param Results List produced from running \code{Sampler_Competition}
+#' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in (Note burnin_prop includes warm-up iterations)
+#' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
+#' @param n_samples Integer containing number of posterior predictive samples to generate
+#' @returns List containing:
+#' \describe{
+#'   \item{\code{posterior_pred_samples_A}}{Posterior predictive samples of spike trains under the A stimulus}
+#'   \item{\code{posterior_pred_samples_B}}{Posterior predictive samples of spike trains under the B stimulus}
+#'   \item{\code{posterior_pred_samples_AB}}{Posterior predictive samples of spike trains under the A  and B stimuli}
+#'   \item{\code{posterior_pred_labels}}{labels corresponding to posterior_pred_samples_AB}
+#'   \item{\code{n_A}}{Number of spikes in each of the spike trains in posterior_pred_samples_A}
+#'   \item{\code{n_B}}{Number of spikes in each of the spike trains in posterior_pred_samples_B}
+#'   \item{\code{n_AB}}{Number of spikes in each of the spike trains in posterior_pred_samples_AB}
+#'   \item{\code{switch_times}}{Times spent in each encoding state in the spike trains generated in posterior_pred_samples_AB}
+#'   \item{\code{switch_states}}{Encoding state (labels) corresponding to switch_times}
+#'   \item{\code{n_switches}}{number of switches observed in each spike train generated in posterior_pred_samples_AB}
+#' }
+#' 
+#' @section Warning:
+#' The following must be true:
+#' \describe{
+#'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+#'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+#'   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+#'   \item{\code{n_sample}}{must be greater than 1}
+#' }
+#' 
+#' @examples
+#' ##############################
+#' ### Time-Homogeneous Model ###
+#' ##############################
+#' 
+#' ## Load sample data
+#' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## set parameters
+#' MCMC_iters <- 100
+#' 
+#' basis_degree <- 3
+#' boundary_knots <- c(0, 1)
+#' internal_knots <- c(0.25, 0.5, 0.75)
+#' 
+#' ## Warm Blocks should be longer, however for the example, they are short
+#' Warm_block1 = 50
+#' Warm_block2 = 50
+#' 
+#' ## Run MCMC chain
+#' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+#'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+#'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+#'                                time_inhomogeneous = FALSE)
+#'                                
+#' ## Posterior Predictive Samples
+#' post_pred <- Competition_Posterior_Predictive(1, basis_degree, boundary_knots, internal_knots,
+#'                                               results, time_inhomogeneous = FALSE)
+#' 
+#' ################################
+#' ### Time-Inhomogeneous Model ###
+#' ################################
+#' 
+#' ## Load sample data
+#' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## set parameters
+#' MCMC_iters <- 100
+#' basis_degree <- 3
+#' boundary_knots <- c(0, 1)
+#' internal_knots <- c(0.25, 0.5, 0.75)
+#' 
+#' ## Warm Blocks should be longer, however for the example, they are short
+#' Warm_block1 = 50
+#' Warm_block2 = 50
+#' 
+#' ## Run MCMC chain
+#' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+#'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+#'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#'                                
+#' ## Posterior Predictive Samples                               
+#' post_pred <- Competition_Posterior_Predictive(1, basis_degree, boundary_knots, internal_knots,
+#'                                               results)
+#'                                               
+#' @export
 Competition_Posterior_Predictive <- function(trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop = 0.2, time_inhomogeneous = TRUE, n_samples = 10000L) {
     .Call('_NeuralComp_Competition_Posterior_Predictive', PACKAGE = 'NeuralComp', trial_time, basis_degree, boundary_knots, internal_knots, Results, burnin_prop, time_inhomogeneous, n_samples)
 }
 
+#' Estimate the KL Divergence Between the A and B Point Processes
+#' 
+#' This function estimates the KL Divergence between the point process 
+#' specified for the A stimulus and B stimulus. This can be useful when determining
+#' whether or not the responses to the two stimuli are sufficiently different. The KL
+#' divergence is approximated using a finite grid of points over the trial-time
+#' 
+#' @name KL_divergence_A_B
+#' @param Results_A List produced from running \code{Sampler_IIGPP} for A trials
+#' @param Results_B List produced from running \code{Sampler_IIGPP} for B trials
+#' @param time_grid Vector of time points that create a dense-grid over the trial-time
+#' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+#' @param boundary_knots Vector of two elements specifying the boundary knots
+#' @param internal_knots Vector containing the desired internal knots of the B-splines
+#' @param Results List produced from running \code{Sampler_Competition}
+#' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in (Note burnin_prop includes warm-up iterations)
+#' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
+#' @param n_MC_samples Integer containing number of samples used to estimate the KL-divergence at each time point
+#' @returns KL_divergence Approximation of the KL Divergence
+#' 
+#' @section Warning:
+#' The following must be true:
+#' \describe{
+#'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+#'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+#'   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+#'   \item{\code{n_sample}}{must be greater than 1}
+#' }
+#' 
+#' @examples
+#' ##############################
+#' ### Time-Homogeneous Model ###
+#' ##############################
+#' 
+#' ## Load sample data
+#' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## set parameters
+#' MCMC_iters <- 100
+#' 
+#' basis_degree <- 3
+#' boundary_knots <- c(0, 1)
+#' internal_knots <- c(0.25, 0.5, 0.75)
+#' 
+#' ## Warm Blocks should be longer, however for the example, they are short
+#' Warm_block1 = 50
+#' Warm_block2 = 50
+#' 
+#' ## Run MCMC chain for A trials
+#' results_A <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+#'                            internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+#'                            time_inhomogeneous = FALSE)
+#'                        
+#' ## Run MCMC chain for B trials
+#' results_B<- Sampler_IIGPP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
+#'                           internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+#'                           time_inhomogeneous = FALSE)
+#'                                
+#' ## Calculate KL Divergence between distribution of A spike train and distribution of 
+#' ## B spike train
+#' time_grid <- seq(0, 1, 0.01)
+#' KL_div <- KL_divergence_A_B(results_A, results_B, time_grid, basis_degree, 
+#'                             boundary_knots, internal_knots, time_inhomogeneous = FALSE)
+#' 
+#' ################################
+#' ### Time-Inhomogeneous Model ###
+#' ################################
+#' 
+#' ## Load sample data
+#' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## set parameters
+#' MCMC_iters <- 100
+#' basis_degree <- 3
+#' boundary_knots <- c(0, 1)
+#' internal_knots <- c(0.25, 0.5, 0.75)
+#' 
+#' ## Warm Blocks should be longer, however for the example, they are short
+#' Warm_block1 = 50
+#' Warm_block2 = 50
+#' 
+#' ## Run MCMC chain for A trials
+#' results_A <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+#'                            internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#'                        
+#' ## Run MCMC chain for B trials
+#' results_B<- Sampler_IIGPP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
+#'                           internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+#'                                
+#' ## Calculate KL Divergence between distribution of A spike train and distribution of 
+#' ## B spike train
+#' time_grid <- seq(0, 1, 0.01)
+#' KL_div <- KL_divergence_A_B(results_A, results_B, time_grid, basis_degree, 
+#'                             boundary_knots, internal_knots)
+#'                                               
+#' @export
 KL_divergence_A_B <- function(Results_A, Results_B, time_grid, basis_degree, boundary_knots, internal_knots, burnin_prop = 0.2, time_inhomogeneous = TRUE, n_MC_samples = 10L) {
     .Call('_NeuralComp_KL_divergence_A_B', PACKAGE = 'NeuralComp', Results_A, Results_B, time_grid, basis_degree, boundary_knots, internal_knots, burnin_prop, time_inhomogeneous, n_MC_samples)
 }
 
-bootstrap_test_unimodality <- function(obs_dat, eval_grid = NULL, h_grid = NULL, n_boot = 10000L) {
-    .Call('_NeuralComp_bootstrap_test_unimodality', PACKAGE = 'NeuralComp', obs_dat, eval_grid, h_grid, n_boot)
+#' Test for Unimodality for Single Stimuli Trials
+#' 
+#' This function conducts a bootstrap-based test for unimodality. This test is
+#' used to confirm that the single stimulus trials are unimodal in the distribution
+#' of spike counts.
+#' 
+#' @name Bootstrap_Test_Unimodality
+#' @param obs_dat Vector containing number of spikes for each trial
+#' @param eval_grid Vector containing points over which to evaluate the density (default is 500 points)
+#' @param h_grid Vector containing a list of bandwidths for the Gaussian KDE (default is adaptively chosen)
+#' @param n_boot Integer indicating the number of bootstrap samples to use (default is 10000)
+#' @returns p_val Estimated p-value of test under the null hypothesis that the distribution is unimodal
+#' 
+#' @section Warning:
+#' The following must be true:
+#' \describe{
+#'   \item{\code{eval_grid}}{points should be positive and cover the range of observed spike counts}
+#'   \item{\code{h_grid}}{all bandwidths should be positive}
+#'   \item{\code{n_boot}}{must be greater than 1}
+#' }
+#' 
+#' @examples
+#' ## Load sample data 
+#' ## Note there is no difference between time homogeneous and time inhomogeneous processes
+#' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+#' 
+#' ## Run test for A process
+#' p_val_A <- Bootsrap_Test_Unimodality(dat$n_A)
+#' 
+#' ## Run test for B process
+#' p_val_B <- Bootsrap_Test_Unimodality(dat$n_B)
+#' 
+#' @export
+Bootstrap_Test_Unimodality <- function(obs_dat, eval_grid = NULL, h_grid = NULL, n_boot = 10000L) {
+    .Call('_NeuralComp_Bootstrap_Test_Unimodality', PACKAGE = 'NeuralComp', obs_dat, eval_grid, h_grid, n_boot)
 }
 
 rcpparma_hello_world <- function() {

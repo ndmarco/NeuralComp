@@ -13,9 +13,9 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// getBSpline
-arma::mat getBSpline(const arma::vec time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots);
-RcppExport SEXP _NeuralComp_getBSpline(SEXP timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP) {
+// GetBSpline
+arma::mat GetBSpline(const arma::vec time, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots);
+RcppExport SEXP _NeuralComp_GetBSpline(SEXP timeSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -23,7 +23,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
-    rcpp_result_gen = Rcpp::wrap(getBSpline(time, basis_degree, boundary_knots, internal_knots));
+    rcpp_result_gen = Rcpp::wrap(GetBSpline(time, basis_degree, boundary_knots, internal_knots));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -248,9 +248,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// bootstrap_test_unimodality
-double bootstrap_test_unimodality(const arma::vec obs_dat, Rcpp::Nullable<Rcpp::NumericVector> eval_grid, Rcpp::Nullable<Rcpp::NumericVector> h_grid, const int n_boot);
-RcppExport SEXP _NeuralComp_bootstrap_test_unimodality(SEXP obs_datSEXP, SEXP eval_gridSEXP, SEXP h_gridSEXP, SEXP n_bootSEXP) {
+// Bootstrap_Test_Unimodality
+double Bootstrap_Test_Unimodality(const arma::vec obs_dat, Rcpp::Nullable<Rcpp::NumericVector> eval_grid, Rcpp::Nullable<Rcpp::NumericVector> h_grid, const int n_boot);
+RcppExport SEXP _NeuralComp_Bootstrap_Test_Unimodality(SEXP obs_datSEXP, SEXP eval_gridSEXP, SEXP h_gridSEXP, SEXP n_bootSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -258,7 +258,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type eval_grid(eval_gridSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type h_grid(h_gridSEXP);
     Rcpp::traits::input_parameter< const int >::type n_boot(n_bootSEXP);
-    rcpp_result_gen = Rcpp::wrap(bootstrap_test_unimodality(obs_dat, eval_grid, h_grid, n_boot));
+    rcpp_result_gen = Rcpp::wrap(Bootstrap_Test_Unimodality(obs_dat, eval_grid, h_grid, n_boot));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -344,7 +344,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_NeuralComp_getBSpline", (DL_FUNC) &_NeuralComp_getBSpline, 4},
+    {"_NeuralComp_GetBSpline", (DL_FUNC) &_NeuralComp_GetBSpline, 4},
     {"_NeuralComp_Sampler_Competition", (DL_FUNC) &_NeuralComp_Sampler_Competition, 34},
     {"_NeuralComp_Sampler_IIGPP", (DL_FUNC) &_NeuralComp_Sampler_IIGPP, 20},
     {"_NeuralComp_FR_CI_IIGPP", (DL_FUNC) &_NeuralComp_FR_CI_IIGPP, 7},
@@ -354,7 +354,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_WAIC_IIGPP", (DL_FUNC) &_NeuralComp_WAIC_IIGPP, 14},
     {"_NeuralComp_Competition_Posterior_Predictive", (DL_FUNC) &_NeuralComp_Competition_Posterior_Predictive, 8},
     {"_NeuralComp_KL_divergence_A_B", (DL_FUNC) &_NeuralComp_KL_divergence_A_B, 9},
-    {"_NeuralComp_bootstrap_test_unimodality", (DL_FUNC) &_NeuralComp_bootstrap_test_unimodality, 4},
+    {"_NeuralComp_Bootstrap_Test_Unimodality", (DL_FUNC) &_NeuralComp_Bootstrap_Test_Unimodality, 4},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},

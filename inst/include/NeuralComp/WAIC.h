@@ -648,7 +648,6 @@ inline void calc_loglikelihood_AB_MCMC_approx2(const arma::vec X_AB,
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
   arma::vec llik_samples = arma::zeros(n_MCMC_approx);
   arma::vec weights = arma::ones(n_MCMC_approx);
-  bool weights_zero = false;
   double isi_slow = 0;
   for(int i = burnin_num; i < n_MCMC; i++){
     if(Labels(obs_num, 0)(i,spike_num) == 0){

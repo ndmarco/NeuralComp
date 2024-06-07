@@ -12,7 +12,7 @@ using namespace Eigen;
 //' 
 //' Creates B-spline basis functions evaluated at the time points of interest.
 //' 
-//' @name getBSpline
+//' @name GetBSpline
 //' @param time Vector of time points of interest
 //' @param basis_degree Integer indicating the degree of B-splines
 //' @param boundary_knots Vector of two elements specifying the boundary knots
@@ -25,11 +25,11 @@ using namespace Eigen;
 //' boundary_knots <- c(0, 1)
 //' internal_knots <- c(0.25, 0.5, 0.75)
 //' 
-//' B <- getBSpline(time, basis_degree, boundary_knots, internal_knots)
+//' B <- GetBSpline(time, basis_degree, boundary_knots, internal_knots)
 //' 
 //' @export
 //[[Rcpp::export]]
-arma::mat getBSpline(const arma::vec time,
+arma::mat GetBSpline(const arma::vec time,
                      const int basis_degree,
                      const arma::vec boundary_knots,
                      const arma::vec internal_knots){
@@ -1598,15 +1598,21 @@ Rcpp::List Competition_Posterior_Predictive(const double trial_time,
 //' Warm_block1 = 50
 //' Warm_block2 = 50
 //' 
-//' ## Run MCMC chain
-//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
-//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-//'                                time_inhomogeneous = FALSE)
+//' ## Run MCMC chain for A trials
+//' results_A <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+//'                            internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+//'                            time_inhomogeneous = FALSE)
+//'                        
+//' ## Run MCMC chain for B trials
+//' results_B<- Sampler_IIGPP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
+//'                           internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+//'                           time_inhomogeneous = FALSE)
 //'                                
-//' ## Posterior Predictive Samples
-//' post_pred <- Competition_Posterior_Predictive(1, basis_degree, boundary_knots, internal_knots,
-//'                                               results, time_inhomogeneous = FALSE)
+//' ## Calculate KL Divergence between distribution of A spike train and distribution of 
+//' ## B spike train
+//' time_grid <- seq(0, 1, 0.01)
+//' KL_div <- KL_divergence_A_B(results_A, results_B, time_grid, basis_degree, 
+//'                             boundary_knots, internal_knots, time_inhomogeneous = FALSE)
 //' 
 //' ################################
 //' ### Time-Inhomogeneous Model ###
@@ -1625,14 +1631,19 @@ Rcpp::List Competition_Posterior_Predictive(const double trial_time,
 //' Warm_block1 = 50
 //' Warm_block2 = 50
 //' 
-//' ## Run MCMC chain
-//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
-//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//' ## Run MCMC chain for A trials
+//' results_A <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
+//'                            internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//'                        
+//' ## Run MCMC chain for B trials
+//' results_B<- Sampler_IIGPP(dat$X_B, dat$n_B, MCMC_iters, basis_degree, boundary_knots,
+//'                           internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 //'                                
-//' ## Posterior Predictive Samples                               
-//' post_pred <- Competition_Posterior_Predictive(1, basis_degree, boundary_knots, internal_knots,
-//'                                               results)
+//' ## Calculate KL Divergence between distribution of A spike train and distribution of 
+//' ## B spike train
+//' time_grid <- seq(0, 1, 0.01)
+//' KL_div <- KL_divergence_A_B(results_A, results_B, time_grid, basis_degree, 
+//'                             boundary_knots, internal_knots)
 //'                                               
 //' @export
 //[[Rcpp::export]]
@@ -1700,11 +1711,47 @@ double KL_divergence_A_B(Rcpp::List Results_A,
   return KL_divergence;
 }
 
+//' Test for Unimodality for Single Stimuli Trials
+//' 
+//' This function conducts a bootstrap-based test for unimodality. This test is
+//' used to confirm that the single stimulus trials are unimodal in the distribution
+//' of spike counts.
+//' 
+//' @name Bootstrap_Test_Unimodality
+//' @param obs_dat Vector containing number of spikes for each trial
+//' @param eval_grid Vector containing points over which to evaluate the density (default is 500 points)
+//' @param h_grid Vector containing a list of bandwidths for the Gaussian KDE (default is adaptively chosen)
+//' @param n_boot Integer indicating the number of bootstrap samples to use (default is 10000)
+//' @returns p_val Estimated p-value of test under the null hypothesis that the distribution is unimodal
+//' 
+//' @section Warning:
+//' The following must be true:
+//' \describe{
+//'   \item{\code{eval_grid}}{points should be positive and cover the range of observed spike counts}
+//'   \item{\code{h_grid}}{all bandwidths should be positive}
+//'   \item{\code{n_boot}}{must be greater than 1}
+//' }
+//' 
+//' @examples
+//' ## Load sample data 
+//' ## Note there is no difference between time homogeneous and time inhomogeneous processes
+//' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+//' 
+//' ## Run test for A process
+//' p_val_A <- Bootsrap_Test_Unimodality(dat$n_A)
+//' 
+//' ## Run test for B process
+//' p_val_B <- Bootsrap_Test_Unimodality(dat$n_B)
+//' 
+//' @export
 //[[Rcpp::export]]
-double bootstrap_test_unimodality(const arma::vec obs_dat, 
+double Bootstrap_Test_Unimodality(const arma::vec obs_dat, 
                                   Rcpp::Nullable<Rcpp::NumericVector> eval_grid  = R_NilValue,
                                   Rcpp::Nullable<Rcpp::NumericVector> h_grid  = R_NilValue,
                                   const int n_boot = 10000){
+  if(n_boot < 2){
+    Rcpp::stop("'n_boot' must be larger than 1");
+  }
   arma::vec eval_grid1 = arma::linspace(0, arma::max(obs_dat) + 5, 500);
   if(eval_grid.isNotNull()) {
     Rcpp::NumericVector eval_grid_(eval_grid);
@@ -1726,6 +1773,13 @@ double bootstrap_test_unimodality(const arma::vec obs_dat,
   if(h_grid.isNotNull()){
     Rcpp::NumericVector h_grid_(h_grid);
     h_grid1 = Rcpp::as<arma::vec>(h_grid_);
+  }
+  
+  if(arma::min(eval_grid1) < 0){
+    Rcpp::stop("'eval_grid' must must contain only positive values");
+  }
+  if(arma::min(h_grid1) < 0){
+    Rcpp::stop("'eval_grid' must must contain only positive values");
   }
   
   // Run bootstrap test
