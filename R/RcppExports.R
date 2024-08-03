@@ -440,7 +440,7 @@ WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degr
 #' where lppd is the log pointwise predictive density, and p is the effective number of parameters.
 #' The Marginal WAIC is akin to leave-one-spike-train-out cross validation (asymptotically).
 #' 
-#' @name WAIC_Competition
+#' @name WAIC_Competition_Marginal
 #' @param X_A List of vectors containing the ISIs of A trials
 #' @param X_B List of vectors containing the ISIs of B trials
 #' @param X_AB List of vectors containing the ISIs of AB trials
@@ -851,13 +851,13 @@ KL_divergence_A_B <- function(Results_A, Results_B, time_grid, basis_degree, bou
     .Call('_NeuralComp_KL_divergence_A_B', PACKAGE = 'NeuralComp', Results_A, Results_B, time_grid, basis_degree, boundary_knots, internal_knots, burnin_prop, time_inhomogeneous, n_MC_samples)
 }
 
-#' Test for Unimodality for Single Stimuli Trials
+#' Test for Unimodality for Single Stimuli Trials (Whole Trial Analysis)
 #' 
 #' This function conducts a bootstrap-based test for unimodality. This test is
 #' used to confirm that the single stimulus trials are unimodal in the distribution
 #' of spike counts.
 #' 
-#' @name Bootstrap_Test_Unimodality
+#' @name Bootstrap_Test_Unimodality_WTA
 #' @param obs_dat Vector containing number of spikes for each trial
 #' @param eval_grid Vector containing points over which to evaluate the density (default is 500 points)
 #' @param h_grid Vector containing a list of bandwidths for the Gaussian KDE (default is adaptively chosen)
@@ -867,7 +867,7 @@ KL_divergence_A_B <- function(Results_A, Results_B, time_grid, basis_degree, bou
 #' @section Warning:
 #' The following must be true:
 #' \describe{
-#'   \item{\code{eval_grid}}{points should be positive and cover the range of observed spike counts}
+#'   \item{\code{eval_grid}}{points should cover the range of observed spike counts plus slightly more}
 #'   \item{\code{h_grid}}{all bandwidths should be positive}
 #'   \item{\code{n_boot}}{must be greater than 1}
 #' }
@@ -878,14 +878,18 @@ KL_divergence_A_B <- function(Results_A, Results_B, time_grid, basis_degree, bou
 #' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
 #' 
 #' ## Run test for A process
-#' p_val_A <- Bootsrap_Test_Unimodality(dat$n_A)
+#' p_val_A <- Bootsrap_Test_Unimodality_WTA(dat$n_A)
 #' 
 #' ## Run test for B process
-#' p_val_B <- Bootsrap_Test_Unimodality(dat$n_B)
+#' p_val_B <- Bootsrap_Test_Unimodality_WTA(dat$n_B)
 #' 
 #' @export
-Bootstrap_Test_Unimodality <- function(obs_dat, eval_grid = NULL, h_grid = NULL, n_boot = 10000L) {
-    .Call('_NeuralComp_Bootstrap_Test_Unimodality', PACKAGE = 'NeuralComp', obs_dat, eval_grid, h_grid, n_boot)
+Bootstrap_Test_Unimodality_WTA <- function(obs_dat, eval_grid = NULL, h_grid = NULL, n_boot = 10000L) {
+    .Call('_NeuralComp_Bootstrap_Test_Unimodality_WTA', PACKAGE = 'NeuralComp', obs_dat, eval_grid, h_grid, n_boot)
+}
+
+Ratio_LLPD <- function(X_A, X_B, n_A, n_B, Results_A, Results_B, Results_joint, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
+    .Call('_NeuralComp_Ratio_LLPD', PACKAGE = 'NeuralComp', X_A, X_B, n_A, n_B, Results_A, Results_B, Results_joint, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
 
 rcpparma_hello_world <- function() {

@@ -2272,10 +2272,7 @@ inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_
                                                  const arma::field<arma::mat> basis_funct_A,
                                                  const arma::field<arma::mat> basis_funct_B,
                                                  const arma::field<arma::mat> basis_funct_AB,
-                                                 const double burnin_prop,
-                                                 const int basis_degree,
-                                                 const arma::vec boundary_knots,
-                                                 const arma::vec internal_knots){
+                                                 const double burnin_prop){
   int n_MCMC = theta.n_rows;
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
   
@@ -2365,9 +2362,67 @@ inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_
   return output1;
 }
 
-
-
+inline double calc_Diff_LPPD_A_B(const arma::field<arma::vec> X_A,
+                                 const arma::field<arma::vec> X_B,
+                                 const arma::field<arma::vec> X_joint,
+                                 const arma::vec n_A,
+                                 const arma::vec n_B,
+                                 const arma::vec n_joint,
+                                 const arma::mat theta_A,
+                                 const arma::mat basis_coef_A,
+                                 const arma::mat theta_B,
+                                 const arma::mat basis_coef_B,
+                                 const arma::mat theta_joint,
+                                 const arma::mat basis_coef_joint,
+                                 const arma::field<arma::mat> basis_funct_A,
+                                 const arma::field<arma::mat> basis_funct_B,
+                                 const arma::field<arma::mat> basis_funct_joint,
+                                 const double burnin_prop){
+  arma::field<arma::mat> llik_A(n_A.n_elem, 1); 
+  arma::field<arma::mat> llik_B(n_B.n_elem, 1);
+  arma::field<arma::mat> llik_joint(n_joint.n_elem, 1);
+  
+  // calculate log-likelihood for A
+  for(int i = 0; i < n_A.n_elem; i++){
+    llik_A(i,0) = calc_loglikelihood_IGP(X_A(i,0), theta_A, basis_coef_A, 
+           basis_funct_A(i,0), burnin_prop);
+  }
+  
+  // calculate log-likelihood for B
+  for(int i = 0; i < n_B.n_elem; i++){
+    llik_B(i,0) = calc_loglikelihood_IGP(X_B(i,0), theta_B, basis_coef_B, 
+           basis_funct_B(i,0), burnin_prop);
+  }
+  
+  // calculate log-likelihood for joint
+  for(int i = 0; i < n_joint.n_elem; i++){
+    llik_joint(i,0) = calc_loglikelihood_IGP(X_joint(i,0), theta_joint, basis_coef_joint, 
+            basis_funct_joint(i,0), burnin_prop);
+  }
+  
+  // calculate log pointwise predictive density
+  double llpd_seperate = 0;
+  for(int i = 0; i < n_A.n_elem; i++){
+    for(int j = 0; j < n_A(i); j++){
+      llpd_seperate = llpd_seperate + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+    }
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+    for(int j = 0; j < n_B(i); j++){
+      llpd_seperate = llpd_seperate + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+    }
+  }
+  
+  double llpd_joint = 0;
+  for(int i = 0; i < n_joint.n_elem; i++){
+    for(int j = 0; j < n_joint(i); j++){
+      llpd_joint = llpd_joint + std::log(arma::mean(arma::exp(llik_joint(i,0).col(j))));
+    }
+  }
+  double ratio_llpd = llpd_seperate - llpd_joint;
+  return ratio_llpd;
 }
 
+}
 
 #endif

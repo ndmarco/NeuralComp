@@ -955,7 +955,7 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
   }else if(method == "marginal"){
     waic = NeuralComp::calc_WAIC_competition_Marginal(X_A, X_B, X_AB, n_A, n_B, n_AB, theta, basis_coef_A,
                                                       basis_coef_B, basis_funct_A, basis_funct_B, basis_funct_AB,
-                                                      burnin_prop, basis_degree, boundary_knots, internal_knots);
+                                                      burnin_prop);
   }else{
     Rcpp::Rcout << method << " method is not recognized. The method 'sampling_fast' will be used instead.";
     waic = NeuralComp::calc_WAIC_competition_approx_direct(X_A, X_B, X_AB, n_A, n_B, n_AB, theta, basis_coef_A,
@@ -976,7 +976,7 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
 //' where lppd is the log pointwise predictive density, and p is the effective number of parameters.
 //' The Marginal WAIC is akin to leave-one-spike-train-out cross validation (asymptotically).
 //' 
-//' @name WAIC_Competition
+//' @name WAIC_Competition_Marginal
 //' @param X_A List of vectors containing the ISIs of A trials
 //' @param X_B List of vectors containing the ISIs of B trials
 //' @param X_AB List of vectors containing the ISIs of AB trials
@@ -1171,7 +1171,7 @@ Rcpp::List WAIC_Competition_Marginal(const arma::field<arma::vec> X_A,
   
   Rcpp::List waic = NeuralComp::calc_WAIC_competition_Marginal(X_A, X_B, X_AB, n_A, n_B, n_AB, theta, basis_coef_A,
                                                                basis_coef_B, basis_funct_A, basis_funct_B, basis_funct_AB,
-                                                               burnin_prop, basis_degree, boundary_knots, internal_knots);
+                                                               burnin_prop);
   return waic;
 }
 
@@ -1711,13 +1711,13 @@ double KL_divergence_A_B(Rcpp::List Results_A,
   return KL_divergence;
 }
 
-//' Test for Unimodality for Single Stimuli Trials
+//' Test for Unimodality for Single Stimuli Trials (Whole Trial Analysis)
 //' 
 //' This function conducts a bootstrap-based test for unimodality. This test is
 //' used to confirm that the single stimulus trials are unimodal in the distribution
 //' of spike counts.
 //' 
-//' @name Bootstrap_Test_Unimodality
+//' @name Bootstrap_Test_Unimodality_WTA
 //' @param obs_dat Vector containing number of spikes for each trial
 //' @param eval_grid Vector containing points over which to evaluate the density (default is 500 points)
 //' @param h_grid Vector containing a list of bandwidths for the Gaussian KDE (default is adaptively chosen)
@@ -1727,7 +1727,7 @@ double KL_divergence_A_B(Rcpp::List Results_A,
 //' @section Warning:
 //' The following must be true:
 //' \describe{
-//'   \item{\code{eval_grid}}{points should be positive and cover the range of observed spike counts}
+//'   \item{\code{eval_grid}}{points should cover the range of observed spike counts plus slightly more}
 //'   \item{\code{h_grid}}{all bandwidths should be positive}
 //'   \item{\code{n_boot}}{must be greater than 1}
 //' }
@@ -1738,21 +1738,25 @@ double KL_divergence_A_B(Rcpp::List Results_A,
 //' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
 //' 
 //' ## Run test for A process
-//' p_val_A <- Bootsrap_Test_Unimodality(dat$n_A)
+//' p_val_A <- Bootsrap_Test_Unimodality_WTA(dat$n_A)
 //' 
 //' ## Run test for B process
-//' p_val_B <- Bootsrap_Test_Unimodality(dat$n_B)
+//' p_val_B <- Bootsrap_Test_Unimodality_WTA(dat$n_B)
 //' 
 //' @export
 //[[Rcpp::export]]
-double Bootstrap_Test_Unimodality(const arma::vec obs_dat, 
-                                  Rcpp::Nullable<Rcpp::NumericVector> eval_grid  = R_NilValue,
-                                  Rcpp::Nullable<Rcpp::NumericVector> h_grid  = R_NilValue,
-                                  const int n_boot = 10000){
+double Bootstrap_Test_Unimodality_WTA(const arma::vec obs_dat, 
+                                      Rcpp::Nullable<Rcpp::NumericVector> eval_grid  = R_NilValue,
+                                      Rcpp::Nullable<Rcpp::NumericVector> h_grid  = R_NilValue,
+                                      const int n_boot = 10000){
   if(n_boot < 2){
     Rcpp::stop("'n_boot' must be larger than 1");
   }
-  arma::vec eval_grid1 = arma::linspace(0, arma::max(obs_dat) + 5, 500);
+  double padding = arma::var(obs_dat) * 2;
+  if(padding < 5){
+    padding = 5;
+  }
+  arma::vec eval_grid1 = arma::linspace(arma::min(obs_dat) - padding, arma::max(obs_dat) + padding, 500);
   if(eval_grid.isNotNull()) {
     Rcpp::NumericVector eval_grid_(eval_grid);
     eval_grid1 = Rcpp::as<arma::vec>(eval_grid_);
@@ -1775,15 +1779,194 @@ double Bootstrap_Test_Unimodality(const arma::vec obs_dat,
     h_grid1 = Rcpp::as<arma::vec>(h_grid_);
   }
   
-  if(arma::min(eval_grid1) < 0){
-    Rcpp::stop("'eval_grid' must must contain only positive values");
-  }
   if(arma::min(h_grid1) < 0){
     Rcpp::stop("'eval_grid' must must contain only positive values");
   }
-  
   // Run bootstrap test
   double p_val = NeuralComp::bootstrap_test_unimodality(obs_dat, eval_grid1, h_grid1, n_boot);
   
   return p_val;
 }
+
+
+// //' Test for Unimodality for Single Stimuli Trials (Inter Spike Intervals)
+//  //' 
+//  //' This function conducts a bootstrap-based test for unimodality. This test is
+//  //' used to confirm that the single stimulus trials are unimodal in the distribution
+//  //' of spike counts.
+//  //' 
+//  //' @name Bootstrap_Test_Unimodality_ISI
+//  //' @param obs_dat Vector containing number of spikes for each trial
+//  //' @param eval_grid Vector containing points over which to evaluate the density (default is 500 points)
+//  //' @param h_grid Vector containing a list of bandwidths for the Gaussian KDE (default is adaptively chosen)
+//  //' @param n_boot Integer indicating the number of bootstrap samples to use (default is 10000)
+//  //' @returns p_val Estimated p-value of test under the null hypothesis that the distribution is unimodal
+//  //' 
+//  //' @section Warning:
+//  //' The following must be true:
+//  //' \describe{
+//  //'   \item{\code{eval_grid}}{points should cover the range of observed spike counts plus slightly more}
+//  //'   \item{\code{h_grid}}{all bandwidths should be positive}
+//  //'   \item{\code{n_boot}}{must be greater than 1}
+//  //' }
+//  //' 
+//  //' @examples
+//  //' ## Load sample data 
+//  //' ## Note there is no difference between time homogeneous and time inhomogeneous processes
+//  //' dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+//  //' 
+//  //' ## Run test for A process
+//  //' p_val_A <- Bootsrap_Test_Unimodality_ISI(unlist(dat$X_A))
+//  //' 
+//  //' ## Run test for B process
+//  //' p_val_B <- Bootsrap_Test_Unimodality_ISI(unlist(dat$X_B))
+//  //' 
+//  //' @export
+//  //[[Rcpp::export]]
+//  double Bootstrap_Test_Unimodality_ISI(const arma::vec obs_dat, 
+//                                        Rcpp::Nullable<Rcpp::NumericVector> eval_grid  = R_NilValue,
+//                                        Rcpp::Nullable<Rcpp::NumericVector> h_grid  = R_NilValue,
+//                                        const int n_boot = 10000){
+//    if(n_boot < 2){
+//      Rcpp::stop("'n_boot' must be larger than 1");
+//    }
+//    double padding = arma::var(obs_dat) * 2;
+//    if(padding < 0.1){
+//      padding = 0.1;
+//    }
+//    arma::vec eval_grid1 = arma::linspace(arma::min(obs_dat) - padding, arma::max(obs_dat) + padding, 500);
+//    if(eval_grid.isNotNull()) {
+//      Rcpp::NumericVector eval_grid_(eval_grid);
+//      eval_grid1 = Rcpp::as<arma::vec>(eval_grid_);
+//    }
+//    
+//    // Check to make sure h_grid is large enough
+//    int h_max = 1;
+//    int peaks_i = 0;
+//    for(int i = 0; i < 10; i++){
+//      peaks_i = NeuralComp::get_peaks_from_bw(eval_grid1, obs_dat, h_max);
+//      if(peaks_i == 1){
+//        break;
+//      }else{
+//        h_max = h_max * 2;
+//      }
+//    }
+//    arma::vec h_grid1 = arma::linspace(0.01, h_max, 1000);
+//    if(h_grid.isNotNull()){
+//      Rcpp::NumericVector h_grid_(h_grid);
+//      h_grid1 = Rcpp::as<arma::vec>(h_grid_);
+//    }
+//    
+//    if(arma::min(h_grid1) < 0){
+//      Rcpp::stop("'eval_grid' must must contain only positive values");
+//    }
+//    // Run bootstrap test
+//    double p_val = NeuralComp::bootstrap_test_unimodality_ISI(obs_dat, eval_grid1, h_grid1, n_boot);
+//    
+//    return p_val;
+//  }
+
+//[[Rcpp::export]]
+double Diff_LLPD(const arma::field<arma::vec> X_A,
+                 const arma::field<arma::vec> X_B,
+                 const arma::vec n_A,
+                 const arma::vec n_B,
+                 Rcpp::List Results_A,
+                 Rcpp::List Results_B,
+                 Rcpp::List Results_joint,
+                 const int basis_degree,
+                 const arma::vec boundary_knots,
+                 const arma::vec internal_knots,
+                 const bool time_inhomogeneous = true,
+                 const double burnin_prop = 0.2){
+  if(burnin_prop < 0){
+    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }if(burnin_prop >= 1){
+    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }
+  arma::vec n_joint = arma::join_cols(n_A, n_B);
+  arma::field<arma::vec> X_joint(n_joint.n_elem, 1);
+  for(int i = 0; i < n_joint.n_elem; i++){
+    if(i < n_A.n_elem){
+      X_joint(i,0) = X_A(i,0);
+    }else{
+      X_joint(i,0) = X_B(i - n_A.n_elem, 0);
+    }
+  }
+  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+  arma::field<arma::mat> basis_funct_joint(n_joint.n_elem,1);
+  arma::mat basis_coef_A;
+  arma::mat basis_coef_B;
+  arma::mat basis_coef_joint;
+  arma::mat theta_A = Results_A["theta"];
+  arma::mat theta_B = Results_B["theta"];
+  arma::mat theta_joint = Results_joint["theta"];
+  if(time_inhomogeneous == true){
+    // Check conditions
+    if(basis_degree <  1){
+      Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+    }
+    for(int i = 0; i < internal_knots.n_elem; i++){
+      if(boundary_knots(0) >= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+      }
+      if(boundary_knots(1) <= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+      }
+    }
+    
+    //Create B-splines
+    splines2::BSpline bspline;
+    for(int i = 0; i < n_A.n_elem; i++){
+      arma::vec time = arma::zeros(n_A(i));
+      for(int j = 1; j < n_A(i); j++){
+        time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct_A(i,0) = bspline_mat;
+      basis_funct_joint(i,0) = bspline_mat;
+    }
+    
+    for(int i = 0; i < n_B.n_elem; i++){
+      arma::vec time = arma::zeros(n_B(i));
+      for(int j = 1; j < n_B(i); j++){
+        time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct_B(i,0) = bspline_mat;
+      basis_funct_joint(i + n_A.n_elem,0) = bspline_mat;
+    }
+    arma::mat ph = Results_A["basis_coef"];
+    basis_coef_A = ph;
+    arma::mat ph1 = Results_B["basis_coef"];
+    basis_coef_B = ph1;
+    arma::mat ph2 = Results_joint["basis_coef"];
+    basis_coef_joint = ph2;
+  }else{
+    for(int i = 0; i < n_A.n_elem; i++){
+      basis_funct_A(i, 0) = arma::zeros(n_A(i), 1);
+    }
+    for(int i = 0; i < n_B.n_elem; i++){
+      basis_funct_B(i, 0) = arma::zeros(n_B(i), 1);
+    }
+    for(int i = 0; i < n_joint.n_elem; i++){
+      basis_funct_joint(i, 0) = arma::zeros(n_joint(i), 1);
+    }
+    basis_coef_A = arma::zeros(theta_A.n_rows,1);
+    basis_coef_B = arma::zeros(theta_B.n_rows,1);
+    basis_coef_joint = arma::zeros(theta_joint.n_rows,1);
+  }
+  double ratio = NeuralComp::calc_Diff_LPPD_A_B(X_A, X_B, X_joint, n_A, n_B, n_joint, theta_A, 
+                                                basis_coef_A, theta_B, basis_coef_B, 
+                                                theta_joint, basis_coef_joint, basis_funct_A, 
+                                                basis_funct_B, basis_funct_joint, burnin_prop);
+  return ratio;
+}
+  

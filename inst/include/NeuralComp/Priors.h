@@ -227,6 +227,10 @@ inline double rinv_gauss(const double mean,
   if(z <= (mean / (mean + x))){
     val = x;
   }
+   // check for overflow
+  if(val < 0){
+    val = mean;
+  }
   return val;
 }
 

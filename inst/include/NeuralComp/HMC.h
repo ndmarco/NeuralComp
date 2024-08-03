@@ -851,17 +851,17 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
       }
     }
     
-    if((i % 10) == 0){
+    if((i % 25) == 0){
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
+      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-24, i))/ 25;
       if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.6){
         step_size_theta = step_size_theta * 0.8;
-      }else if(prop_accept_10_theta > 0.8){
-        step_size_theta = step_size_theta * 1.2;
       }else if(prop_accept_10_theta > 0.9){
         step_size_theta = step_size_theta * 1.5;
+      }else if(prop_accept_10_theta > 0.8){
+        step_size_theta = step_size_theta * 1.2;
       }
     }
   }
@@ -1077,7 +1077,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     }
     if((i % 10) == 0){
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-9, i))/ 10;
+      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-9, i))/ 10;\
       if(prop_accept_10  <= 0.1){
         step_size_FR = step_size_FR * 0.1;
       }else if(prop_accept_10 <= 0.3){
@@ -1201,29 +1201,29 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
         Labels(j, i + 1) = Labels(j, i);
       }
     }
-    if((i % 10) == 0){
+    if((i % 25) == 0){
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-9, i))/ 10;
+      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-24, i))/ 25;
       if(prop_accept_10  <= 0.3){
         step_size_FR = step_size_FR * 0.5;
       }else if(prop_accept_10 <= 0.6){
         step_size_FR = step_size_FR * 0.8;
-      }else if(prop_accept_10 > 0.8){
-        step_size_FR = step_size_FR * 1.2;
       }else if(prop_accept_10 > 0.9){
         step_size_FR = step_size_FR * 1.5;
+      }else if(prop_accept_10 > 0.8){
+        step_size_FR = step_size_FR * 1.2;
       }
       
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
+      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-24, i))/ 25;
       if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.6){
         step_size_theta = step_size_theta * 0.8;
-      }else if(prop_accept_10_theta > 0.8){
-        step_size_theta = step_size_theta * 1.2;
       }else if(prop_accept_10_theta > 0.9){
         step_size_theta = step_size_theta * 1.5;
+      }else if(prop_accept_10_theta > 0.8){
+        step_size_theta = step_size_theta * 1.2;
       }
     }
   }
@@ -1439,17 +1439,17 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
       theta.row(i + 1) = theta.row(i);
     }
     
-    if((i % 10) == 0){
+    if((i % 25) == 0){
       // adjust step size for I and sigma
-      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
+      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-24, i))/ 25;
       if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.5){
         step_size_theta = step_size_theta * 0.8;
-      }else if(prop_accept_10_theta > 0.8){
-        step_size_theta = step_size_theta * 1.2;
       }else if(prop_accept_10_theta > 0.9){
         step_size_theta = step_size_theta * 1.5;
+      }else if(prop_accept_10_theta > 0.8){
+        step_size_theta = step_size_theta * 1.2;
       }
     }
   }
@@ -1647,29 +1647,29 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
       I_sigma_sq(i + 1) = I_sigma_sq(i);
     }
     
-    if((i % 10) == 0){
+    if((i % 25) == 0){
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-9, i))/ 10;
+      prop_accept_10 = arma::accu(vec_accept_FR.subvec(i-24, i))/ 25;
       if(prop_accept_10  <= 0.3){
         step_size_FR = step_size_FR * 0.5;
       }else if(prop_accept_10 <= 0.6){
         step_size_FR = step_size_FR * 0.8;
-      }else if(prop_accept_10 > 0.8){
-        step_size_FR = step_size_FR * 1.2;
       }else if(prop_accept_10 > 0.9){
         step_size_FR = step_size_FR * 1.5;
+      }else if(prop_accept_10 > 0.8){
+        step_size_FR = step_size_FR * 1.2;
       }
       
       // adjust step size for I_A, I_B, sigma_A, sigma_B
-      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-9, i))/ 10;
+      prop_accept_10_theta = arma::accu(vec_accept_theta.subvec(i-24, i))/ 25;
       if(prop_accept_10_theta  <= 0.3){
         step_size_theta = step_size_theta * 0.5;
       }else if(prop_accept_10_theta <= 0.6){
         step_size_theta = step_size_theta * 0.8;
-      }else if(prop_accept_10_theta > 0.8){
-        step_size_theta = step_size_theta * 1.2;
       }else if(prop_accept_10_theta > 0.9){
         step_size_theta = step_size_theta * 1.5;
+      }else if(prop_accept_10_theta > 0.8){
+        step_size_theta = step_size_theta * 1.2;
       }
     }
   }

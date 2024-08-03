@@ -248,9 +248,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Bootstrap_Test_Unimodality
-double Bootstrap_Test_Unimodality(const arma::vec obs_dat, Rcpp::Nullable<Rcpp::NumericVector> eval_grid, Rcpp::Nullable<Rcpp::NumericVector> h_grid, const int n_boot);
-RcppExport SEXP _NeuralComp_Bootstrap_Test_Unimodality(SEXP obs_datSEXP, SEXP eval_gridSEXP, SEXP h_gridSEXP, SEXP n_bootSEXP) {
+// Bootstrap_Test_Unimodality_WTA
+double Bootstrap_Test_Unimodality_WTA(const arma::vec obs_dat, Rcpp::Nullable<Rcpp::NumericVector> eval_grid, Rcpp::Nullable<Rcpp::NumericVector> h_grid, const int n_boot);
+RcppExport SEXP _NeuralComp_Bootstrap_Test_Unimodality_WTA(SEXP obs_datSEXP, SEXP eval_gridSEXP, SEXP h_gridSEXP, SEXP n_bootSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -258,7 +258,29 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type eval_grid(eval_gridSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type h_grid(h_gridSEXP);
     Rcpp::traits::input_parameter< const int >::type n_boot(n_bootSEXP);
-    rcpp_result_gen = Rcpp::wrap(Bootstrap_Test_Unimodality(obs_dat, eval_grid, h_grid, n_boot));
+    rcpp_result_gen = Rcpp::wrap(Bootstrap_Test_Unimodality_WTA(obs_dat, eval_grid, h_grid, n_boot));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Ratio_LLPD
+double Ratio_LLPD(const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::vec n_A, const arma::vec n_B, Rcpp::List Results_A, Rcpp::List Results_B, Rcpp::List Results_joint, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const bool time_inhomogeneous, const double burnin_prop);
+RcppExport SEXP _NeuralComp_Ratio_LLPD(SEXP X_ASEXP, SEXP X_BSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP Results_ASEXP, SEXP Results_BSEXP, SEXP Results_jointSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP time_inhomogeneousSEXP, SEXP burnin_propSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_A(X_ASEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_B(X_BSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_A(n_ASEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n_B(n_BSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Results_A(Results_ASEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Results_B(Results_BSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Results_joint(Results_jointSEXP);
+    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
+    Rcpp::traits::input_parameter< const bool >::type time_inhomogeneous(time_inhomogeneousSEXP);
+    Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
+    rcpp_result_gen = Rcpp::wrap(Ratio_LLPD(X_A, X_B, n_A, n_B, Results_A, Results_B, Results_joint, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -354,7 +376,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_WAIC_IIGPP", (DL_FUNC) &_NeuralComp_WAIC_IIGPP, 14},
     {"_NeuralComp_Competition_Posterior_Predictive", (DL_FUNC) &_NeuralComp_Competition_Posterior_Predictive, 8},
     {"_NeuralComp_KL_divergence_A_B", (DL_FUNC) &_NeuralComp_KL_divergence_A_B, 9},
-    {"_NeuralComp_Bootstrap_Test_Unimodality", (DL_FUNC) &_NeuralComp_Bootstrap_Test_Unimodality, 4},
+    {"_NeuralComp_Bootstrap_Test_Unimodality_WTA", (DL_FUNC) &_NeuralComp_Bootstrap_Test_Unimodality_WTA, 4},
+    {"_NeuralComp_Ratio_LLPD", (DL_FUNC) &_NeuralComp_Ratio_LLPD, 12},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},
