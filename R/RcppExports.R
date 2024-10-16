@@ -528,8 +528,8 @@ WAIC_Competition <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degr
 #'                                   results, basis_degree, boundary_knots, internal_knots)
 #' 
 #' @export
-WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
-    .Call('_NeuralComp_WAIC_Competition_Marginal', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
+WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, method = "Spike", time_inhomogeneous = TRUE, burnin_prop = 0.2) {
+    .Call('_NeuralComp_WAIC_Competition_Marginal', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, method, time_inhomogeneous, burnin_prop)
 }
 
 #' Calculates WAIC for the IIGPP Model
@@ -647,6 +647,10 @@ WAIC_Competition_Marginal <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, b
 #' @export
 WAIC_IIGPP <- function(X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
     .Call('_NeuralComp_WAIC_IIGPP', PACKAGE = 'NeuralComp', X_A, X_B, X_AB, n_A, n_B, n_AB, Results_A, Results_B, Results_AB, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
+}
+
+WAIC_Winner_Take_All <- function(X_A, X_B, n_A, n_B, Results_A, Results_B, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
+    .Call('_NeuralComp_WAIC_Winner_Take_All', PACKAGE = 'NeuralComp', X_A, X_B, n_A, n_B, Results_A, Results_B, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
 }
 
 #' Posterior Predictive Sampling for Competition Model
@@ -888,8 +892,12 @@ Bootstrap_Test_Unimodality_WTA <- function(obs_dat, eval_grid = NULL, h_grid = N
     .Call('_NeuralComp_Bootstrap_Test_Unimodality_WTA', PACKAGE = 'NeuralComp', obs_dat, eval_grid, h_grid, n_boot)
 }
 
-Ratio_LLPD <- function(X_A, X_B, n_A, n_B, Results_A, Results_B, Results_joint, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
-    .Call('_NeuralComp_Ratio_LLPD', PACKAGE = 'NeuralComp', X_A, X_B, n_A, n_B, Results_A, Results_B, Results_joint, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
+Diff_LLPD <- function(X_A, X_B, n_A, n_B, Results_A, Results_B, Results_joint, basis_degree, boundary_knots, internal_knots, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
+    .Call('_NeuralComp_Diff_LLPD', PACKAGE = 'NeuralComp', X_A, X_B, n_A, n_B, Results_A, Results_B, Results_joint, basis_degree, boundary_knots, internal_knots, time_inhomogeneous, burnin_prop)
+}
+
+Test_IIGPP_Fit <- function(X, n, Results, basis_degree, boundary_knots, internal_knots, trial_time, time_inhomogeneous = TRUE, burnin_prop = 0.2) {
+    .Call('_NeuralComp_Test_IIGPP_Fit', PACKAGE = 'NeuralComp', X, n, Results, basis_degree, boundary_knots, internal_knots, trial_time, time_inhomogeneous, burnin_prop)
 }
 
 rcpparma_hello_world <- function() {
