@@ -2137,7 +2137,7 @@ inline double calc_log_mean(arma::vec x){
   return output;
 }
 
-inline double calc_WAIC_IGP_observation(const arma::field<arma::vec> X_A,
+inline Rcpp::List calc_WAIC_IGP_observation(const arma::field<arma::vec> X_A,
                                         const arma::field<arma::vec> X_B,
                                         const arma::field<arma::vec> X_AB,
                                         const arma::vec n_A,
@@ -2234,7 +2234,14 @@ inline double calc_WAIC_IGP_observation(const arma::field<arma::vec> X_A,
   
   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
   
-  return waic;
+  
+  Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
+                                          Rcpp::Named("llpd", llpd),
+                                          Rcpp::Named("Effective_pars", pwaic),
+                                          Rcpp::Named("llik_A", llik_A),
+                                          Rcpp::Named("llik_B", llik_B),
+                                          Rcpp::Named("llik_AB", llik_AB));
+  return output1;
 }
 
 
@@ -2934,6 +2941,85 @@ inline Rcpp::List calc_WAIC_IGP_WTA(const arma::field<arma::vec> X_A,
     }
   }
 
+  Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
+  double waic = -2 * (llpd - pwaic);
+  
+  Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
+  
+  Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
+                                          Rcpp::Named("llpd", llpd),
+                                          Rcpp::Named("Effective_pars", pwaic),
+                                          Rcpp::Named("llik_A", llik_A),
+                                          Rcpp::Named("llik_B", llik_B));
+  return output1;
+}
+
+inline Rcpp::List calc_WAIC_IGP_WTA_observation(const arma::field<arma::vec> X_A,
+                                                const arma::field<arma::vec> X_B,
+                                                const arma::vec n_A,
+                                                const arma::vec n_B,
+                                                const arma::mat theta_A,
+                                                const arma::mat basis_coef_A,
+                                                const arma::mat theta_B,
+                                                const arma::mat basis_coef_B,
+                                                const arma::field<arma::mat> basis_funct_A,
+                                                const arma::field<arma::mat> basis_funct_B,
+                                                const double burnin_prop){
+  int n_MCMC_A = theta_A.n_rows;
+  int burnin_num_A = n_MCMC_A - std::floor((1 - burnin_prop) * n_MCMC_A);
+  int n_MCMC_B = theta_B.n_rows;
+  int burnin_num_B = n_MCMC_B - std::floor((1 - burnin_prop) * n_MCMC_B);
+  
+  // Placeholder for log-likelihood by observation
+  arma::field<arma::mat> llik_A(n_A.n_elem, 1); 
+  arma::field<arma::mat> llik_B(n_B.n_elem, 1);
+  
+  // calculate log-likelihood for A
+  for(int i = 0; i < n_A.n_elem; i++){
+    llik_A(i,0) = calc_loglikelihood_IGP(X_A(i,0), theta_A, basis_coef_A, 
+           basis_funct_A(i,0), burnin_prop);
+  }
+  
+  // calculate log-likelihood for B
+  for(int i = 0; i < n_B.n_elem; i++){
+    llik_B(i,0) = calc_loglikelihood_IGP(X_B(i,0), theta_B, basis_coef_B, 
+           basis_funct_B(i,0), burnin_prop);
+  }
+  
+  arma::mat llik_A_obs = arma::zeros(n_MCMC_A - burnin_num_A, n_A.n_elem);
+  arma::mat llik_B_obs = arma::zeros(n_MCMC_B - burnin_num_B, n_B.n_elem);
+  
+  for(int i = 0; i < n_MCMC_A - burnin_num_A; i++){
+    for(int j = 0; j < n_A.n_elem; j++){
+      llik_A_obs(i, j) = arma::accu(llik_A(j,0).row(i));
+    }
+  }
+  
+  for(int i = 0; i < n_MCMC_B - burnin_num_B; i++){
+    for(int j = 0; j < n_B.n_elem; j++){
+      llik_B_obs(i, j) = arma::accu(llik_B(j,0).row(i));
+    }
+  }
+  
+  // calculate log pointwise predictive density
+  double llpd = 0;
+  for(int i = 0; i < n_A.n_elem; i++){
+      llpd = llpd + calc_log_mean(llik_A_obs.col(i));
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+      llpd = llpd + calc_log_mean(llik_B_obs.col(i));
+  }
+  
+  Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+  
+  double pwaic = 0;
+  for(int i = 0; i < n_A.n_elem; i++){
+      pwaic = pwaic + arma::var(llik_A_obs.col(i));
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+      pwaic = pwaic + arma::var(llik_B_obs.col(i));
+  }
+  
   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
   double waic = -2 * (llpd - pwaic);
   
