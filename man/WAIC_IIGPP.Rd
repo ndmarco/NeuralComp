@@ -17,6 +17,7 @@ WAIC_IIGPP(
   basis_degree,
   boundary_knots,
   internal_knots,
+  end_time,
   time_inhomogeneous = TRUE,
   burnin_prop = 0.2
 )

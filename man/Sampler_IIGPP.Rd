@@ -11,6 +11,7 @@ Sampler_IIGPP(
   basis_degree,
   boundary_knots,
   internal_knots,
+  end_time,
   time_inhomogeneous = TRUE,
   Warm_block1 = 500L,
   Warm_block2 = 2000L,

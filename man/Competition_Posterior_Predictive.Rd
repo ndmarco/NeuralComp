@@ -5,7 +5,7 @@
 \title{Posterior Predictive Sampling for Competition Model}
 \usage{
 Competition_Posterior_Predictive(
-  trial_time,
+  end_time,
   basis_degree,
   boundary_knots,
   internal_knots,
@@ -16,8 +16,6 @@ Competition_Posterior_Predictive(
 )
 }
 \arguments{
-\item{trial_time}{Double containing length of trial to simulate}
-
 \item{basis_degree}{Integer indicating the degree of B-splines (3 for cubic splines)}
 
 \item{boundary_knots}{Vector of two elements specifying the boundary knots}
@@ -31,6 +29,8 @@ Competition_Posterior_Predictive(
 \item{time_inhomogeneous}{Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)}
 
 \item{n_samples}{Integer containing number of posterior predictive samples to generate}
+
+\item{trial_time}{Double containing length of trial to simulate}
 }
 \value{
 List containing:

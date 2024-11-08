@@ -95,46 +95,50 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
       }
       if(ISI_A < ISI_B){
         total_time = total_time + ISI_A;
-        labels_i.resize(j + 1);
-        samples_i.resize(j + 1);
-        if(labels_i(j - 1) != 0){
-          n_switches(l) = n_switches(l) + 1;
-          switch_states_i.resize(n_switches(l) + 1);
-          switch_times_i.resize(n_switches(l) + 1);
-          switch_states_i(n_switches(l)) = 0;
-          if(n_switches(l) == 1){
-            switch_times_i(0) = total_time - ISI_A;
-          }else{
-            switch_times_i(n_switches(l) - 1) = total_time - ISI_A - arma::accu(switch_times_i.subvec(0,n_switches(l) - 2));
+        if(total_time < trial_time){
+          labels_i.resize(j + 1);
+          samples_i.resize(j + 1);
+          if(labels_i(j - 1) != 0){
+            n_switches(l) = n_switches(l) + 1;
+            switch_states_i.resize(n_switches(l) + 1);
+            switch_times_i.resize(n_switches(l) + 1);
+            switch_states_i(n_switches(l)) = 0;
+            if(n_switches(l) == 1){
+              switch_times_i(0) = total_time - ISI_A;
+            }else{
+              switch_times_i(n_switches(l) - 1) = total_time - ISI_A - arma::accu(switch_times_i.subvec(0,n_switches(l) - 2));
+            }
           }
+          labels_i(j) = 0;
+          samples_i(j) = ISI_A;
+          j = j + 1;
         }
-        labels_i(j) = 0;
-        samples_i(j) = ISI_A;
-        j = j + 1;
       }else{
         total_time = total_time + ISI_B;
-        labels_i.resize(j + 1);
-        samples_i.resize(j + 1);
-        if(labels_i(j - 1) != 1){
-          n_switches(l) = n_switches(l) + 1;
-          switch_states_i.resize(n_switches(l) + 1);
-          switch_times_i.resize(n_switches(l) + 1);
-          switch_states_i(n_switches(l)) = 1;
-          if(n_switches(l) == 1){
-            switch_times_i(0) = total_time - ISI_B;
-          }else{
-            switch_times_i(n_switches(l) - 1) = total_time - ISI_B - arma::accu(switch_times_i.subvec(0,n_switches(l) - 2));
+        if(total_time < trial_time){
+          labels_i.resize(j + 1);
+          samples_i.resize(j + 1);
+          if(labels_i(j - 1) != 1){
+            n_switches(l) = n_switches(l) + 1;
+            switch_states_i.resize(n_switches(l) + 1);
+            switch_times_i.resize(n_switches(l) + 1);
+            switch_states_i(n_switches(l)) = 1;
+            if(n_switches(l) == 1){
+              switch_times_i(0) = total_time - ISI_B;
+            }else{
+              switch_times_i(n_switches(l) - 1) = total_time - ISI_B - arma::accu(switch_times_i.subvec(0,n_switches(l) - 2));
+            }
           }
+          labels_i(j) = 1;
+          samples_i(j) = ISI_B;
+          j = j + 1;
         }
-        labels_i(j) = 1;
-        samples_i(j) = ISI_B;
-        j = j + 1;
       }
     }
     if(n_switches(l) == 0){
-      switch_times_i(0) =  total_time;
+      switch_times_i(0) =  arma::accu(samples_i);
     }else{
-      switch_times_i(n_switches(l)) = total_time - arma::accu(switch_times_i.subvec(0, n_switches(l) - 1));
+      switch_times_i(n_switches(l)) = arma::accu(samples_i) - arma::accu(switch_times_i.subvec(0, n_switches(l) - 1));
     }
     posterior_predictive_samples_AB(l, 0) = samples_i;
     posterior_predictive_labels(l, 0) = labels_i;
@@ -180,9 +184,11 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
         ISI_A = rinv_gauss((1/(theta(i,0))), (1 / theta(i, 2)) * (1 / theta(i, 2)));
       }
       total_time = total_time + ISI_A;
-      samples_i.resize(j + 1);
-      samples_i(j) = ISI_A;
-      j = j + 1;
+      if(total_time < trial_time){
+        samples_i.resize(j + 1);
+        samples_i(j) = ISI_A;
+        j = j + 1;
+      }
     }
     posterior_predictive_samples_A(l, 0) = samples_i;
     n_A_posterior_predictive(l) = j;
@@ -216,9 +222,12 @@ inline Rcpp::List posterior_pred_samples(const arma::mat& theta,
         ISI_B = rinv_gauss((1/(theta(i,1))), (1 / theta(i, 3)) * (1 / theta(i, 3)));
       }
       total_time = total_time + ISI_B;
-      samples_i.resize(j + 1);
-      samples_i(j) = ISI_B;
-      j = j + 1;
+      
+      if(total_time < trial_time){
+        samples_i.resize(j + 1);
+        samples_i(j) = ISI_B;
+        j = j + 1;
+      }
     }
     posterior_predictive_samples_B(l, 0) = samples_i;
     n_B_posterior_predictive(l) = j;
