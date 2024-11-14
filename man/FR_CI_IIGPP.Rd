@@ -23,7 +23,7 @@ FR_CI_IIGPP(
 
 \item{internal_knots}{Vector containing the desired internal knots of the B-splines}
 
-\item{Results}{List produced from running \code{Sampler_IGP}}
+\item{Results}{List produced from running \code{Sampler_IIGPP}}
 
 \item{burnin_prop}{Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in}
 
@@ -32,14 +32,14 @@ FR_CI_IIGPP(
 \value{
 List containing:
 \describe{
-  \item{\code{FR_MCMC_Samps}}{Matrix of MCMC samples of the firing rate at the specified time points}
+  \item{\code{FR_MCMC_Samps}}{Matrix of MCMC samples of the input current function at the specified time points}
   \item{\code{FR_CI}}{Matrix containing the upper and lower values of the credible interval at the specified time points (first column is lower value, second column is upper value)}
   \item{\code{FR_Median}}{Vector containing the estimated posterior median at the specified time points}
 }
 }
 \description{
-Constructs credible intervals for the time-inhomgeneous mean parameter (I) of the inhomogeneous
-inverse Gaussian point process.
+Constructs credible intervals for the time-inhomgeneous input current function (I) of the inhomogeneous
+inverse Gaussian point process (IIGPP) model.
 }
 \section{Warning}{
 
@@ -65,18 +65,25 @@ MCMC_iters <- 100
 basis_degree <- 3
 boundary_knots <- c(0, 1)
 internal_knots <- c(0.25, 0.5, 0.75)
+end_time <- 1
 
 ## Warm Blocks should be longer, however for the example, they are short
 Warm_block1 = 50
 Warm_block2 = 50
 
 ## Run MCMC chain
-results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
-                               MCMC_iters, basis_degree, boundary_knots, internal_knots,
-                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots, 
+                         internal_knots, end_time, Warm_block1 = Warm_block1,
+                         Warm_block2 = Warm_block2)
 
 ## Get CI
 time <- seq(0, 1, 0.01)
 CI <- FR_CI_IIGPP(time, basis_degree, boundary_knots, internal_knots, results)
+
+## plot CI
+CI_range <- c(min(CI$FR_CI)-5, max(CI$FR_CI) + 5)
+plot(time, CI$FR_median, type = 'l', col = "red", ylim = CI_range)
+lines(time, CI$FR_CI[,1], col = "blue")
+lines(time, CI$FR_CI[,2], col = "blue")
 
 }

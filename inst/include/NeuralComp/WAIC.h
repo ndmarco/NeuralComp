@@ -2761,9 +2761,7 @@ inline double calc_Diff_LPPD_A_B(const arma::field<arma::vec> X_A,
   
   double llpd_joint = 0;
   for(int i = 0; i < n_joint.n_elem; i++){
-    for(int j = 0; j < n_joint(i); j++){
-      llpd_joint = llpd_joint + calc_log_mean(llik_joint_obs.col(i));
-    }
+    llpd_joint = llpd_joint + calc_log_mean(llik_joint_obs.col(i));
   }
   double ratio_llpd = llpd_seperate - llpd_joint;
   return ratio_llpd;
@@ -2821,8 +2819,8 @@ inline Rcpp::List sim_IIGPP(const arma::vec theta,
     
     
     n_sim(i) = j;
-    arma::vec time = arma::zeros(n_sim(i));
-    for(int j = 1; j < n_sim(i); j++){
+    arma::vec time = arma::zeros(n_sim(i) + 1);
+    for(int j = 1; j < (n_sim(i) + 1); j++){
       time(j) = arma::accu(X_sim(i,0).subvec(0,j-1));
     }
     bspline = splines2::BSpline(time, internal_knots, basis_degree,
@@ -2859,6 +2857,14 @@ inline double calc_discrepency(const arma::field<arma::vec>& X,
         d = d + dinv_gauss(X(i,0)(j), mean, lambda);
       }
     }
+    if(time_inhomogeneous == true){
+      mean = 1 / (theta(0) * std::exp(arma::dot(basis_funct(i,0).row(n(i)), basis_coef)));
+      lambda = (1 / theta(1)) * (1 / theta(1));
+    }else{
+      mean = 1 / theta(0);
+      lambda = (1 / theta(1)) * (1 / theta(1));
+    }
+    // last spike
     d = d + pinv_gauss(end_time - arma::accu(X(i,0)), mean, lambda);
   }
   return d;

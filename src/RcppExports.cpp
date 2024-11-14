@@ -137,9 +137,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// WAIC_Competition_Marginal
-Rcpp::List WAIC_Competition_Marginal(const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, Rcpp::List Results, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const double end_time, const bool time_inhomogeneous, const double burnin_prop);
-RcppExport SEXP _NeuralComp_WAIC_Competition_Marginal(SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP ResultsSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP end_timeSEXP, SEXP time_inhomogeneousSEXP, SEXP burnin_propSEXP) {
+// WAIC_Competition
+Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, Rcpp::List Results, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const double end_time, const bool time_inhomogeneous, const double burnin_prop);
+RcppExport SEXP _NeuralComp_WAIC_Competition(SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP ResultsSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP end_timeSEXP, SEXP time_inhomogeneousSEXP, SEXP burnin_propSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -156,7 +156,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double >::type end_time(end_timeSEXP);
     Rcpp::traits::input_parameter< const bool >::type time_inhomogeneous(time_inhomogeneousSEXP);
     Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
-    rcpp_result_gen = Rcpp::wrap(WAIC_Competition_Marginal(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, end_time, time_inhomogeneous, burnin_prop));
+    rcpp_result_gen = Rcpp::wrap(WAIC_Competition(X_A, X_B, X_AB, n_A, n_B, n_AB, Results, basis_degree, boundary_knots, internal_knots, end_time, time_inhomogeneous, burnin_prop));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -248,180 +248,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Test_FFBS_only
-Rcpp::List Test_FFBS_only(const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, int MCMC_iters, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const double end_time, arma::vec theta_truth, arma::vec basis_coef_A_truth, arma::vec basis_coef_B_truth, const bool time_inhomogeneous, int Warm_block1, int Warm_block2, int Leapfrog_steps, const double I_A_mean, const double I_A_shape, const double I_B_mean, const double I_B_shape, const double sigma_A_mean, const double sigma_A_shape, const double sigma_B_mean, const double sigma_B_shape, const double delta_shape, const double delta_rate, double step_size_theta, double step_size_FR, double delta_proposal_mean, double delta_proposal_sd, double alpha_labels, double nu, double gamma, int delta_adaption_block, int Mass_adaption_block, int M_proposal);
-RcppExport SEXP _NeuralComp_Test_FFBS_only(SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP MCMC_itersSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP end_timeSEXP, SEXP theta_truthSEXP, SEXP basis_coef_A_truthSEXP, SEXP basis_coef_B_truthSEXP, SEXP time_inhomogeneousSEXP, SEXP Warm_block1SEXP, SEXP Warm_block2SEXP, SEXP Leapfrog_stepsSEXP, SEXP I_A_meanSEXP, SEXP I_A_shapeSEXP, SEXP I_B_meanSEXP, SEXP I_B_shapeSEXP, SEXP sigma_A_meanSEXP, SEXP sigma_A_shapeSEXP, SEXP sigma_B_meanSEXP, SEXP sigma_B_shapeSEXP, SEXP delta_shapeSEXP, SEXP delta_rateSEXP, SEXP step_size_thetaSEXP, SEXP step_size_FRSEXP, SEXP delta_proposal_meanSEXP, SEXP delta_proposal_sdSEXP, SEXP alpha_labelsSEXP, SEXP nuSEXP, SEXP gammaSEXP, SEXP delta_adaption_blockSEXP, SEXP Mass_adaption_blockSEXP, SEXP M_proposalSEXP) {
+// Test_IIGPP_Fit
+Rcpp::List Test_IIGPP_Fit(const arma::field<arma::vec> X, const arma::vec n, Rcpp::List Results, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const double end_time, const bool time_inhomogeneous, const double burnin_prop);
+RcppExport SEXP _NeuralComp_Test_IIGPP_Fit(SEXP XSEXP, SEXP nSEXP, SEXP ResultsSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP end_timeSEXP, SEXP time_inhomogeneousSEXP, SEXP burnin_propSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_A(X_ASEXP);
-    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_B(X_BSEXP);
-    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_AB(X_ABSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type n_A(n_ASEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type n_B(n_BSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type n_AB(n_ABSEXP);
-    Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
-    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
-    Rcpp::traits::input_parameter< const double >::type end_time(end_timeSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type theta_truth(theta_truthSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type basis_coef_A_truth(basis_coef_A_truthSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type basis_coef_B_truth(basis_coef_B_truthSEXP);
-    Rcpp::traits::input_parameter< const bool >::type time_inhomogeneous(time_inhomogeneousSEXP);
-    Rcpp::traits::input_parameter< int >::type Warm_block1(Warm_block1SEXP);
-    Rcpp::traits::input_parameter< int >::type Warm_block2(Warm_block2SEXP);
-    Rcpp::traits::input_parameter< int >::type Leapfrog_steps(Leapfrog_stepsSEXP);
-    Rcpp::traits::input_parameter< const double >::type I_A_mean(I_A_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type I_A_shape(I_A_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type I_B_mean(I_B_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type I_B_shape(I_B_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma_A_mean(sigma_A_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma_A_shape(sigma_A_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma_B_mean(sigma_B_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma_B_shape(sigma_B_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type delta_shape(delta_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type delta_rate(delta_rateSEXP);
-    Rcpp::traits::input_parameter< double >::type step_size_theta(step_size_thetaSEXP);
-    Rcpp::traits::input_parameter< double >::type step_size_FR(step_size_FRSEXP);
-    Rcpp::traits::input_parameter< double >::type delta_proposal_mean(delta_proposal_meanSEXP);
-    Rcpp::traits::input_parameter< double >::type delta_proposal_sd(delta_proposal_sdSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha_labels(alpha_labelsSEXP);
-    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< int >::type delta_adaption_block(delta_adaption_blockSEXP);
-    Rcpp::traits::input_parameter< int >::type Mass_adaption_block(Mass_adaption_blockSEXP);
-    Rcpp::traits::input_parameter< int >::type M_proposal(M_proposalSEXP);
-    rcpp_result_gen = Rcpp::wrap(Test_FFBS_only(X_A, X_B, X_AB, n_A, n_B, n_AB, MCMC_iters, basis_degree, boundary_knots, internal_knots, end_time, theta_truth, basis_coef_A_truth, basis_coef_B_truth, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_A_mean, I_A_shape, I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, step_size_theta, step_size_FR, delta_proposal_mean, delta_proposal_sd, alpha_labels, nu, gamma, delta_adaption_block, Mass_adaption_block, M_proposal));
-    return rcpp_result_gen;
-END_RCPP
-}
-// test_forward_filtration_delta_int
-arma::field<arma::mat> test_forward_filtration_delta_int(arma::vec& theta, arma::vec& basis_coef_A, const arma::vec& basis_coef_B, const arma::field<arma::vec> X_AB, const arma::vec n_AB, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const double end_time);
-RcppExport SEXP _NeuralComp_test_forward_filtration_delta_int(SEXP thetaSEXP, SEXP basis_coef_ASEXP, SEXP basis_coef_BSEXP, SEXP X_ABSEXP, SEXP n_ABSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP end_timeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type basis_coef_A(basis_coef_ASEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type basis_coef_B(basis_coef_BSEXP);
-    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_AB(X_ABSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type n_AB(n_ABSEXP);
-    Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
-    Rcpp::traits::input_parameter< const double >::type end_time(end_timeSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_forward_filtration_delta_int(theta, basis_coef_A, basis_coef_B, X_AB, n_AB, basis_degree, boundary_knots, internal_knots, end_time));
-    return rcpp_result_gen;
-END_RCPP
-}
-// test_half_t
-Rcpp::List test_half_t(arma::vec x, double nu, double gamma, int MCMC_iters);
-RcppExport SEXP _NeuralComp_test_half_t(SEXP xSEXP, SEXP nuSEXP, SEXP gammaSEXP, SEXP MCMC_itersSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_half_t(x, nu, gamma, MCMC_iters));
-    return rcpp_result_gen;
-END_RCPP
-}
-// test_posterior_cauchy
-double test_posterior_cauchy(double x, const arma::vec basis_coef, const double nu, const double gamma);
-RcppExport SEXP _NeuralComp_test_posterior_cauchy(SEXP xSEXP, SEXP basis_coefSEXP, SEXP nuSEXP, SEXP gammaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type basis_coef(basis_coefSEXP);
-    Rcpp::traits::input_parameter< const double >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< const double >::type gamma(gammaSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_posterior_cauchy(x, basis_coef, nu, gamma));
-    return rcpp_result_gen;
-END_RCPP
-}
-// test_dcauchy
-double test_dcauchy(double x, double nu, double gamma);
-RcppExport SEXP _NeuralComp_test_dcauchy(SEXP xSEXP, SEXP nuSEXP, SEXP gammaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_dcauchy(x, nu, gamma));
-    return rcpp_result_gen;
-END_RCPP
-}
-// Test_FR_only
-Rcpp::List Test_FR_only(const arma::field<arma::vec> X_A, const arma::field<arma::vec> X_B, const arma::field<arma::vec> X_AB, const arma::vec n_A, const arma::vec n_B, const arma::vec n_AB, const double delta, const arma::field<arma::vec> labels, int MCMC_iters, const int basis_degree, const arma::vec boundary_knots, const arma::vec internal_knots, const double end_time, const bool time_inhomogeneous, int Warm_block1, int Warm_block2, int Leapfrog_steps, const double I_A_mean, const double I_A_shape, const double I_B_mean, const double I_B_shape, const double sigma_A_mean, const double sigma_A_shape, const double sigma_B_mean, const double sigma_B_shape, const double delta_shape, const double delta_rate, double step_size_theta, double step_size_FR, double nu, double gamma, int delta_adaption_block, int Mass_adaption_block, int M_proposal);
-RcppExport SEXP _NeuralComp_Test_FR_only(SEXP X_ASEXP, SEXP X_BSEXP, SEXP X_ABSEXP, SEXP n_ASEXP, SEXP n_BSEXP, SEXP n_ABSEXP, SEXP deltaSEXP, SEXP labelsSEXP, SEXP MCMC_itersSEXP, SEXP basis_degreeSEXP, SEXP boundary_knotsSEXP, SEXP internal_knotsSEXP, SEXP end_timeSEXP, SEXP time_inhomogeneousSEXP, SEXP Warm_block1SEXP, SEXP Warm_block2SEXP, SEXP Leapfrog_stepsSEXP, SEXP I_A_meanSEXP, SEXP I_A_shapeSEXP, SEXP I_B_meanSEXP, SEXP I_B_shapeSEXP, SEXP sigma_A_meanSEXP, SEXP sigma_A_shapeSEXP, SEXP sigma_B_meanSEXP, SEXP sigma_B_shapeSEXP, SEXP delta_shapeSEXP, SEXP delta_rateSEXP, SEXP step_size_thetaSEXP, SEXP step_size_FRSEXP, SEXP nuSEXP, SEXP gammaSEXP, SEXP delta_adaption_blockSEXP, SEXP Mass_adaption_blockSEXP, SEXP M_proposalSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_A(X_ASEXP);
-    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_B(X_BSEXP);
-    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X_AB(X_ABSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type n_A(n_ASEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type n_B(n_BSEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type n_AB(n_ABSEXP);
-    Rcpp::traits::input_parameter< const double >::type delta(deltaSEXP);
-    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type labels(labelsSEXP);
-    Rcpp::traits::input_parameter< int >::type MCMC_iters(MCMC_itersSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type n(nSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Results(ResultsSEXP);
     Rcpp::traits::input_parameter< const int >::type basis_degree(basis_degreeSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type boundary_knots(boundary_knotsSEXP);
     Rcpp::traits::input_parameter< const arma::vec >::type internal_knots(internal_knotsSEXP);
     Rcpp::traits::input_parameter< const double >::type end_time(end_timeSEXP);
     Rcpp::traits::input_parameter< const bool >::type time_inhomogeneous(time_inhomogeneousSEXP);
-    Rcpp::traits::input_parameter< int >::type Warm_block1(Warm_block1SEXP);
-    Rcpp::traits::input_parameter< int >::type Warm_block2(Warm_block2SEXP);
-    Rcpp::traits::input_parameter< int >::type Leapfrog_steps(Leapfrog_stepsSEXP);
-    Rcpp::traits::input_parameter< const double >::type I_A_mean(I_A_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type I_A_shape(I_A_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type I_B_mean(I_B_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type I_B_shape(I_B_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma_A_mean(sigma_A_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma_A_shape(sigma_A_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma_B_mean(sigma_B_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma_B_shape(sigma_B_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type delta_shape(delta_shapeSEXP);
-    Rcpp::traits::input_parameter< const double >::type delta_rate(delta_rateSEXP);
-    Rcpp::traits::input_parameter< double >::type step_size_theta(step_size_thetaSEXP);
-    Rcpp::traits::input_parameter< double >::type step_size_FR(step_size_FRSEXP);
-    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< int >::type delta_adaption_block(delta_adaption_blockSEXP);
-    Rcpp::traits::input_parameter< int >::type Mass_adaption_block(Mass_adaption_blockSEXP);
-    Rcpp::traits::input_parameter< int >::type M_proposal(M_proposalSEXP);
-    rcpp_result_gen = Rcpp::wrap(Test_FR_only(X_A, X_B, X_AB, n_A, n_B, n_AB, delta, labels, MCMC_iters, basis_degree, boundary_knots, internal_knots, end_time, time_inhomogeneous, Warm_block1, Warm_block2, Leapfrog_steps, I_A_mean, I_A_shape, I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape, sigma_B_mean, sigma_B_shape, delta_shape, delta_rate, step_size_theta, step_size_FR, nu, gamma, delta_adaption_block, Mass_adaption_block, M_proposal));
-    return rcpp_result_gen;
-END_RCPP
-}
-// Test_zero_half_cauchy
-Rcpp::List Test_zero_half_cauchy(double nu, double gamma, double MCMC_iters);
-RcppExport SEXP _NeuralComp_Test_zero_half_cauchy(SEXP nuSEXP, SEXP gammaSEXP, SEXP MCMC_itersSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type MCMC_iters(MCMC_itersSEXP);
-    rcpp_result_gen = Rcpp::wrap(Test_zero_half_cauchy(nu, gamma, MCMC_iters));
-    return rcpp_result_gen;
-END_RCPP
-}
-// Test_rIG
-double Test_rIG(double mean, double shape);
-RcppExport SEXP _NeuralComp_Test_rIG(SEXP meanSEXP, SEXP shapeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type mean(meanSEXP);
-    Rcpp::traits::input_parameter< double >::type shape(shapeSEXP);
-    rcpp_result_gen = Rcpp::wrap(Test_rIG(mean, shape));
+    Rcpp::traits::input_parameter< const double >::type burnin_prop(burnin_propSEXP);
+    rcpp_result_gen = Rcpp::wrap(Test_IIGPP_Fit(X, n, Results, basis_degree, boundary_knots, internal_knots, end_time, time_inhomogeneous, burnin_prop));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -512,19 +354,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_NeuralComp_Sampler_IIGPP", (DL_FUNC) &_NeuralComp_Sampler_IIGPP, 21},
     {"_NeuralComp_FR_CI_IIGPP", (DL_FUNC) &_NeuralComp_FR_CI_IIGPP, 7},
     {"_NeuralComp_FR_CI_Competition", (DL_FUNC) &_NeuralComp_FR_CI_Competition, 7},
-    {"_NeuralComp_WAIC_Competition_Marginal", (DL_FUNC) &_NeuralComp_WAIC_Competition_Marginal, 13},
+    {"_NeuralComp_WAIC_Competition", (DL_FUNC) &_NeuralComp_WAIC_Competition, 13},
     {"_NeuralComp_WAIC_IIGPP", (DL_FUNC) &_NeuralComp_WAIC_IIGPP, 15},
     {"_NeuralComp_WAIC_Winner_Take_All", (DL_FUNC) &_NeuralComp_WAIC_Winner_Take_All, 12},
     {"_NeuralComp_Competition_Posterior_Predictive", (DL_FUNC) &_NeuralComp_Competition_Posterior_Predictive, 8},
     {"_NeuralComp_Diff_LLPD", (DL_FUNC) &_NeuralComp_Diff_LLPD, 13},
-    {"_NeuralComp_Test_FFBS_only", (DL_FUNC) &_NeuralComp_Test_FFBS_only, 38},
-    {"_NeuralComp_test_forward_filtration_delta_int", (DL_FUNC) &_NeuralComp_test_forward_filtration_delta_int, 9},
-    {"_NeuralComp_test_half_t", (DL_FUNC) &_NeuralComp_test_half_t, 4},
-    {"_NeuralComp_test_posterior_cauchy", (DL_FUNC) &_NeuralComp_test_posterior_cauchy, 4},
-    {"_NeuralComp_test_dcauchy", (DL_FUNC) &_NeuralComp_test_dcauchy, 3},
-    {"_NeuralComp_Test_FR_only", (DL_FUNC) &_NeuralComp_Test_FR_only, 34},
-    {"_NeuralComp_Test_zero_half_cauchy", (DL_FUNC) &_NeuralComp_Test_zero_half_cauchy, 3},
-    {"_NeuralComp_Test_rIG", (DL_FUNC) &_NeuralComp_Test_rIG, 2},
+    {"_NeuralComp_Test_IIGPP_Fit", (DL_FUNC) &_NeuralComp_Test_IIGPP_Fit, 9},
     {"_NeuralComp_rcpparma_hello_world", (DL_FUNC) &_NeuralComp_rcpparma_hello_world, 0},
     {"_NeuralComp_rcpparma_outerproduct", (DL_FUNC) &_NeuralComp_rcpparma_outerproduct, 1},
     {"_NeuralComp_rcpparma_innerproduct", (DL_FUNC) &_NeuralComp_rcpparma_innerproduct, 1},

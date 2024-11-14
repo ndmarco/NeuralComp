@@ -73,6 +73,7 @@ arma::mat GetBSpline(const arma::vec time,
 //' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
 //' @param boundary_knots Vector of two elements specifying the boundary knots
 //' @param internal_knots Vector containing the desired internal knots of the B-splines
+//' @param end_time Double containing the end of the experimental window (experimental window assumed [0, end_time])
 //' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
 //' @param Warm_block1 Integer containing number of iterations to adapt the leapfrog step size under identity mass matrices
 //' @param Warm_block2 Integer containing number of iterations to adapt the mass matrices, leapfrog step size, and delta sampling parameters
@@ -92,8 +93,8 @@ arma::mat GetBSpline(const arma::vec time,
 //' @param delta_proposal_mean Double containing the value for mean parameter of the lognormal proposal distribution of delta parameter
 //' @param delta_proposal_sd Double containing the value for sd parameter of the lognormal proposal distribution of delta parameter
 //' @param alpha_labels Double containing probability that proposed new deltas come from the prior on delta instead of adapted lognormal distribution
-//' @param alpha Double containing the value for the shape parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared
-//' @param beta Double containing the value for the scale parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared
+//' @param nu Double containing the value for the degrees of freedom parameter of the folded-t prior distribution on I_A_sigma and I_B_sigma
+//' @param gamma Double containing the value for the scale parameter of the folded-t prior distribution on I_A_sigma and I_B_sigma
 //' @param delta_adaptation_block Integer containing how often the delta sampling parameters should be updated in Warm_block2
 //' @param Mass_adaptation_block Integer containing how often the Mass Matrix should be updated in Warm_block2
 //' @param M_proposal Integer containing the number of deltas proposed when sampling delta
@@ -115,6 +116,7 @@ arma::mat GetBSpline(const arma::vec time,
 //' \describe{
 //'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
 //'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+//'   \item{\code{end_time}}{must be larger than 0}
 //'   \item{\code{I_A_mean}}{must be greater than 0}
 //'   \item{\code{I_A_shape}}{must be greater than 0}
 //'   \item{\code{I_B_mean}}{must be greater than 0}
@@ -143,6 +145,7 @@ arma::mat GetBSpline(const arma::vec time,
 //' 
 //' ## set parameters
 //' MCMC_iters <- 100
+//' end_time <- 1
 //' 
 //' basis_degree <- 3
 //' boundary_knots <- c(0, 1)
@@ -155,7 +158,7 @@ arma::mat GetBSpline(const arma::vec time,
 //' ## Run MCMC chain
 //' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
 //'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+//'                                end_time, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
 //'                                time_inhomogeneous = FALSE)
 //' 
 //' 
@@ -171,6 +174,7 @@ arma::mat GetBSpline(const arma::vec time,
 //' basis_degree <- 3
 //' boundary_knots <- c(0, 1)
 //' internal_knots <- c(0.25, 0.5, 0.75)
+//' end_time <- 1
 //' 
 //' ## Warm Blocks should be longer, however for the example, they are short
 //' Warm_block1 = 50
@@ -179,7 +183,7 @@ arma::mat GetBSpline(const arma::vec time,
 //' ## Run MCMC chain
 //' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
 //'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//'                                end_time, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 //' 
 //' @export
 //[[Rcpp::export]]
@@ -196,7 +200,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
                                const double end_time,
                                const bool time_inhomogeneous = true,
                                int Warm_block1 = 500,
-                               int Warm_block2 = 2000,
+                               int Warm_block2 = 4000,
                                int Leapfrog_steps = 10,
                                const double I_A_mean = 40, 
                                const double I_A_shape = 1,
@@ -214,7 +218,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
                                double delta_proposal_sd = 0.3,
                                double alpha_labels = 0.2,
                                double nu = 5,
-                               double gamma = 2,
+                               double gamma = 0.25,
                                int delta_adaption_block = 100,
                                int Mass_adaption_block = 500,
                                int M_proposal = 10){
@@ -267,6 +271,21 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
  }
  if(gamma <= 0){
    Rcpp::stop("'gamma' must be greater than 0");
+ }
+ for(int i = 0; i < n_A.n_elem; i++){
+   if(arma::accu(X_A(i,0)) > end_time){
+     Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train" + std::to_string(i + 1) + ")");
+   }
+ }
+ for(int i = 0; i < n_B.n_elem; i++){
+   if(arma::accu(X_B(i,0)) > end_time){
+     Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike trains" + std::to_string(i + 1) + ")");
+   }
+ }
+ for(int i = 0; i < n_AB.n_elem; i++){
+   if(arma::accu(X_AB(i,0)) > end_time){
+     Rcpp::stop("All spikes must be observed in [0,'end_time'] (See AB condition spike trains" + std::to_string(i + 1) + ")");
+   }
  }
  
  Rcpp::List param;
@@ -366,6 +385,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
 //' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
 //' @param boundary_knots Vector of two elements specifying the boundary knots
 //' @param internal_knots Vector containing the desired internal knots of the B-splines
+//' @param end_time Double containing the end of the experimental window (experimental window assumed [0, end_time])
 //' @param time_inhomogeneous Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)
 //' @param Warm_block1 Integer containing number of iterations to adapt the leapfrog step size under identity mass matrices
 //' @param Warm_block2 Integer containing number of iterations to adapt the mass matrices, leapfrog step size, and delta sampling parameters
@@ -376,8 +396,8 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
 //' @param sigma_shape Double containing the value for the shape parameter of IG prior on sigma
 //' @param step_size_theta Double containing initial leapfrog step size for theta parameters
 //' @param step_size_FR Double containing initial leapfrog step size for time-inhomogeneous firing rate parameters
-//' @param alpha Double containing the value for the shape parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared
-//' @param beta Double containing the value for the scale parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared
+//' @param nu Double containing the value for the degrees of freedom parameter of the folded-t prior distribution on I_A_sigma and I_B_sigma
+//' @param gamma Double containing the value for the scale parameter of the folded-t prior distribution on I_A_sigma and I_B_sigma
 //' @param Mass_adaptation_block Integer containing how often the Mass Matrix should be updated in Warm_block2
 //' @param M_proposal Integer containing the number of deltas proposed when sampling delta
 //' @returns List containing:
@@ -395,6 +415,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
 //' \describe{
 //'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
 //'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+//'   \item{\code{end_time}}{must be larger than 0}
 //'   \item{\code{I_mean}}{must be greater than 0}
 //'   \item{\code{I_shape}}{must be greater than 0}
 //'   \item{\code{sigma_mean}}{must be greater than 0}
@@ -420,6 +441,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
 //' basis_degree <- 3
 //' boundary_knots <- c(0, 1)
 //' internal_knots <- c(0.25, 0.5, 0.75)
+//' end_time <- 1
 //' 
 //' ## Warm Blocks should be longer, however for the example, they are short
 //' Warm_block1 = 50
@@ -427,8 +449,8 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
 //' 
 //' ## Run MCMC chain
 //' results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
-//'                          internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-//'                          time_inhomogeneous = FALSE)
+//'                          internal_knots, end_time, Warm_block1 = Warm_block1, 
+//'                          Warm_block2 = Warm_block2, time_inhomogeneous = FALSE)
 //' 
 //' 
 //' ################################
@@ -443,6 +465,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
 //' basis_degree <- 3
 //' boundary_knots <- c(0, 1)
 //' internal_knots <- c(0.25, 0.5, 0.75)
+//' end_time <- 1
 //' 
 //' ## Warm Blocks should be longer, however for the example, they are short
 //' Warm_block1 = 50
@@ -450,7 +473,8 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
 //' 
 //' ## Run MCMC chain
 //' results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots, 
-//'                          internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//'                          internal_knots, end_time, Warm_block1 = Warm_block1,
+//'                          Warm_block2 = Warm_block2)
 //' 
 //' @export
 //[[Rcpp::export]]
@@ -472,60 +496,103 @@ Rcpp::List Sampler_IIGPP(const arma::field<arma::vec> X,
                          double step_size_theta =  0.001,
                          double step_size_FR =  0.001,
                          double nu = 5,
-                         double gamma = 2,
+                         double gamma = 0.25,
                          int Mass_adaption_block = 500,
                          int M_proposal = 10){
- Rcpp::List param;
- if(time_inhomogeneous == true){
-   //Create B-splines
-   splines2::BSpline bspline;
-   // Make spline basis for A functions
-   arma::field<arma::mat> basis_funct(n.n_elem,1);
-   for(int i = 0; i < n.n_elem; i++){
-     arma::vec time = arma::zeros(n(i) + 1);
-     for(int j = 1; j < (n(i) + 1); j++){
-       time(j) = arma::accu(X(i,0).subvec(0,j-1));
-     }
-     bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                 boundary_knots);
-     // Get Basis matrix
-     arma::mat bspline_mat{bspline.basis(false)};
-     basis_funct(i,0) = bspline_mat;
-   }
-   
-   param = NeuralComp::Mixed_sampler_IGP_int_TI(basis_funct, X, n, end_time, MCMC_iters, 
-                                            Leapfrog_steps, I_mean, I_shape,
-                                            sigma_mean, sigma_shape,
-                                            step_size_theta, step_size_FR,
-                                            nu, gamma, Mass_adaption_block, 
-                                            Warm_block1, Warm_block2);
- }else{
-   param = NeuralComp::Mixed_sampler_IGP_int(X, n, end_time, MCMC_iters, Leapfrog_steps, I_mean,
-                                             I_shape, sigma_mean, sigma_shape,
-                                             step_size_theta, Mass_adaption_block,
-                                             Warm_block1, Warm_block2);
- }
- 
- return param;
+  Rcpp::List param;
+  
+  // Check conditions
+  if(I_mean <= 0){
+    Rcpp::stop("'I_mean' must be greater than 0");
+  }
+  if(I_shape <= 0){
+    Rcpp::stop("'I_shape' must be greater than 0");
+  }
+  if(sigma_mean <= 0){
+    Rcpp::stop("'sigma_mean' must be greater than 0");
+  }
+  if(sigma_shape <= 0){
+    Rcpp::stop("'sigma_shape' must be greater than 0");
+  }
+  if(step_size_theta <= 0){
+    Rcpp::stop("'step_size_theta' must be greater than 0");
+  }
+  if(step_size_FR <= 0){
+    Rcpp::stop("'step_size_FR' must be greater than 0");
+  }
+  if(gamma <= 0){
+    Rcpp::stop("'gamma' must be greater than 0");
+  }
+  for(int i = 0; i < n.n_elem; i++){
+    if(arma::accu(X(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See spike train" + std::to_string(i + 1) + ")");
+    }
+  }
+  
+  if(time_inhomogeneous == true){
+    
+    // Check conditions
+    if(basis_degree <  1){
+      Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+    }
+    for(int i = 0; i < internal_knots.n_elem; i++){
+      if(boundary_knots(0) >= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+      }
+      if(boundary_knots(1) <= internal_knots(i)){
+        Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+      }
+    }
+    
+    //Create B-splines
+    splines2::BSpline bspline;
+    // Make spline basis for A functions
+    arma::field<arma::mat> basis_funct(n.n_elem,1);
+    for(int i = 0; i < n.n_elem; i++){
+      arma::vec time = arma::zeros(n(i) + 1);
+      for(int j = 1; j < (n(i) + 1); j++){
+        time(j) = arma::accu(X(i,0).subvec(0,j-1));
+      }
+      bspline = splines2::BSpline(time, internal_knots, basis_degree,
+                                  boundary_knots);
+      // Get Basis matrix
+      arma::mat bspline_mat{bspline.basis(false)};
+      basis_funct(i,0) = bspline_mat;
+    }
+    
+    param = NeuralComp::Mixed_sampler_IGP_int_TI(basis_funct, X, n, end_time, MCMC_iters, 
+                                                 Leapfrog_steps, I_mean, I_shape,
+                                                 sigma_mean, sigma_shape,
+                                                 step_size_theta, step_size_FR,
+                                                 nu, gamma, Mass_adaption_block, 
+                                                 Warm_block1, Warm_block2);
+  }else{
+    param = NeuralComp::Mixed_sampler_IGP_int(X, n, end_time, MCMC_iters, Leapfrog_steps, I_mean,
+                                              I_shape, sigma_mean, sigma_shape,
+                                              step_size_theta, Mass_adaption_block,
+                                              Warm_block1, Warm_block2);
+  }
+  
+  return param;
 }
 
 //' Constructs CI for IIGPP Firing Rate
 //' 
-//' Constructs credible intervals for the time-inhomgeneous mean parameter (I) of the inhomogeneous
-//' inverse Gaussian point process.
+//' Constructs credible intervals for the time-inhomgeneous input current function (I) of the inhomogeneous
+//' inverse Gaussian point process (IIGPP) model.
 //' 
 //' @name FR_CI_IIGPP
 //' @param time Vector of time points at which pointwise credible intervals will be constructed
 //' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
 //' @param boundary_knots Vector of two elements specifying the boundary knots
 //' @param internal_knots Vector containing the desired internal knots of the B-splines
-//' @param Results List produced from running \code{Sampler_IGP}
+//' @param Results List produced from running \code{Sampler_IIGPP}
 //' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in
 //' @param alpha Double indicating the size of the credible interval ((1 - alpha) * 100 percent)
 //' 
 //' @returns List containing:
 //' \describe{
-//'   \item{\code{FR_MCMC_Samps}}{Matrix of MCMC samples of the firing rate at the specified time points}
+//'   \item{\code{FR_MCMC_Samps}}{Matrix of MCMC samples of the input current function at the specified time points}
 //'   \item{\code{FR_CI}}{Matrix containing the upper and lower values of the credible interval at the specified time points (first column is lower value, second column is upper value)}
 //'   \item{\code{FR_Median}}{Vector containing the estimated posterior median at the specified time points}
 //' }
@@ -552,19 +619,26 @@ Rcpp::List Sampler_IIGPP(const arma::field<arma::vec> X,
 //' basis_degree <- 3
 //' boundary_knots <- c(0, 1)
 //' internal_knots <- c(0.25, 0.5, 0.75)
+//' end_time <- 1
 //' 
 //' ## Warm Blocks should be longer, however for the example, they are short
 //' Warm_block1 = 50
 //' Warm_block2 = 50
 //' 
 //' ## Run MCMC chain
-//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
-//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//' results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots, 
+//'                          internal_knots, end_time, Warm_block1 = Warm_block1,
+//'                          Warm_block2 = Warm_block2)
 //' 
 //' ## Get CI
 //' time <- seq(0, 1, 0.01)
 //' CI <- FR_CI_IIGPP(time, basis_degree, boundary_knots, internal_knots, results)
+//' 
+//' ## plot CI
+//' CI_range <- c(min(CI$FR_CI)-5, max(CI$FR_CI) + 5)
+//' plot(time, CI$FR_median, type = 'l', col = "red", ylim = CI_range)
+//' lines(time, CI$FR_CI[,1], col = "blue")
+//' lines(time, CI$FR_CI[,2], col = "blue")
 //' 
 //' @export
 //[[Rcpp::export]]
@@ -580,6 +654,19 @@ Rcpp::List FR_CI_IIGPP(const arma::vec time,
   const arma::mat theta = Results["theta"];
   
   // Check conditions
+  if(burnin_prop < 0){
+    Rcpp::stop("'burnin_prop' must be in [0,1)");
+  }
+  if(burnin_prop >= 1){
+    Rcpp::stop("'burnin_prop' must be in [0,1)");
+  }
+  if(alpha <= 0){
+    Rcpp::stop("'alpha' must be in (0,1)");
+  }
+  if(alpha >= 1){
+    Rcpp::stop("'alpha' must be in (0,1)");
+  }
+  
   if(basis_degree <  1){
     Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
   }
@@ -625,6 +712,80 @@ Rcpp::List FR_CI_IIGPP(const arma::vec time,
   return output;
 }
 
+//' Constructs CI for Competition Firing Rate
+//' 
+//' Constructs credible intervals for the time-inhomgeneous input current (I) of the 
+//' competition model for time-inhomogeneous models.
+//' 
+//' @name FR_CI_Competition
+//' @param time Vector of time points at which pointwise credible intervals will be constructed
+//' @param basis_degree Integer indicating the degree of B-splines (3 for cubic splines)
+//' @param boundary_knots Vector of two elements specifying the boundary knots
+//' @param internal_knots Vector containing the desired internal knots of the B-splines
+//' @param Results List produced from running \code{Sampler_Competition}
+//' @param burnin_prop Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in
+//' @param alpha Double indicating the size of the credible interval ((1 - alpha) * 100 percent)
+//' 
+//' @returns List containing:
+//' \describe{
+//'   \item{\code{A_FR_MCMC_Samps}}{Matrix of MCMC samples of the A input current function at the specified time points}
+//'   \item{\code{B_FR_MCMC_Samps}}{Matrix of MCMC samples of the B input current function at the specified time points}
+//'   \item{\code{A_FR_CI}}{Matrix containing the upper and lower values of the A input current function credible interval at the specified time points (first column is lower value, second column is upper value)}
+//'   \item{\code{B_FR_CI}}{Matrix containing the upper and lower values of the B input current function credible interval at the specified time points (first column is lower value, second column is upper value)}
+//'   \item{\code{A_FR_Median}}{Vector containing the estimated posterior median A input current function at the specified time points}
+//'   \item{\code{B_FR_Median}}{Vector containing the estimated posterior median B input current function at the specified time points}
+//' }
+//' 
+//' @section Warning:
+//' The following must be true:
+//' \describe{
+//'   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
+//'   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+//'   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+//'   \item{\code{alpha}}{must be between 0 and 0.5}
+//' }
+//' 
+//' @examples
+//' ################################
+//' ### Time-Inhomogeneous Model ###
+//' ################################
+//' 
+//' ## Load sample data
+//' dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+//' 
+//' ## set parameters
+//' MCMC_iters <- 100
+//' basis_degree <- 3
+//' boundary_knots <- c(0, 1)
+//' internal_knots <- c(0.25, 0.5, 0.75)
+//' end_time <- 1
+//' 
+//' ## Warm Blocks should be longer, however for the example, they are short
+//' Warm_block1 = 50
+//' Warm_block2 = 50
+//' 
+//' ## Run MCMC chain
+//' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
+//'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
+//'                                end_time, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//' 
+//' ## Get CI
+//' time <- seq(0, 1, 0.01)
+//' CI <- FR_CI_Competition(time, basis_degree, boundary_knots, internal_knots, results)
+//' 
+//' ## plot A input current CI
+//' CI_range <- c(min(CI$A_FR_CI)-5, max(CI$A_FR_CI) + 5)
+//' plot(time, CI$A_FR_median, type = 'l', col = "red", ylim = CI_range)
+//' lines(time, CI$A_FR_CI[,1], col = "blue")
+//' lines(time, CI$A_FR_CI[,2], col = "blue")
+//' 
+//' ## plot B input current CI
+//' CI_range <- c(min(CI$B_FR_CI)-5, max(CI$B_FR_CI) + 5)
+//' plot(time, CI$B_FR_median, type = 'l', col = "red", ylim = CI_range)
+//' lines(time, CI$B_FR_CI[,1], col = "blue")
+//' lines(time, CI$B_FR_CI[,2], col = "blue")
+//' 
+//' @export
 //[[Rcpp::export]]
 Rcpp::List FR_CI_Competition(const arma::vec time,
                              const int basis_degree,
@@ -638,6 +799,19 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
   const arma::mat theta = Results["theta"];
   
   // Check conditions
+  if(burnin_prop < 0){
+    Rcpp::stop("'burnin_prop' must be in [0,1)");
+  }
+  if(burnin_prop >= 1){
+    Rcpp::stop("'burnin_prop' must be in [0,1)");
+  }
+  if(alpha <= 0){
+    Rcpp::stop("'alpha' must be in (0,1)");
+  }
+  if(alpha >= 1){
+    Rcpp::stop("'alpha' must be in (0,1)");
+  }
+  
   if(basis_degree <  1){
     Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
   }
@@ -973,7 +1147,7 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
 //   return waic;
 // }
 
-//' Calculates WAIC for the Competition Model (Marginal)
+//' Calculates WAIC for the Competition Model
 //' 
 //' This function calculates the Watanabe-Akaike information criterion (WAIC) for 
 //' the drift-diffusion competition model using the marginal likelihood (marginalizing out the labels).
@@ -982,7 +1156,7 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
 //' where lppd is the log pointwise predictive density, and p is the effective number of parameters.
 //' The Marginal WAIC is akin to leave-one-spike-train-out cross validation (asymptotically).
 //' 
-//' @name WAIC_Competition_Marginal
+//' @name WAIC_Competition
 //' @param X_A List of vectors containing the ISIs of A trials
 //' @param X_B List of vectors containing the ISIs of B trials
 //' @param X_AB List of vectors containing the ISIs of AB trials
@@ -1039,9 +1213,9 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
 //'                                time_inhomogeneous = FALSE)
 //'                                
 //' ## Calculate WAIC
-//' WAIC <- WAIC_Competition_Marginal(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
-//'                                   results, basis_degree, boundary_knots, internal_knots,
-//'                                   time_inhomogeneous = FALSE)
+//' WAIC <- WAIC_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
+//'                          results, basis_degree, boundary_knots, internal_knots, 1,
+//'                          time_inhomogeneous = FALSE)
 //' 
 //' ################################
 //' ### Time-Inhomogeneous Model ###
@@ -1063,32 +1237,48 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
 //' ## Run MCMC chain
 //' results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
 //'                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+//'                                Warm_block1 = Warm_block1, Warm_block2 = Warm_block2, 1)
 //' 
 //' ## Calculate WAIC
-//' WAIC <- WAIC_Competition_Marginal(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
-//'                                   results, basis_degree, boundary_knots, internal_knots)
+//' WAIC <- WAIC_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
+//'                                   results, basis_degree, boundary_knots, internal_knots, 1)
 //' 
 //' @export
 //[[Rcpp::export]]
-Rcpp::List WAIC_Competition_Marginal(const arma::field<arma::vec> X_A,
-                                     const arma::field<arma::vec> X_B,
-                                     const arma::field<arma::vec> X_AB,
-                                     const arma::vec n_A,
-                                     const arma::vec n_B,
-                                     const arma::vec n_AB,
-                                     Rcpp::List Results,
-                                     const int basis_degree,
-                                     const arma::vec boundary_knots,
-                                     const arma::vec internal_knots,
-                                     const double end_time,
-                                     const bool time_inhomogeneous = true,
-                                     const double burnin_prop = 0.2){
+Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
+                            const arma::field<arma::vec> X_B,
+                            const arma::field<arma::vec> X_AB,
+                            const arma::vec n_A,
+                            const arma::vec n_B,
+                            const arma::vec n_AB,
+                            Rcpp::List Results,
+                            const int basis_degree,
+                            const arma::vec boundary_knots,
+                            const arma::vec internal_knots,
+                            const double end_time,
+                            const bool time_inhomogeneous = true,
+                            const double burnin_prop = 0.2){
   // Check if max_time is large enough
   if(burnin_prop < 0){
     Rcpp::stop("'burnin_prop' must be between 0 and 1");
   }if(burnin_prop >= 1){
     Rcpp::stop("'burnin_prop' must be between 0 and 1");
+  }
+  
+  for(int i = 0; i < n_A.n_elem; i++){
+    if(arma::accu(X_A(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train" + std::to_string(i + 1) + ")");
+    }
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+    if(arma::accu(X_B(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike trains" + std::to_string(i + 1) + ")");
+    }
+  }
+  for(int i = 0; i < n_AB.n_elem; i++){
+    if(arma::accu(X_AB(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See AB condition spike trains" + std::to_string(i + 1) + ")");
+    }
   }
   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
@@ -1319,6 +1509,21 @@ Rcpp::List WAIC_IIGPP(const arma::field<arma::vec> X_A,
    Rcpp::stop("'burnin_prop' must be between 0 and 1");
  }if(burnin_prop >= 1){
    Rcpp::stop("'burnin_prop' must be between 0 and 1");
+ }
+ for(int i = 0; i < n_A.n_elem; i++){
+   if(arma::accu(X_A(i,0)) > end_time){
+     Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train" + std::to_string(i + 1) + ")");
+   }
+ }
+ for(int i = 0; i < n_B.n_elem; i++){
+   if(arma::accu(X_B(i,0)) > end_time){
+     Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike trains" + std::to_string(i + 1) + ")");
+   }
+ }
+ for(int i = 0; i < n_AB.n_elem; i++){
+   if(arma::accu(X_AB(i,0)) > end_time){
+     Rcpp::stop("All spikes must be observed in [0,'end_time'] (See AB condition spike trains" + std::to_string(i + 1) + ")");
+   }
  }
  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
@@ -1651,6 +1856,17 @@ Rcpp::List WAIC_Winner_Take_All(const arma::field<arma::vec> X_A,
   }if(burnin_prop >= 1){
     Rcpp::stop("'burnin_prop' must be between 0 and 1");
   }
+  for(int i = 0; i < n_A.n_elem; i++){
+    if(arma::accu(X_A(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train" + std::to_string(i + 1) + ")");
+    }
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+    if(arma::accu(X_B(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike trains" + std::to_string(i + 1) + ")");
+    }
+  }
+
   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
   arma::mat basis_coef_A;
@@ -1828,6 +2044,12 @@ Rcpp::List Competition_Posterior_Predictive(const double end_time,
                                             const bool time_inhomogeneous = true,
                                             const int n_samples = 10000){
   // check parameters
+  if(end_time <= 0){
+    Rcpp::stop("'end_time' must be greater than 0");
+  }
+  if(n_samples <= 0){
+    Rcpp::stop("'n_samples' must be an integer greater or equal to 1");
+  }
   if(burnin_prop < 0){
     Rcpp::stop("'burnin_prop' must be between 0 and 1");
   }if(burnin_prop >= 1){
@@ -2200,6 +2422,16 @@ double Diff_LLPD(const arma::field<arma::vec> X_A,
                  const double end_time,
                  const bool time_inhomogeneous = true,
                  const double burnin_prop = 0.2){
+  for(int i = 0; i < n_A.n_elem; i++){
+    if(arma::accu(X_A(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train" + std::to_string(i + 1) + ")");
+    }
+  }
+  for(int i = 0; i < n_B.n_elem; i++){
+    if(arma::accu(X_B(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike trains" + std::to_string(i + 1) + ")");
+    }
+  }
   if(burnin_prop < 0){
     Rcpp::stop("'burnin_prop' must be between 0 and 1");
   }if(burnin_prop >= 1){
@@ -2240,8 +2472,8 @@ double Diff_LLPD(const arma::field<arma::vec> X_A,
     //Create B-splines
     splines2::BSpline bspline;
     for(int i = 0; i < n_A.n_elem; i++){
-      arma::vec time = arma::zeros(n_A(i));
-      for(int j = 1; j < n_A(i); j++){
+      arma::vec time = arma::zeros(n_A(i) + 1);
+      for(int j = 1; j < (n_A(i) + 1); j++){
         time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
       }
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
@@ -2253,8 +2485,8 @@ double Diff_LLPD(const arma::field<arma::vec> X_A,
     }
     
     for(int i = 0; i < n_B.n_elem; i++){
-      arma::vec time = arma::zeros(n_B(i));
-      for(int j = 1; j < n_B(i); j++){
+      arma::vec time = arma::zeros(n_B(i) + 1);
+      for(int j = 1; j < (n_B(i) + 1); j++){
         time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
       }
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
@@ -2272,18 +2504,19 @@ double Diff_LLPD(const arma::field<arma::vec> X_A,
     basis_coef_joint = ph2;
   }else{
     for(int i = 0; i < n_A.n_elem; i++){
-      basis_funct_A(i, 0) = arma::zeros(n_A(i), 1);
+      basis_funct_A(i, 0) = arma::zeros(n_A(i) + 1, 1);
     }
     for(int i = 0; i < n_B.n_elem; i++){
-      basis_funct_B(i, 0) = arma::zeros(n_B(i), 1);
+      basis_funct_B(i, 0) = arma::zeros(n_B(i) + 1, 1);
     }
     for(int i = 0; i < n_joint.n_elem; i++){
-      basis_funct_joint(i, 0) = arma::zeros(n_joint(i), 1);
+      basis_funct_joint(i, 0) = arma::zeros(n_joint(i) + 1, 1);
     }
     basis_coef_A = arma::zeros(theta_A.n_rows,1);
     basis_coef_B = arma::zeros(theta_B.n_rows,1);
     basis_coef_joint = arma::zeros(theta_joint.n_rows,1);
   }
+  
   double ratio = NeuralComp::calc_Diff_LPPD_A_B(X_A, X_B, X_joint, n_A, n_B, n_joint, end_time, theta_A, 
                                                 basis_coef_A, theta_B, basis_coef_B, 
                                                 theta_joint, basis_coef_joint, basis_funct_A, 
@@ -2292,98 +2525,25 @@ double Diff_LLPD(const arma::field<arma::vec> X_A,
 }
 
 //[[Rcpp::export]]
-Rcpp::List Test_FFBS_only(const arma::field<arma::vec> X_A,
-                          const arma::field<arma::vec> X_B,
-                          const arma::field<arma::vec> X_AB,
-                          const arma::vec n_A,
-                          const arma::vec n_B,
-                          const arma::vec n_AB,
-                          int MCMC_iters,
+Rcpp::List Test_IIGPP_Fit(const arma::field<arma::vec> X,
+                          const arma::vec n,
+                          Rcpp::List Results,
                           const int basis_degree,
                           const arma::vec boundary_knots,
                           const arma::vec internal_knots,
                           const double end_time,
-                          arma::vec theta_truth,
-                          arma::vec basis_coef_A_truth,
-                          arma::vec basis_coef_B_truth,
                           const bool time_inhomogeneous = true,
-                          int Warm_block1 = 500,
-                          int Warm_block2 = 2000,
-                          int Leapfrog_steps = 10,
-                          const double I_A_mean = 40, 
-                          const double I_A_shape = 1,
-                          const double I_B_mean = 40,
-                          const double I_B_shape = 1,
-                          const double sigma_A_mean = 6.32,
-                          const double sigma_A_shape = 1,
-                          const double sigma_B_mean = 6.32,
-                          const double sigma_B_shape = 1,
-                          const double delta_shape = 0.01,
-                          const double delta_rate = 0.1,
-                          double step_size_theta =  0.001,
-                          double step_size_FR =  0.001,
-                          double delta_proposal_mean = -2,
-                          double delta_proposal_sd = 0.3,
-                          double alpha_labels = 0.2,
-                          double nu = 5,
-                          double gamma = 2,
-                          int delta_adaption_block = 100,
-                          int Mass_adaption_block = 500,
-                          int M_proposal = 10){
-  
-  // Check conditions
-  if(I_A_mean <= 0){
-    Rcpp::stop("'I_A_mean' must be greater than 0");
-  }
-  if(I_A_shape <= 0){
-    Rcpp::stop("'I_A_shape' must be greater than 0");
-  }
-  if(I_B_mean <= 0){
-    Rcpp::stop("'I_B_mean' must be greater than 0");
-  }
-  if(I_B_shape <= 0){
-    Rcpp::stop("'I_B_shape' must be greater than 0");
-  }
-  if(sigma_A_mean <= 0){
-    Rcpp::stop("'sigma_A_mean' must be greater than 0");
-  }
-  if(sigma_A_shape <= 0){
-    Rcpp::stop("'sigma_A_shape' must be greater than 0");
-  }
-  if(sigma_B_mean <= 0){
-    Rcpp::stop("'sigma_B_mean' must be greater than 0");
-  }
-  if(sigma_B_shape <= 0){
-    Rcpp::stop("'sigma_B_shape' must be greater than 0");
-  }
-  if(delta_rate <= 0){
-    Rcpp::stop("'delta_rate' must be greater than 0");
-  }
-  if(delta_shape <= 0){
-    Rcpp::stop("'delta_shape' must be greater than 0");
-  }
-  if(step_size_theta <= 0){
-    Rcpp::stop("'step_size_theta' must be greater than 0");
-  }
-  if(step_size_FR <= 0){
-    Rcpp::stop("'step_size_FR' must be greater than 0");
-  }
-  if(delta_proposal_sd <= 0){
-    Rcpp::stop("'delta_proposal_sd' must be greater than 0");
-  }
-  if(alpha_labels <= 0){
-    Rcpp::stop("'alpha_labels' must be between 0 and 1");
-  }
-  if(alpha_labels >= 1){
-    Rcpp::stop("'alpha_labels' must be between 0 and 1");
-  }
-  if(gamma <= 0){
-    Rcpp::stop("'gamma' must be greater than 0");
+                          const double burnin_prop = 0.2){
+  arma::mat theta = Results["theta"];
+  arma::field<arma::mat> basis_funct(n.n_elem,1);
+  arma::mat basis_coef;
+  for(int i = 0; i < n.n_elem; i++){
+    if(arma::accu(X(i,0)) > end_time){
+      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See spike train" + std::to_string(i + 1) + ")");
+    }
   }
   
-  Rcpp::List param;
   if(time_inhomogeneous == true){
-    
     // Check conditions
     if(basis_degree <  1){
       Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
@@ -2399,248 +2559,390 @@ Rcpp::List Test_FFBS_only(const arma::field<arma::vec> X_A,
     
     //Create B-splines
     splines2::BSpline bspline;
-    // Make spline basis for A functions
-    arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-    for(int i = 0; i < n_A.n_elem; i++){
-      arma::vec time = arma::zeros(n_A(i) + 1);
-      for(int j = 1; j < (n_A(i) + 1); j++){
-        time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+    for(int i = 0; i < n.n_elem; i++){
+      arma::vec time = arma::zeros(n(i) + 1);
+      for(int j = 1; j < (n(i) + 1); j++){
+        time(j) = arma::accu(X(i,0).subvec(0,j-1));
       }
       bspline = splines2::BSpline(time, internal_knots, basis_degree,
                                   boundary_knots);
       // Get Basis matrix
       arma::mat bspline_mat{bspline.basis(false)};
-      basis_funct_A(i,0) = bspline_mat;
+      basis_funct(i,0) = bspline_mat;
     }
     
-    // Make spline basis for B functions
-    arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-    for(int i = 0; i < n_B.n_elem; i++){
-      arma::vec time = arma::zeros(n_B(i) + 1);
-      for(int j = 1; j < (n_B(i) + 1); j++){
-        time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-      }
-      bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                  boundary_knots);
-      // Get Basis matrix
-      arma::mat bspline_mat{bspline.basis(false)};
-      basis_funct_B(i,0) = bspline_mat;
+    arma::mat ph = Results["basis_coef"];
+    basis_coef = ph;
+  }else{
+    for(int i = 0; i < n.n_elem; i++){
+      basis_funct(i, 0) = arma::zeros(n(i) + 1, 1);
     }
-    
-    // Make spline basis for AB functions
-    arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-    for(int i = 0; i < n_AB.n_elem; i++){
-      arma::vec time = arma::zeros(n_AB(i) + 1);
-      for(int j = 1; j < (n_AB(i) + 1); j++){
-        time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-      }
-      bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                  boundary_knots);
-      // Get Basis matrix
-      arma::mat bspline_mat{bspline.basis(false)};
-      basis_funct_AB(i,0) = bspline_mat;
-    }
-    
-    param = NeuralComp::FFBS_only(basis_funct_A, basis_funct_B, basis_funct_AB,
-                                  X_A, X_B, X_AB, n_A, n_B, n_AB, end_time, MCMC_iters, 
-                                  Leapfrog_steps, I_A_mean, I_A_shape,
-                                  I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
-                                  sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
-                                  step_size_theta, step_size_FR,
-                                  delta_proposal_mean, delta_proposal_sd, 
-                                  alpha_labels, nu, gamma, theta_truth, basis_coef_A_truth,
-                                  basis_coef_B_truth, delta_adaption_block,
-                                  Mass_adaption_block, M_proposal, 
-                                  Warm_block1, Warm_block2);
+    basis_coef = arma::zeros(theta.n_rows,1);
   }
+  // Run bootstrap test
+  Rcpp::List p_val = NeuralComp::calc_chi_squared_IIGPP(X, n, end_time, theta, basis_coef, basis_funct, end_time, basis_degree,
+                                                        boundary_knots, internal_knots, time_inhomogeneous, burnin_prop);
   
-  return param;
+  return p_val;
 }
 
 
-//[[Rcpp::export]]
-arma::field<arma::mat> test_forward_filtration_delta_int(arma::vec& theta,
-                                                         arma::vec& basis_coef_A,
-                                                         const arma::vec& basis_coef_B,
-                                                         const arma::field<arma::vec> X_AB,
-                                                         const arma::vec n_AB,
-                                                         const int basis_degree,
-                                                         const arma::vec boundary_knots,
-                                                         const arma::vec internal_knots,
-                                                         const double end_time){
-  splines2::BSpline bspline;
-  // Make spline basis for AB functions
-  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-  for(int i = 0; i < n_AB.n_elem; i++){
-    arma::vec time = arma::zeros(n_AB(i) + 1);
-    for(int j = 1; j < (n_AB(i) + 1); j++){
-      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(false)};
-    basis_funct_AB(i,0) = bspline_mat;
-  }
-  
-  return NeuralComp::forward_filtration_delta_int(theta, basis_coef_A, basis_coef_B, basis_funct_AB(0,0), X_AB(0,0), end_time);
-}
-
-
-//[[Rcpp::export]]
-Rcpp::List test_half_t(arma::vec x,
-                      double nu,
-                      double gamma,
-                      int MCMC_iters){
-  arma::vec sigma = arma::ones(MCMC_iters);
-  arma::vec omega = arma::ones(MCMC_iters);
-  
-  for(int i = 0; i < MCMC_iters; i++){
-    NeuralComp::update_I_sigma_cauchy(x, i, nu, omega, sigma);
-    NeuralComp::update_omega(nu, gamma, i, omega, sigma);
-   
-   if(i < (MCMC_iters - 1)){
-     sigma(i + 1) = sigma(i);
-     omega(i + 1) = omega(i);
-   }
-  }
-  
-  Rcpp::List output =  Rcpp::List::create(Rcpp::Named("sigma", sigma),
-                                          Rcpp::Named("omega", omega));
-  
-  return output;
-}
-
-//[[Rcpp::export]]
-double test_posterior_cauchy(double x,
-                             const arma::vec basis_coef,
-                             const double nu,
-                             const double gamma){
-  return NeuralComp::posterior_cauchy(x, basis_coef, nu, gamma);
-}
-
-//[[Rcpp::export]]
-double test_dcauchy(double x,
-                    double nu,
-                    double gamma){
-  return NeuralComp::dcauchy(x, nu, gamma);
-}
-
-//[[Rcpp::export]]
-Rcpp::List Test_FR_only(const arma::field<arma::vec> X_A,
-                        const arma::field<arma::vec> X_B,
-                        const arma::field<arma::vec> X_AB,
-                        const arma::vec n_A,
-                        const arma::vec n_B,
-                        const arma::vec n_AB,
-                        const double delta,
-                        const arma::field<arma::vec> labels,
-                        int MCMC_iters,
-                        const int basis_degree,
-                        const arma::vec boundary_knots,
-                        const arma::vec internal_knots,
-                        const double end_time,
-                        const bool time_inhomogeneous = true,
-                        int Warm_block1 = 500,
-                        int Warm_block2 = 2000,
-                        int Leapfrog_steps = 10,
-                        const double I_A_mean = 40, 
-                        const double I_A_shape = 1,
-                        const double I_B_mean = 40,
-                        const double I_B_shape = 1,
-                        const double sigma_A_mean = 6.32,
-                        const double sigma_A_shape = 1,
-                        const double sigma_B_mean = 6.32,
-                        const double sigma_B_shape = 1,
-                        const double delta_shape = 0.01,
-                        const double delta_rate = 0.1,
-                        double step_size_theta =  0.001,
-                        double step_size_FR =  0.001,
-                        double nu = 5,
-                        double gamma = 2,
-                        int delta_adaption_block = 100,
-                        int Mass_adaption_block = 500,
-                        int M_proposal = 10){
-  //Create B-splines
-  splines2::BSpline bspline;
-  // Make spline basis for A functions
-  arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-  for(int i = 0; i < n_A.n_elem; i++){
-    arma::vec time = arma::zeros(n_A(i) + 1);
-    for(int j = 1; j < (n_A(i) + 1); j++){
-      time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(false)};
-    basis_funct_A(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for B functions
-  arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-  for(int i = 0; i < n_B.n_elem; i++){
-    arma::vec time = arma::zeros(n_B(i) + 1);
-    for(int j = 1; j < (n_B(i) + 1); j++){
-      time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(false)};
-    basis_funct_B(i,0) = bspline_mat;
-  }
-  
-  // Make spline basis for AB functions
-  arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-  for(int i = 0; i < n_AB.n_elem; i++){
-    arma::vec time = arma::zeros(n_AB(i) + 1);
-    for(int j = 1; j < (n_AB(i) + 1); j++){
-      time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
-    }
-    bspline = splines2::BSpline(time, internal_knots, basis_degree,
-                                boundary_knots);
-    // Get Basis matrix
-    arma::mat bspline_mat{bspline.basis(false)};
-    basis_funct_AB(i,0) = bspline_mat;
-  }
-  
-  Rcpp::List param = NeuralComp::FR_only(basis_funct_A, basis_funct_B, basis_funct_AB,
-                                         X_A, X_B, X_AB, n_A, n_B, n_AB, end_time, MCMC_iters, 
-                                         Leapfrog_steps, I_A_mean, I_A_shape,
-                                         I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
-                                         sigma_B_mean, sigma_B_shape,
-                                         delta, labels, step_size_theta, step_size_FR,
-                                         nu, gamma, Mass_adaption_block, M_proposal, 
-                                         Warm_block1, Warm_block2);
-  return param;
-}
-
-//[[Rcpp::export]]
-Rcpp::List Test_zero_half_cauchy(double nu,
-                                 double gamma,
-                                 double MCMC_iters){
-  arma::vec sigma = arma::ones(MCMC_iters);
-  arma::vec omega = arma::ones(MCMC_iters);
-  
-  for(int i = 0; i < MCMC_iters; i++){
-    sigma(i) = 1 / R::rgamma(3, 1 / omega(i));
-    omega(i) = 1 / R::rgamma(1, 1 + (1/sigma(i)));
-    
-    if(i < (MCMC_iters - 1)){
-      sigma(i + 1) = sigma(i);
-      omega(i + 1) = omega(i);
-    }
-  }
-  
-  Rcpp::List output =  Rcpp::List::create(Rcpp::Named("sigma", sigma),
-                                          Rcpp::Named("omega", omega));
-  
-  return output;
-}
-
-//[[Rcpp::export]]
-double Test_rIG(double mean,
-                double shape){
-  return NeuralComp::rinv_gauss(mean, shape);
-}
+// //[[Rcpp::export]]
+// Rcpp::List Test_FFBS_only(const arma::field<arma::vec> X_A,
+//                           const arma::field<arma::vec> X_B,
+//                           const arma::field<arma::vec> X_AB,
+//                           const arma::vec n_A,
+//                           const arma::vec n_B,
+//                           const arma::vec n_AB,
+//                           int MCMC_iters,
+//                           const int basis_degree,
+//                           const arma::vec boundary_knots,
+//                           const arma::vec internal_knots,
+//                           const double end_time,
+//                           arma::vec theta_truth,
+//                           arma::vec basis_coef_A_truth,
+//                           arma::vec basis_coef_B_truth,
+//                           const bool time_inhomogeneous = true,
+//                           int Warm_block1 = 500,
+//                           int Warm_block2 = 2000,
+//                           int Leapfrog_steps = 10,
+//                           const double I_A_mean = 40, 
+//                           const double I_A_shape = 1,
+//                           const double I_B_mean = 40,
+//                           const double I_B_shape = 1,
+//                           const double sigma_A_mean = 6.32,
+//                           const double sigma_A_shape = 1,
+//                           const double sigma_B_mean = 6.32,
+//                           const double sigma_B_shape = 1,
+//                           const double delta_shape = 0.01,
+//                           const double delta_rate = 0.1,
+//                           double step_size_theta =  0.001,
+//                           double step_size_FR =  0.001,
+//                           double delta_proposal_mean = -2,
+//                           double delta_proposal_sd = 0.3,
+//                           double alpha_labels = 0.2,
+//                           double nu = 5,
+//                           double gamma = 2,
+//                           int delta_adaption_block = 100,
+//                           int Mass_adaption_block = 500,
+//                           int M_proposal = 10){
+//   
+//   // Check conditions
+//   if(I_A_mean <= 0){
+//     Rcpp::stop("'I_A_mean' must be greater than 0");
+//   }
+//   if(I_A_shape <= 0){
+//     Rcpp::stop("'I_A_shape' must be greater than 0");
+//   }
+//   if(I_B_mean <= 0){
+//     Rcpp::stop("'I_B_mean' must be greater than 0");
+//   }
+//   if(I_B_shape <= 0){
+//     Rcpp::stop("'I_B_shape' must be greater than 0");
+//   }
+//   if(sigma_A_mean <= 0){
+//     Rcpp::stop("'sigma_A_mean' must be greater than 0");
+//   }
+//   if(sigma_A_shape <= 0){
+//     Rcpp::stop("'sigma_A_shape' must be greater than 0");
+//   }
+//   if(sigma_B_mean <= 0){
+//     Rcpp::stop("'sigma_B_mean' must be greater than 0");
+//   }
+//   if(sigma_B_shape <= 0){
+//     Rcpp::stop("'sigma_B_shape' must be greater than 0");
+//   }
+//   if(delta_rate <= 0){
+//     Rcpp::stop("'delta_rate' must be greater than 0");
+//   }
+//   if(delta_shape <= 0){
+//     Rcpp::stop("'delta_shape' must be greater than 0");
+//   }
+//   if(step_size_theta <= 0){
+//     Rcpp::stop("'step_size_theta' must be greater than 0");
+//   }
+//   if(step_size_FR <= 0){
+//     Rcpp::stop("'step_size_FR' must be greater than 0");
+//   }
+//   if(delta_proposal_sd <= 0){
+//     Rcpp::stop("'delta_proposal_sd' must be greater than 0");
+//   }
+//   if(alpha_labels <= 0){
+//     Rcpp::stop("'alpha_labels' must be between 0 and 1");
+//   }
+//   if(alpha_labels >= 1){
+//     Rcpp::stop("'alpha_labels' must be between 0 and 1");
+//   }
+//   if(gamma <= 0){
+//     Rcpp::stop("'gamma' must be greater than 0");
+//   }
+//   
+//   Rcpp::List param;
+//   if(time_inhomogeneous == true){
+//     
+//     // Check conditions
+//     if(basis_degree <  1){
+//       Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
+//     }
+//     for(int i = 0; i < internal_knots.n_elem; i++){
+//       if(boundary_knots(0) >= internal_knots(i)){
+//         Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
+//       }
+//       if(boundary_knots(1) <= internal_knots(i)){
+//         Rcpp::stop("at least one element in 'internal_knots' is more than or equal to second boundary knot");
+//       }
+//     }
+//     
+//     //Create B-splines
+//     splines2::BSpline bspline;
+//     // Make spline basis for A functions
+//     arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+//     for(int i = 0; i < n_A.n_elem; i++){
+//       arma::vec time = arma::zeros(n_A(i) + 1);
+//       for(int j = 1; j < (n_A(i) + 1); j++){
+//         time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+//       }
+//       bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                   boundary_knots);
+//       // Get Basis matrix
+//       arma::mat bspline_mat{bspline.basis(false)};
+//       basis_funct_A(i,0) = bspline_mat;
+//     }
+//     
+//     // Make spline basis for B functions
+//     arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+//     for(int i = 0; i < n_B.n_elem; i++){
+//       arma::vec time = arma::zeros(n_B(i) + 1);
+//       for(int j = 1; j < (n_B(i) + 1); j++){
+//         time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+//       }
+//       bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                   boundary_knots);
+//       // Get Basis matrix
+//       arma::mat bspline_mat{bspline.basis(false)};
+//       basis_funct_B(i,0) = bspline_mat;
+//     }
+//     
+//     // Make spline basis for AB functions
+//     arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+//     for(int i = 0; i < n_AB.n_elem; i++){
+//       arma::vec time = arma::zeros(n_AB(i) + 1);
+//       for(int j = 1; j < (n_AB(i) + 1); j++){
+//         time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+//       }
+//       bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                   boundary_knots);
+//       // Get Basis matrix
+//       arma::mat bspline_mat{bspline.basis(false)};
+//       basis_funct_AB(i,0) = bspline_mat;
+//     }
+//     
+//     param = NeuralComp::FFBS_only(basis_funct_A, basis_funct_B, basis_funct_AB,
+//                                   X_A, X_B, X_AB, n_A, n_B, n_AB, end_time, MCMC_iters, 
+//                                   Leapfrog_steps, I_A_mean, I_A_shape,
+//                                   I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+//                                   sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
+//                                   step_size_theta, step_size_FR,
+//                                   delta_proposal_mean, delta_proposal_sd, 
+//                                   alpha_labels, nu, gamma, theta_truth, basis_coef_A_truth,
+//                                   basis_coef_B_truth, delta_adaption_block,
+//                                   Mass_adaption_block, M_proposal, 
+//                                   Warm_block1, Warm_block2);
+//   }
+//   
+//   return param;
+// }
+// 
+// 
+// //[[Rcpp::export]]
+// arma::field<arma::mat> test_forward_filtration_delta_int(arma::vec& theta,
+//                                                          arma::vec& basis_coef_A,
+//                                                          const arma::vec& basis_coef_B,
+//                                                          const arma::field<arma::vec> X_AB,
+//                                                          const arma::vec n_AB,
+//                                                          const int basis_degree,
+//                                                          const arma::vec boundary_knots,
+//                                                          const arma::vec internal_knots,
+//                                                          const double end_time){
+//   splines2::BSpline bspline;
+//   // Make spline basis for AB functions
+//   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+//   for(int i = 0; i < n_AB.n_elem; i++){
+//     arma::vec time = arma::zeros(n_AB(i) + 1);
+//     for(int j = 1; j < (n_AB(i) + 1); j++){
+//       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(false)};
+//     basis_funct_AB(i,0) = bspline_mat;
+//   }
+//   arma::field<arma::mat> output(n_AB.n_elem, 2);
+//   arma::field<arma::mat> ph(2,1);
+//   for(int i = 0; i < n_AB.n_elem; i++){
+//     ph =  NeuralComp::forward_filtration_delta_int(theta, basis_coef_A, basis_coef_B, basis_funct_AB(i,0), X_AB(i,0), end_time);
+//     output(i,0) = ph(0,0);
+//     output(i,1) = ph(1,0);
+//   }
+//   return output;
+// }
+// 
+// 
+// //[[Rcpp::export]]
+// Rcpp::List test_half_t(arma::vec x,
+//                       double nu,
+//                       double gamma,
+//                       int MCMC_iters){
+//   arma::vec sigma = arma::ones(MCMC_iters);
+//   arma::vec omega = arma::ones(MCMC_iters);
+//   
+//   for(int i = 0; i < MCMC_iters; i++){
+//     NeuralComp::update_I_sigma_cauchy(x, i, nu, omega, sigma);
+//     NeuralComp::update_omega(nu, gamma, i, omega, sigma);
+//    
+//    if(i < (MCMC_iters - 1)){
+//      sigma(i + 1) = sigma(i);
+//      omega(i + 1) = omega(i);
+//    }
+//   }
+//   
+//   Rcpp::List output =  Rcpp::List::create(Rcpp::Named("sigma", sigma),
+//                                           Rcpp::Named("omega", omega));
+//   
+//   return output;
+// }
+// 
+// //[[Rcpp::export]]
+// double test_posterior_cauchy(double x,
+//                              const arma::vec basis_coef,
+//                              const double nu,
+//                              const double gamma){
+//   return NeuralComp::posterior_cauchy(x, basis_coef, nu, gamma);
+// }
+// 
+// //[[Rcpp::export]]
+// double test_dcauchy(double x,
+//                     double nu,
+//                     double gamma){
+//   return NeuralComp::dcauchy(x, nu, gamma);
+// }
+// 
+// //[[Rcpp::export]]
+// Rcpp::List Test_FR_only(const arma::field<arma::vec> X_A,
+//                         const arma::field<arma::vec> X_B,
+//                         const arma::field<arma::vec> X_AB,
+//                         const arma::vec n_A,
+//                         const arma::vec n_B,
+//                         const arma::vec n_AB,
+//                         const double delta,
+//                         const arma::field<arma::vec> labels,
+//                         int MCMC_iters,
+//                         const int basis_degree,
+//                         const arma::vec boundary_knots,
+//                         const arma::vec internal_knots,
+//                         const double end_time,
+//                         const bool time_inhomogeneous = true,
+//                         int Warm_block1 = 500,
+//                         int Warm_block2 = 2000,
+//                         int Leapfrog_steps = 10,
+//                         const double I_A_mean = 40, 
+//                         const double I_A_shape = 1,
+//                         const double I_B_mean = 40,
+//                         const double I_B_shape = 1,
+//                         const double sigma_A_mean = 6.32,
+//                         const double sigma_A_shape = 1,
+//                         const double sigma_B_mean = 6.32,
+//                         const double sigma_B_shape = 1,
+//                         const double delta_shape = 0.01,
+//                         const double delta_rate = 0.1,
+//                         double step_size_theta =  0.001,
+//                         double step_size_FR =  0.001,
+//                         double nu = 5,
+//                         double gamma = 2,
+//                         int delta_adaption_block = 100,
+//                         int Mass_adaption_block = 500,
+//                         int M_proposal = 10){
+//   //Create B-splines
+//   splines2::BSpline bspline;
+//   // Make spline basis for A functions
+//   arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
+//   for(int i = 0; i < n_A.n_elem; i++){
+//     arma::vec time = arma::zeros(n_A(i) + 1);
+//     for(int j = 1; j < (n_A(i) + 1); j++){
+//       time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(false)};
+//     basis_funct_A(i,0) = bspline_mat;
+//   }
+//   
+//   // Make spline basis for B functions
+//   arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
+//   for(int i = 0; i < n_B.n_elem; i++){
+//     arma::vec time = arma::zeros(n_B(i) + 1);
+//     for(int j = 1; j < (n_B(i) + 1); j++){
+//       time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(false)};
+//     basis_funct_B(i,0) = bspline_mat;
+//   }
+//   
+//   // Make spline basis for AB functions
+//   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
+//   for(int i = 0; i < n_AB.n_elem; i++){
+//     arma::vec time = arma::zeros(n_AB(i) + 1);
+//     for(int j = 1; j < (n_AB(i) + 1); j++){
+//       time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
+//     }
+//     bspline = splines2::BSpline(time, internal_knots, basis_degree,
+//                                 boundary_knots);
+//     // Get Basis matrix
+//     arma::mat bspline_mat{bspline.basis(false)};
+//     basis_funct_AB(i,0) = bspline_mat;
+//   }
+//   
+//   Rcpp::List param = NeuralComp::FR_only(basis_funct_A, basis_funct_B, basis_funct_AB,
+//                                          X_A, X_B, X_AB, n_A, n_B, n_AB, end_time, MCMC_iters, 
+//                                          Leapfrog_steps, I_A_mean, I_A_shape,
+//                                          I_B_mean, I_B_shape, sigma_A_mean, sigma_A_shape,
+//                                          sigma_B_mean, sigma_B_shape,
+//                                          delta, labels, step_size_theta, step_size_FR,
+//                                          nu, gamma, Mass_adaption_block, M_proposal, 
+//                                          Warm_block1, Warm_block2);
+//   return param;
+// }
+// 
+// //[[Rcpp::export]]
+// Rcpp::List Test_zero_half_cauchy(double nu,
+//                                  double gamma,
+//                                  double MCMC_iters){
+//   arma::vec sigma = arma::ones(MCMC_iters);
+//   arma::vec omega = arma::ones(MCMC_iters);
+//   
+//   for(int i = 0; i < MCMC_iters; i++){
+//     sigma(i) = 1 / R::rgamma(3, 1 / omega(i));
+//     omega(i) = 1 / R::rgamma(1, 1 + (1/sigma(i)));
+//     
+//     if(i < (MCMC_iters - 1)){
+//       sigma(i + 1) = sigma(i);
+//       omega(i + 1) = omega(i);
+//     }
+//   }
+//   
+//   Rcpp::List output =  Rcpp::List::create(Rcpp::Named("sigma", sigma),
+//                                           Rcpp::Named("omega", omega));
+//   
+//   return output;
+// }
+// 
+// //[[Rcpp::export]]
+// double Test_rIG(double mean,
+//                 double shape){
+//   return NeuralComp::rinv_gauss(mean, shape);
+// }

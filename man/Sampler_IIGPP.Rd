@@ -23,7 +23,7 @@ Sampler_IIGPP(
   step_size_theta = 0.001,
   step_size_FR = 0.001,
   nu = 5,
-  gamma = 2,
+  gamma = 0.25,
   Mass_adaption_block = 500L,
   M_proposal = 10L
 )
@@ -40,6 +40,8 @@ Sampler_IIGPP(
 \item{boundary_knots}{Vector of two elements specifying the boundary knots}
 
 \item{internal_knots}{Vector containing the desired internal knots of the B-splines}
+
+\item{end_time}{Double containing the end of the experimental window (experimental window assumed [0, end_time])}
 
 \item{time_inhomogeneous}{Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)}
 
@@ -61,11 +63,11 @@ Sampler_IIGPP(
 
 \item{step_size_FR}{Double containing initial leapfrog step size for time-inhomogeneous firing rate parameters}
 
+\item{nu}{Double containing the value for the degrees of freedom parameter of the folded-t prior distribution on I_A_sigma and I_B_sigma}
+
+\item{gamma}{Double containing the value for the scale parameter of the folded-t prior distribution on I_A_sigma and I_B_sigma}
+
 \item{M_proposal}{Integer containing the number of deltas proposed when sampling delta}
-
-\item{alpha}{Double containing the value for the shape parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared}
-
-\item{beta}{Double containing the value for the scale parameter of the inverse gamma prior on I_A_sigma squared and I_B_sigma squared}
 
 \item{Mass_adaptation_block}{Integer containing how often the Mass Matrix should be updated in Warm_block2}
 }
@@ -91,6 +93,7 @@ The following must be true:
 \describe{
   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
+  \item{\code{end_time}}{must be larger than 0}
   \item{\code{I_mean}}{must be greater than 0}
   \item{\code{I_shape}}{must be greater than 0}
   \item{\code{sigma_mean}}{must be greater than 0}
@@ -117,6 +120,7 @@ MCMC_iters <- 100
 basis_degree <- 3
 boundary_knots <- c(0, 1)
 internal_knots <- c(0.25, 0.5, 0.75)
+end_time <- 1
 
 ## Warm Blocks should be longer, however for the example, they are short
 Warm_block1 = 50
@@ -124,8 +128,8 @@ Warm_block2 = 50
 
 ## Run MCMC chain
 results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots,
-                         internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-                         time_inhomogeneous = FALSE)
+                         internal_knots, end_time, Warm_block1 = Warm_block1, 
+                         Warm_block2 = Warm_block2, time_inhomogeneous = FALSE)
 
 
 ################################
@@ -140,6 +144,7 @@ MCMC_iters <- 100
 basis_degree <- 3
 boundary_knots <- c(0, 1)
 internal_knots <- c(0.25, 0.5, 0.75)
+end_time <- 1
 
 ## Warm Blocks should be longer, however for the example, they are short
 Warm_block1 = 50
@@ -147,6 +152,7 @@ Warm_block2 = 50
 
 ## Run MCMC chain
 results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_knots, 
-                         internal_knots, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+                         internal_knots, end_time, Warm_block1 = Warm_block1,
+                         Warm_block2 = Warm_block2)
 
 }
