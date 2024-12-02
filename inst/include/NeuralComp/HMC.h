@@ -696,15 +696,15 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
                                     int Warm_block2){
   arma::field<arma::mat> basis_funct_A(n_A.n_elem, 1);
   for(int i = 0; i < n_A.n_elem; i++){
-    basis_funct_A(i,0) = arma::zeros(n_A(i), 1);
+    basis_funct_A(i,0) = arma::zeros(n_A(i) + 1, 1);
   }
   arma::field<arma::mat> basis_funct_B(n_B.n_elem, 1);
   for(int i = 0; i < n_B.n_elem; i++){
-    basis_funct_B(i,0) = arma::zeros(n_B(i), 1);
+    basis_funct_B(i,0) = arma::zeros(n_B(i) + 1, 1);
   }
   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem, 1);
   for(int i = 0; i < n_AB.n_elem; i++){
-    basis_funct_AB(i,0) = arma::zeros(n_AB(i), 1);
+    basis_funct_AB(i,0) = arma::zeros(n_AB(i) + 1, 1);
   }
   arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 5, arma::fill::ones);
   arma::mat basis_coef_A(MCMC_iters + Warm_block1 + Warm_block2, 1, arma::fill::zeros);
@@ -720,29 +720,49 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   arma::vec init_position(5, arma::fill::ones);
   double ISI_A_mean = 0;
   for(int i = 0; i < n_A.n_elem; i++){
-    ISI_A_mean = ISI_A_mean + arma::mean(X_A(i,0));
+    if(n_A(i) > 0){
+      ISI_A_mean = ISI_A_mean + arma::accu(X_A(i,0));
+    }else{
+      ISI_A_mean = ISI_A_mean + end_time;
+    }
   }
-  ISI_A_mean = ISI_A_mean / n_A.n_elem;
+  ISI_A_mean = ISI_A_mean / arma::accu(n_A);
   init_position(0) = 1 / ISI_A_mean;
   double ISI_B_mean = 0;
   for(int i = 0; i < n_B.n_elem; i++){
-    ISI_B_mean = ISI_B_mean + arma::mean(X_B(i,0));
+    if(n_B(i) > 0){
+      ISI_B_mean = ISI_B_mean + arma::accu(X_B(i,0));
+    }else{
+      ISI_B_mean = ISI_B_mean + end_time;
+    }
   }
-  ISI_B_mean = ISI_B_mean / n_B.n_elem;
+  ISI_B_mean = ISI_B_mean / arma::accu(n_B);
   init_position(0) = 1 / ISI_A_mean;
   init_position(1) = 1 / ISI_B_mean;
   double ISI_A_var = 0;
   for(int i = 0; i < n_A.n_elem; i++){
-    ISI_A_var = ISI_A_var + arma::var(X_A(i,0));
+    if(n_A(i) > 1){
+      ISI_A_var = ISI_A_var + (n_A(i) - 1) * arma::var(X_A(i,0));
+    }else if(n_A(i) == 1){
+      ISI_A_var = ISI_A_var + std::pow(ISI_A_mean - X_A(i,0)(0), 2.0);
+    }else{
+      ISI_A_var = ISI_A_var + std::pow(ISI_A_mean - end_time, 2.0);
+    }
   }
-  ISI_A_var = ISI_A_var / n_A.n_elem;
+  ISI_A_var = ISI_A_var / arma::accu(n_A);
   init_position(2) =   std::sqrt(ISI_A_var / std::pow(1/init_position(0), 3.0));
   double ISI_B_var = 0;
   for(int i = 0; i < n_B.n_elem; i++){
-    ISI_B_var = ISI_B_var + arma::var(X_B(i,0));
+    if(n_B(i) > 1){
+      ISI_B_var = ISI_B_var + (n_B(i) - 1) * arma::var(X_B(i,0));
+    }else if(n_B(i) == 1){
+      ISI_B_var = ISI_B_var + std::pow(ISI_B_mean - X_B(i,0)(0), 2.0);
+    }else{
+      ISI_B_var = ISI_B_var + std::pow(ISI_B_mean - end_time, 2.0);
+    }
   }
-  ISI_B_var = ISI_B_var / n_B.n_elem;
-  init_position(3) = std::sqrt(ISI_A_var / std::pow(1/init_position(1), 3.0));
+  ISI_B_var = ISI_B_var / arma::accu(n_B);
+  init_position(3) = std::sqrt(ISI_B_var / std::pow(1/init_position(1), 3.0));
   init_position(4) = delta_shape / delta_rate;
   theta.row(0) = arma::log(init_position.t());
   theta.row(1) = arma::log(init_position.t());
@@ -1039,36 +1059,48 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   double ISI_A_mean = 0;
   for(int i = 0; i < n_A.n_elem; i++){
     if(n_A(i) > 0){
-      ISI_A_mean = ISI_A_mean + arma::mean(X_A(i,0));
+      ISI_A_mean = ISI_A_mean + arma::accu(X_A(i,0));
+    }else{
+      ISI_A_mean = ISI_A_mean + end_time;
     }
   }
-  ISI_A_mean = ISI_A_mean / n_A.n_elem;
+  ISI_A_mean = ISI_A_mean / arma::accu(n_A);
   init_position(0) = 1 / ISI_A_mean;
   double ISI_B_mean = 0;
   for(int i = 0; i < n_B.n_elem; i++){
     if(n_B(i) > 0){
-      ISI_B_mean = ISI_B_mean + arma::mean(X_B(i,0));
+      ISI_B_mean = ISI_B_mean + arma::accu(X_B(i,0));
+    }else{
+      ISI_B_mean = ISI_B_mean + end_time;
     }
   }
-  ISI_B_mean = ISI_B_mean / n_B.n_elem;
+  ISI_B_mean = ISI_B_mean / arma::accu(n_B);
   init_position(0) = 1 / ISI_A_mean;
   init_position(1) = 1 / ISI_B_mean;
   double ISI_A_var = 0;
   for(int i = 0; i < n_A.n_elem; i++){
     if(n_A(i) > 1){
-      ISI_A_var = ISI_A_var + arma::var(X_A(i,0));
+      ISI_A_var = ISI_A_var + (n_A(i) - 1) * arma::var(X_A(i,0));
+    }else if(n_A(i) == 1){
+      ISI_A_var = ISI_A_var + std::pow(ISI_A_mean - X_A(i,0)(0), 2.0);
+    }else{
+      ISI_A_var = ISI_A_var + std::pow(ISI_A_mean - end_time, 2.0);
     }
   }
-  ISI_A_var = ISI_A_var / n_A.n_elem;
+  ISI_A_var = ISI_A_var / arma::accu(n_A);
   init_position(2) =   std::sqrt(ISI_A_var / std::pow(1/init_position(0), 3.0));
   double ISI_B_var = 0;
   for(int i = 0; i < n_B.n_elem; i++){
     if(n_B(i) > 1){
-      ISI_B_var = ISI_B_var + arma::var(X_B(i,0));
+      ISI_B_var = ISI_B_var + (n_B(i) - 1) * arma::var(X_B(i,0));
+    }else if(n_B(i) == 1){
+      ISI_B_var = ISI_B_var + std::pow(ISI_B_mean - X_B(i,0)(0), 2.0);
+    }else{
+      ISI_B_var = ISI_B_var + std::pow(ISI_B_mean - end_time, 2.0);
     }
   }
-  ISI_B_var = ISI_B_var / n_B.n_elem;
-  init_position(3) = std::sqrt(ISI_A_var / std::pow(1/init_position(1), 3.0));
+  ISI_B_var = ISI_B_var / arma::accu(n_B);
+  init_position(3) = std::sqrt(ISI_B_var / std::pow(1/init_position(1), 3.0));
   init_position(4) = delta_shape / delta_rate;
   theta.row(0) = arma::log(init_position.t());
   theta.row(1) = arma::log(init_position.t());
@@ -1085,7 +1117,6 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     Labels_iter(i,0) = arma::zeros(n_AB(i));
   }
   arma::vec theta_exp;
-  
   
   arma::vec vec_accept_FR(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::vec vec_accept_theta(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
@@ -1136,6 +1167,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     update_I_sigma_cauchy(basis_coef_B_ph, i, nu, omega_B, I_B_sigma_sq);
     update_omega(nu, gamma, i, omega_B, I_B_sigma_sq);
 
+
     llik(i) = log_likelihood_TI(Labels_iter, theta_exp, basis_coef_A_ph, basis_coef_B_ph,
          basis_funct_A, basis_funct_B, basis_funct_AB,
          X_A, X_B, X_AB, n_A, n_B, n_AB, end_time);
@@ -1145,6 +1177,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     //            sigma_B_mean, sigma_B_shape, delta_shape, delta_rate,
     //            alpha, beta);
     
+
     theta.row(i) = theta_ph.t();
     basis_coef_A.row(i) = basis_coef_A_ph.t();
     basis_coef_B.row(i) = basis_coef_B_ph.t();
@@ -1424,7 +1457,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
                                         int Warm_block2){
   arma::field<arma::mat> basis_funct(n.n_elem, 1);
   for(int i = 0; i < n.n_elem; i++){
-    basis_funct(i,0) = arma::zeros(n(i), 1);
+    basis_funct(i,0) = arma::zeros(n(i) + 1, 1);
   }
   arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 2, arma::fill::ones);
   arma::mat basis_coef(MCMC_iters + Warm_block1 + Warm_block2, 1, arma::fill::zeros);
@@ -1438,15 +1471,25 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
   arma::vec init_position(2, arma::fill::ones);
   double ISI_mean = 0;
   for(int i = 0; i < n.n_elem; i++){
-    ISI_mean = ISI_mean + arma::mean(X(i,0));
+    if(n(i) > 0){
+      ISI_mean = ISI_mean + arma::accu(X(i,0));
+    }else{
+      ISI_mean = ISI_mean + end_time;
+    }
   }
-  ISI_mean = ISI_mean / n.n_elem;
+  ISI_mean = ISI_mean / arma::accu(n);
   init_position(0) = 1 / ISI_mean;
   double ISI_var = 0;
   for(int i = 0; i < n.n_elem; i++){
-    ISI_var = ISI_var + arma::var(X(i,0));
+    if(n(i) > 1){
+      ISI_var = ISI_var + (n(i) - 1) * arma::var(X(i,0));
+    }else if(n(i) == 1){
+      ISI_var = ISI_var + std::pow(ISI_mean - X(i,0)(0), 2.0);
+    }else{
+      ISI_var = ISI_var + std::pow(ISI_mean - end_time, 2.0);
+    }
   }
-  ISI_var = ISI_var / n.n_elem;
+  ISI_var = ISI_var / arma::accu(n);
   init_position(1) =   std::sqrt(ISI_var / std::pow(1/init_position(0), 3.0));
   theta.row(0) = arma::log(init_position.t());
   theta.row(1) = arma::log(init_position.t());
@@ -1612,20 +1655,29 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
   arma::vec init_position(2, arma::fill::ones);
   double ISI_mean = 0;
   for(int i = 0; i < n.n_elem; i++){
-    ISI_mean = ISI_mean + arma::mean(X(i,0));
+    if(n(i) > 0){
+      ISI_mean = ISI_mean + arma::accu(X(i,0));
+    }else{
+      ISI_mean = ISI_mean + end_time;
+    }
   }
-  ISI_mean = ISI_mean / n.n_elem;
+  ISI_mean = ISI_mean / arma::accu(n);
   init_position(0) = 1 / ISI_mean;
   double ISI_var = 0;
   for(int i = 0; i < n.n_elem; i++){
-    ISI_var = ISI_var + arma::var(X(i,0));
+    if(n(i) > 1){
+      ISI_var = ISI_var + (n(i) - 1) * arma::var(X(i,0));
+    }else if(n(i) == 1){
+      ISI_var = ISI_var + std::pow(ISI_mean - X(i,0)(0), 2.0);
+    }else{
+      ISI_var = ISI_var + std::pow(ISI_mean - end_time, 2.0);
+    }
   }
-  ISI_var = ISI_var / n.n_elem;
+  ISI_var = ISI_var / arma::accu(n);
   init_position(1) =   std::sqrt(ISI_var / std::pow(1/init_position(0), 3.0));
   theta.row(0) = arma::log(init_position.t());
   theta.row(1) = arma::log(init_position.t());
   arma::vec theta_ph(init_position.n_elem);
-  
   arma::vec theta_exp;
   
   arma::vec vec_accept_FR(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);

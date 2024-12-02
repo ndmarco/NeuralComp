@@ -24,7 +24,7 @@ Sampler_IIGPP(
   step_size_FR = 0.001,
   nu = 5,
   gamma = 0.25,
-  Mass_adaption_block = 500L,
+  Mass_adaptation_block = 500L,
   M_proposal = 10L
 )
 }
@@ -67,9 +67,9 @@ Sampler_IIGPP(
 
 \item{gamma}{Double containing the value for the scale parameter of the folded-t prior distribution on I_A_sigma and I_B_sigma}
 
-\item{M_proposal}{Integer containing the number of deltas proposed when sampling delta}
-
 \item{Mass_adaptation_block}{Integer containing how often the Mass Matrix should be updated in Warm_block2}
+
+\item{M_proposal}{Integer containing the number of deltas proposed when sampling delta}
 }
 \value{
 List containing:
@@ -93,7 +93,7 @@ The following must be true:
 \describe{
   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
-  \item{\code{end_time}}{must be larger than 0}
+  \item{\code{end_time}}{must be larger than 0 and all spike times must be before end_time}
   \item{\code{I_mean}}{must be greater than 0}
   \item{\code{I_shape}}{must be greater than 0}
   \item{\code{sigma_mean}}{must be greater than 0}
@@ -112,7 +112,8 @@ The following must be true:
 ##############################
 
 ## Load sample data
-dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS",
+               package = "NeuralComp"))
 
 ## set parameters
 MCMC_iters <- 100
@@ -137,7 +138,8 @@ results <- Sampler_IIGPP(dat$X_A, dat$n_A, MCMC_iters, basis_degree, boundary_kn
 ################################
 
 ## Load sample data
-dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS",
+               package = "NeuralComp"))
 
 ## set parameters
 MCMC_iters <- 100

@@ -41,6 +41,8 @@ WAIC_Competition(
 
 \item{internal_knots}{Vector containing the desired internal knots of the B-splines}
 
+\item{end_time}{Double containing the end of the experimental window (experimental window assumed [0, end_time])}
+
 \item{time_inhomogeneous}{Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)}
 
 \item{burnin_prop}{Double containing proportion of MCMC samples that should be discarded due to MCMC burn-in (Note burnin_prop includes warm-up iterations)}
@@ -53,13 +55,13 @@ List containing:
   \item{\code{Effective_pars}}{Estimated Effective number of parameters}
   \item{\code{llik_A}}{Log-likelihood for A trial spike trains}
   \item{\code{llik_B}}{Log-likelihood for B trial spike trains}
-  \item{\code{llik_AB}}{Log-likelihood for AB trial spike trains}
+  \item{\code{llik_AB}}{Marginal log-likelihood for AB trial spike trains}
 }
 }
 \description{
 This function calculates the Watanabe-Akaike information criterion (WAIC) for 
 the drift-diffusion competition model using the marginal likelihood (marginalizing out the labels).
- This function will use the output from 
+This function will use the output from 
 \code{Sampler_Competition}. The WAIC is defined on the deviance scale as waic = -2(lppd - p),
 where lppd is the log pointwise predictive density, and p is the effective number of parameters.
 The Marginal WAIC is akin to leave-one-spike-train-out cross validation (asymptotically).
@@ -71,6 +73,7 @@ The following must be true:
   \item{\code{basis_degree}}{must be an integer larger than or equal to 1}
   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
+  \item{\code{end_time}}{must be larger than 0 and all spike times must be before end_time}
 }
 }
 
@@ -80,7 +83,8 @@ The following must be true:
 ##############################
 
 ## Load sample data
-dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS",
+               package = "NeuralComp"))
 
 ## set parameters
 MCMC_iters <- 100
@@ -88,6 +92,7 @@ MCMC_iters <- 100
 basis_degree <- 3
 boundary_knots <- c(0, 1)
 internal_knots <- c(0.25, 0.5, 0.75)
+end_time <- 1
 
 ## Warm Blocks should be longer, however for the example, they are short
 Warm_block1 = 50
@@ -96,12 +101,12 @@ Warm_block2 = 50
 ## Run MCMC chain
 results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
+                               end_time, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
                                time_inhomogeneous = FALSE)
                                
 ## Calculate WAIC
 WAIC <- WAIC_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
-                         results, basis_degree, boundary_knots, internal_knots, 1,
+                         results, basis_degree, boundary_knots, internal_knots, end_time,
                          time_inhomogeneous = FALSE)
 
 ################################
@@ -109,13 +114,15 @@ WAIC <- WAIC_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
 ################################
 
 ## Load sample data
-dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS",
+               package = "NeuralComp"))
 
 ## set parameters
 MCMC_iters <- 100
 basis_degree <- 3
 boundary_knots <- c(0, 1)
 internal_knots <- c(0.25, 0.5, 0.75)
+end_time <- 1
 
 ## Warm Blocks should be longer, however for the example, they are short
 Warm_block1 = 50
@@ -124,10 +131,11 @@ Warm_block2 = 50
 ## Run MCMC chain
 results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2, 1)
+                               end_time, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
 
 ## Calculate WAIC
 WAIC <- WAIC_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB,
-                                  results, basis_degree, boundary_knots, internal_knots, 1)
+                         results, basis_degree, boundary_knots, internal_knots,
+                         end_time)
 
 }

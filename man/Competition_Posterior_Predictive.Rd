@@ -16,6 +16,8 @@ Competition_Posterior_Predictive(
 )
 }
 \arguments{
+\item{end_time}{Double containing length of trial to simulate}
+
 \item{basis_degree}{Integer indicating the degree of B-splines (3 for cubic splines)}
 
 \item{boundary_knots}{Vector of two elements specifying the boundary knots}
@@ -29,8 +31,6 @@ Competition_Posterior_Predictive(
 \item{time_inhomogeneous}{Boolean containing whether or not a time-inhomogeneous model should be used (if false then basis_degree, boundary_knots, and internal_knots can take any value of the correct type)}
 
 \item{n_samples}{Integer containing number of posterior predictive samples to generate}
-
-\item{trial_time}{Double containing length of trial to simulate}
 }
 \value{
 List containing:
@@ -64,6 +64,7 @@ The following must be true:
   \item{\code{internal_knots}}{must lie in the range of \code{boundary_knots}}
   \item{\code{burnin_prop}}{must be greater than or equal to 0 and less than 1}
   \item{\code{n_sample}}{must be greater than 1}
+  \item{\code{end_time}}{must be larger than 0 and all spike times must be before end_time}
 }
 }
 
@@ -73,7 +74,8 @@ The following must be true:
 ##############################
 
 ## Load sample data
-dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS", package = "NeuralComp"))
+dat <- readRDS(system.file("test-data", "time_homogeneous_sample_dat.RDS",
+               package = "NeuralComp"))
 
 ## set parameters
 MCMC_iters <- 100
@@ -81,6 +83,7 @@ MCMC_iters <- 100
 basis_degree <- 3
 boundary_knots <- c(0, 1)
 internal_knots <- c(0.25, 0.5, 0.75)
+end_time <- 1
 
 ## Warm Blocks should be longer, however for the example, they are short
 Warm_block1 = 50
@@ -89,25 +92,28 @@ Warm_block2 = 50
 ## Run MCMC chain
 results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2,
-                               time_inhomogeneous = FALSE)
+                               end_time, Warm_block1 = Warm_block1, 
+                               Warm_block2 = Warm_block2, time_inhomogeneous = FALSE)
                                
 ## Posterior Predictive Samples
-post_pred <- Competition_Posterior_Predictive(1, basis_degree, boundary_knots, internal_knots,
-                                              results, time_inhomogeneous = FALSE)
+post_pred <- Competition_Posterior_Predictive(end_time, basis_degree, boundary_knots, 
+                                              internal_knots, results, 
+                                              time_inhomogeneous = FALSE)
 
 ################################
 ### Time-Inhomogeneous Model ###
 ################################
 
 ## Load sample data
-dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS",
+               package = "NeuralComp"))
 
 ## set parameters
 MCMC_iters <- 100
 basis_degree <- 3
 boundary_knots <- c(0, 1)
 internal_knots <- c(0.25, 0.5, 0.75)
+end_time <- 1
 
 ## Warm Blocks should be longer, however for the example, they are short
 Warm_block1 = 50
@@ -116,10 +122,10 @@ Warm_block2 = 50
 ## Run MCMC chain
 results <- Sampler_Competition(dat$X_A, dat$X_B, dat$X_AB, dat$n_A, dat$n_B, dat$n_AB, 
                                MCMC_iters, basis_degree, boundary_knots, internal_knots,
-                               Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
+                               end_time, Warm_block1 = Warm_block1, Warm_block2 = Warm_block2)
                                
 ## Posterior Predictive Samples                               
-post_pred <- Competition_Posterior_Predictive(1, basis_degree, boundary_knots, internal_knots,
-                                              results)
+post_pred <- Competition_Posterior_Predictive(end_time, basis_degree, boundary_knots,
+                                              internal_knots, results)
                                               
 }

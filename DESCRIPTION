@@ -5,17 +5,7 @@ Version: 1.0
 Date: 2024-11-14
 Author: Nicholas Marco
 Maintainer: Nicholas Marco <nicholas.marco@duke.edu>
-Description: Code to gather evidence of Multiplexing (See Groh et al. 
-             'Signal switching may enhance processing power of the brain.' Trends
-             in Cognitive Sciences (2024)), a neural encoding theory 
-             that posits that individual neurons can switch between encoding multiple 
-             stimuli. The package assumes that data is recorded in 'triplets' of conditions 
-             (spike trains from an A stimulus, B stimulus, and A + B stimulus). With these
-             triplets, users can fit our mechanistic statistical model for Multiplexing that
-             posits that the switching occurs due to competition (See Marco, Groh, Tokdar 
-             'Modeling Neural Switching via Drift-Diffusion Models' arXiv preprint 2410.00781 
-             (2024)). Additionally, users are able to fit alternative models, allowing 
-             users to gather evidence of multiplexing.
+Description: Code to gather evidence of Multiplexing (See Groh et al. 'Signal switching may enhance processing power of the brain.' Trends in Cognitive Sciences (2024)), a neural encoding theory that posits that individual neurons can switch between encoding multiple stimuli. The package assumes that data is recorded in 'triplets' of conditions (spike trains from an A stimulus, B stimulus, and A + B stimulus). With these triplets, users can fit our mechanistic statistical model for Multiplexing that posits that the switching occurs due to competition (See Marco, Groh, Tokdar 'Modeling Neural Switching via Drift-Diffusion Models' arXiv preprint 2410.00781 (2024)). Additionally, users are able to fit alternative models, allowing users to gather evidence of multiplexing.
 License: GPL (>= 3) + file LICENSE
 Imports: Rcpp (>= 1.0.11)
 LinkingTo: Rcpp,

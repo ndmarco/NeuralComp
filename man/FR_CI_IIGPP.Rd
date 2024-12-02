@@ -58,7 +58,8 @@ The following must be true:
 ################################
 
 ## Load sample data
-dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS", package = "NeuralComp"))
+dat <- readRDS(system.file("test-data", "time_inhomogeneous_sample_dat.RDS",
+               package = "NeuralComp"))
 
 ## set parameters
 MCMC_iters <- 100

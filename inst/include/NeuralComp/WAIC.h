@@ -172,16 +172,27 @@ inline arma::mat calc_loglikelihood_A(const arma::vec X_A,
                                       const double& end_time){
   int n_MCMC = theta.n_rows;
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
-  arma::mat llik = arma::zeros(n_MCMC - burnin_num, X_A.n_elem);
-  for(int i = burnin_num; i < n_MCMC; i++){
-    for(int j = 0; j < X_A.n_elem; j++){
-      llik(i - burnin_num, j) = llik(i - burnin_num, j) + dinv_gauss(X_A(j), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_A.row(j), basis_coef_A.row(i))))),
-           std::pow((1 / theta(i, 2)), 2));
+  arma::mat llik;
+  if(X_A.n_elem > 0){
+    llik = arma::zeros(n_MCMC - burnin_num, X_A.n_elem);
+    for(int i = burnin_num; i < n_MCMC; i++){
+      for(int j = 0; j < X_A.n_elem; j++){
+        llik(i - burnin_num, j) = llik(i - burnin_num, j) + dinv_gauss(X_A(j), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_A.row(j), basis_coef_A.row(i))))),
+             std::pow((1 / theta(i, 2)), 2));
+      }
+      llik(i - burnin_num, X_A.n_elem - 1) = llik(i - burnin_num, X_A.n_elem - 1) + 
+        pinv_gauss(end_time - arma::accu(X_A), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_A.row(X_A.n_elem), basis_coef_A.row(i))))),
+                   std::pow((1 / theta(i,2)), 2.0));
     }
-    llik(i - burnin_num, X_A.n_elem - 1) = llik(i - burnin_num, X_A.n_elem - 1) + 
-      pinv_gauss(end_time - arma::accu(X_A), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_A.row(X_A.n_elem), basis_coef_A.row(i))))),
-                 std::pow((1 / theta(i,2)), 2.0));
+  }else{
+    llik = arma::zeros(n_MCMC - burnin_num, 1);
+    for(int i = burnin_num; i < n_MCMC; i++){
+      llik(i - burnin_num, 0) = llik(i - burnin_num, 0) + 
+        pinv_gauss(end_time, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct_A.row(X_A.n_elem), basis_coef_A.row(i))))),
+                   std::pow((1 / theta(i,2)), 2.0));
+    }
   }
+  
   
   return llik;
 }
@@ -194,15 +205,25 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
                                       const double& end_time){
   int n_MCMC = theta.n_rows;
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
-  arma::mat llik = arma::zeros(n_MCMC - burnin_num, X_B.n_elem);
-  for(int i = burnin_num; i < n_MCMC; i++){
-    for(int j = 0; j < X_B.n_elem; j++){
-      llik(i - burnin_num, j) = llik(i - burnin_num, j) + dinv_gauss(X_B(j), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_B.row(j), basis_coef_B.row(i))))),
-           std::pow((1 / theta(i, 3)), 2));
+  arma::mat llik;
+  if(X_B.n_elem > 0){
+    llik = arma::zeros(n_MCMC - burnin_num, X_B.n_elem);
+    for(int i = burnin_num; i < n_MCMC; i++){
+      for(int j = 0; j < X_B.n_elem; j++){
+        llik(i - burnin_num, j) = llik(i - burnin_num, j) + dinv_gauss(X_B(j), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_B.row(j), basis_coef_B.row(i))))),
+             std::pow((1 / theta(i, 3)), 2));
+      }
+      llik(i - burnin_num, X_B.n_elem - 1) = llik(i - burnin_num, X_B.n_elem - 1) + 
+        pinv_gauss(end_time - arma::accu(X_B), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_B.row(X_B.n_elem), basis_coef_B.row(i))))),
+                   std::pow((1 / theta(i,3)), 2.0));
     }
-    llik(i - burnin_num, X_B.n_elem - 1) = llik(i - burnin_num, X_B.n_elem - 1) + 
-      pinv_gauss(end_time - arma::accu(X_B), (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_B.row(X_B.n_elem), basis_coef_B.row(i))))),
-                 std::pow((1 / theta(i,3)), 2.0));
+  }else{
+    llik = arma::zeros(n_MCMC - burnin_num, 1);
+    for(int i = burnin_num; i < n_MCMC; i++){
+      llik(i - burnin_num, 0) = llik(i - burnin_num, 0) + 
+        pinv_gauss(end_time, (1 / (theta(i, 1) * std::exp(arma::dot(basis_funct_B.row(X_B.n_elem), basis_coef_B.row(i))))),
+                   std::pow((1 / theta(i,3)), 2.0));
+    }
   }
   
   return llik;
@@ -1350,24 +1371,24 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
 //     for(int j = 0; j < n_A(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
 //     }
 //   }
 //   
 //   for(int i = 0; i < n_B.n_elem; i++){
 //     for(int j = 0; j < n_B(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
 //     }
 //   }
 //   for(int i = 0; i < n_AB.n_elem; i++){
 //     for(int j = 0; j < n_AB(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
 //     }
 //   }
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -1386,12 +1407,12 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //     }
 //   }
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
 //   
 //   Rcpp::List output = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-//                                          Rcpp::Named("llpd", llpd),
+//                                          Rcpp::Named("lppd", lppd),
 //                                          Rcpp::Named("Effective_pars", pwaic),
 //                                          Rcpp::Named("llik_A", llik_A),
 //                                          Rcpp::Named("llik_B", llik_B),
@@ -1465,24 +1486,24 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
 //     for(int j = 0; j < n_A(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
 //     }
 //   }
 //   
 //   for(int i = 0; i < n_B.n_elem; i++){
 //     for(int j = 0; j < n_B(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
 //     }
 //   }
 //   for(int i = 0; i < n_AB.n_elem; i++){
 //     for(int j = 0; j < n_AB(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
 //     }
 //   }
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -1503,7 +1524,7 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //     }
 //   }
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "Excess variation due to imputation = " << excess_MCMC_var << "\n";
 //   
@@ -1511,7 +1532,7 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //   
 //   
 //   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-//                                           Rcpp::Named("llpd", llpd),
+//                                           Rcpp::Named("lppd", lppd),
 //                                           Rcpp::Named("Effective_pars", pwaic),
 //                                           Rcpp::Named("llik_A", llik_A),
 //                                           Rcpp::Named("llik_B", llik_B),
@@ -1582,24 +1603,24 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
 //     for(int j = 0; j < n_A(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
 //     }
 //   }
 //   
 //   for(int i = 0; i < n_B.n_elem; i++){
 //     for(int j = 0; j < n_B(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
 //     }
 //   }
 //   for(int i = 0; i < n_AB.n_elem; i++){
 //     for(int j = 0; j < n_AB(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
 //     }
 //   }
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -1620,14 +1641,14 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //     }
 //   }
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "Excess variation due to imputation = " << excess_MCMC_var << "\n";
 //   
 //   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
 //   
 //   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-//                                           Rcpp::Named("llpd", llpd),
+//                                           Rcpp::Named("lppd", lppd),
 //                                           Rcpp::Named("Effective_pars", pwaic),
 //                                           Rcpp::Named("llik_A", llik_A),
 //                                           Rcpp::Named("llik_B", llik_B),
@@ -1699,24 +1720,24 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
 //     for(int j = 0; j < n_A(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
 //     }
 //   }
 //   
 //   for(int i = 0; i < n_B.n_elem; i++){
 //     for(int j = 0; j < n_B(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
 //     }
 //   }
 //   for(int i = 0; i < n_AB.n_elem; i++){
 //     for(int j = 0; j < n_AB(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
 //     }
 //   }
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -1737,14 +1758,14 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //     }
 //   }
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "Excess variation due to imputation = " << excess_MCMC_var << "\n";
 //   
 //   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
 //   
 //   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-//                                           Rcpp::Named("llpd", llpd),
+//                                           Rcpp::Named("lppd", lppd),
 //                                           Rcpp::Named("Effective_pars", pwaic),
 //                                           Rcpp::Named("llik_A", llik_A),
 //                                           Rcpp::Named("llik_B", llik_B),
@@ -1815,24 +1836,24 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
 //     for(int j = 0; j < n_A(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
 //     }
 //   }
 //   
 //   for(int i = 0; i < n_B.n_elem; i++){
 //     for(int j = 0; j < n_B(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
 //     }
 //   }
 //   for(int i = 0; i < n_AB.n_elem; i++){
 //     for(int j = 0; j < n_AB(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
 //     }
 //   }
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -1853,14 +1874,14 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //     }
 //   }
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "Excess variation due to imputation = " << excess_MCMC_var << "\n";
 //   
 //   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
 //   
 //   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-//                                           Rcpp::Named("llpd", llpd),
+//                                           Rcpp::Named("lppd", lppd),
 //                                           Rcpp::Named("Effective_pars", pwaic),
 //                                           Rcpp::Named("llik_A", llik_A),
 //                                           Rcpp::Named("llik_B", llik_B),
@@ -1997,18 +2018,18 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
-//     llpd = llpd + std::log(arma::mean(arma::exp(llik_A_obs.col(i))));
+//     lppd = lppd + std::log(arma::mean(arma::exp(llik_A_obs.col(i))));
 //   }
 //   
 //   for(int i = 0; i < n_B.n_elem; i++){
-//     llpd = llpd + std::log(arma::mean(arma::exp(llik_B_obs.col(i))));
+//     lppd = lppd + std::log(arma::mean(arma::exp(llik_B_obs.col(i))));
 //   }
 //   for(int i = 0; i < n_AB.n_elem; i++){
-//     llpd = llpd + std::log(arma::mean(arma::exp(llik_AB_obs.col(i))));
+//     lppd = lppd + std::log(arma::mean(arma::exp(llik_AB_obs.col(i))));
 //   }
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -2021,7 +2042,7 @@ inline arma::mat calc_loglikelihood_B(const arma::vec X_B,
 //     pwaic = pwaic + arma::var(llik_AB_obs.col(i));
 //   }
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
 //   
@@ -2037,16 +2058,28 @@ inline arma::mat calc_loglikelihood_IGP(const arma::vec X,
   
   int n_MCMC = theta.n_rows;
   int burnin_num = n_MCMC - std::floor((1 - burnin_prop) * n_MCMC);
-  arma::mat llik = arma::zeros(n_MCMC - burnin_num, X.n_elem);
-  for(int i = burnin_num; i < n_MCMC; i++){
-    for(int j = 0; j < X.n_elem; j++){
-      llik(i - burnin_num, j) = llik(i - burnin_num, j) + dinv_gauss(X(j), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct.row(j), basis_coef.row(i))))),
-           std::pow((1 / theta(i, 1)), 2));
+  arma::mat llik;
+  if(X.n_elem > 0){
+    llik = arma::zeros(n_MCMC - burnin_num, X.n_elem);
+    for(int i = burnin_num; i < n_MCMC; i++){
+      for(int j = 0; j < X.n_elem; j++){
+        llik(i - burnin_num, j) = llik(i - burnin_num, j) + dinv_gauss(X(j), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct.row(j), basis_coef.row(i))))),
+             std::pow((1 / theta(i, 1)), 2));
+      }
+      // probability of not observing a spike in the rest of the time
+      llik(i - burnin_num, X.n_elem - 1) = llik(i - burnin_num, X.n_elem - 1) + 
+        pinv_gauss(end_time - arma::accu(X), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct.row(X.n_elem), basis_coef.row(i))))),
+                   std::pow((1 / theta(i,1)), 2.0));
     }
-    // probability of not observing a spike in the rest of the time
-    llik(i - burnin_num, X.n_elem - 1) = llik(i - burnin_num, X.n_elem - 1) + 
-      pinv_gauss(end_time - arma::accu(X), (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct.row(X.n_elem), basis_coef.row(i))))),
-                                             std::pow((1 / theta(i,1)), 2.0));
+  }else{
+    llik = arma::zeros(n_MCMC - burnin_num, 1);
+    for(int i = burnin_num; i < n_MCMC; i++){
+      // probability of not observing a spike in the rest of the time
+      llik(i - burnin_num, 0) = llik(i - burnin_num, 0) + 
+        pinv_gauss(end_time, (1 / (theta(i, 0) * std::exp(arma::dot(basis_funct.row(X.n_elem), basis_coef.row(i))))),
+                   std::pow((1 / theta(i,1)), 2.0));
+    }
+    
   }
   
   return llik;
@@ -2094,23 +2127,23 @@ inline Rcpp::List calc_WAIC_IGP(const arma::field<arma::vec> X_A,
   }
   
   // calculate log pointwise predictive density
-  double llpd = 0;
+  double lppd = 0;
   for(int i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
-      llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+      lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
     }
   }
   for(int i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
-      llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+      lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
     }
   }
   for(int i = 0; i < n_AB.n_elem; i++){
     for(int j = 0; j < n_AB(i); j++){
-      llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+      lppd = lppd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
     }
   }
-  Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+  Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
   
   double pwaic = 0;
   for(int i = 0; i < n_A.n_elem; i++){
@@ -2129,12 +2162,12 @@ inline Rcpp::List calc_WAIC_IGP(const arma::field<arma::vec> X_A,
     }
   }
   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-  double waic = -2 * (llpd - pwaic);
+  double waic = -2 * (lppd - pwaic);
   
   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
   
   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-                                          Rcpp::Named("llpd", llpd),
+                                          Rcpp::Named("lppd", lppd),
                                           Rcpp::Named("Effective_pars", pwaic),
                                           Rcpp::Named("llik_A", llik_A),
                                           Rcpp::Named("llik_B", llik_B),
@@ -2223,17 +2256,17 @@ inline Rcpp::List calc_WAIC_IGP_observation(const arma::field<arma::vec> X_A,
 
   
   // calculate log pointwise predictive density
-  double llpd = 0;
+  double lppd = 0;
   for(int i = 0; i < n_A.n_elem; i++){
-    llpd = llpd + calc_log_mean(llik_A_obs.col(i));
+    lppd = lppd + calc_log_mean(llik_A_obs.col(i));
   }
   for(int i = 0; i < n_B.n_elem; i++){
-    llpd = llpd + calc_log_mean(llik_B_obs.col(i));
+    lppd = lppd + calc_log_mean(llik_B_obs.col(i));
   }
   for(int i = 0; i < n_AB.n_elem; i++){
-    llpd = llpd + calc_log_mean(llik_AB_obs.col(i));
+    lppd = lppd + calc_log_mean(llik_AB_obs.col(i));
   }
-  Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+  Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
   
   double pwaic = 0;
   for(int i = 0; i < n_A.n_elem; i++){
@@ -2246,13 +2279,13 @@ inline Rcpp::List calc_WAIC_IGP_observation(const arma::field<arma::vec> X_A,
     pwaic = pwaic + arma::var(llik_AB_obs.col(i));
   }
   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-  double waic = -2 * (llpd - pwaic);
+  double waic = -2 * (lppd - pwaic);
   
   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
   
   
   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-                                          Rcpp::Named("llpd", llpd),
+                                          Rcpp::Named("lppd", lppd),
                                           Rcpp::Named("Effective_pars", pwaic),
                                           Rcpp::Named("llik_A", llik_A),
                                           Rcpp::Named("llik_B", llik_B),
@@ -2279,9 +2312,15 @@ inline void calc_loglikelihood_AB_Marginal(const arma::vec X_AB,
     theta_i = theta.row(i).t();
     basis_coef_A_i = basis_coef_A.row(i).t();
     basis_coef_B_i = basis_coef_B.row(i).t();
-    ph = forward_filtration_delta_int(theta_i, basis_coef_A_i, basis_coef_B_i,
-                                      basis_funct_AB, X_AB, end_time);
-    llik(i - burnin_num) = arma::accu(ph(1,0));
+    if(X_AB.n_elem > 0){
+      ph = forward_filtration_delta_int(theta_i, basis_coef_A_i, basis_coef_B_i,
+                                        basis_funct_AB, X_AB, end_time);
+      llik(i - burnin_num) = arma::accu(ph(1,0));
+    }else{
+      llik(i - burnin_num) = pinv_gauss(end_time, (1 / (theta_i(1) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_B_i)))), std::pow((1 / theta_i(3)), 2.0)) +
+        pinv_gauss(end_time, (1 / (theta_i(0) * std::exp(arma::dot(basis_funct_AB.row(0), basis_coef_A_i)))), std::pow((1 / theta_i(2)), 2.0));
+    }
+   
   }
 }
 
@@ -2352,18 +2391,17 @@ inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_
   }
   
   // calculate log pointwise predictive density
-  double llpd = 0;
+  double lppd = 0;
   for(int i = 0; i < n_A.n_elem; i++){
-    llpd = llpd + calc_log_mean(llik_A_obs.col(i));
+    lppd = lppd + calc_log_mean(llik_A_obs.col(i));
   }
-  
   for(int i = 0; i < n_B.n_elem; i++){
-    llpd = llpd + calc_log_mean(llik_B_obs.col(i));
+    lppd = lppd + calc_log_mean(llik_B_obs.col(i));
   }
   for(int i = 0; i < n_AB.n_elem; i++){
-    llpd = llpd + calc_log_mean(llik_AB_obs.col(i));
+    lppd = lppd + calc_log_mean(llik_AB_obs.col(i));
   }
-  Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+  Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
   
   double pwaic = 0;
   for(int i = 0; i < n_A.n_elem; i++){
@@ -2376,13 +2414,13 @@ inline Rcpp::List calc_WAIC_competition_Marginal(const arma::field<arma::vec> X_
     pwaic = pwaic + arma::var(llik_AB_obs.col(i));
   }
   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-  double waic = -2 * (llpd - pwaic);
+  double waic = -2 * (lppd - pwaic);
   
   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
   
   
   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-                                          Rcpp::Named("llpd", llpd),
+                                          Rcpp::Named("lppd", lppd),
                                           Rcpp::Named("Effective_pars", pwaic),
                                           Rcpp::Named("llik_A", llik_A_obs),
                                           Rcpp::Named("llik_B", llik_B_obs),
@@ -2524,24 +2562,24 @@ inline void calc_loglikelihood_AB_Marginal_Observation(const arma::vec X_AB,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
 //     for(int j = 0; j < n_A(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
 //     }
 //   }
 //   
 //   for(int i = 0; i < n_B.n_elem; i++){
 //     for(int j = 0; j < n_B(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
 //     }
 //   }
 //   for(int i = 0; i < n_AB.n_elem; i++){
 //     for(int j = 0; j < n_AB(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
 //     }
 //   }
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -2562,12 +2600,12 @@ inline void calc_loglikelihood_AB_Marginal_Observation(const arma::vec X_AB,
 //   }
 // 
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
 //   
 //   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-//                                           Rcpp::Named("llpd", llpd),
+//                                           Rcpp::Named("lppd", lppd),
 //                                           Rcpp::Named("Effective_pars", pwaic),
 //                                           Rcpp::Named("llik_A", llik_A),
 //                                           Rcpp::Named("llik_B", llik_B),
@@ -2625,24 +2663,24 @@ inline void calc_loglikelihood_AB_Marginal_Observation(const arma::vec X_AB,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
 //     for(int j = 0; j < n_A(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
 //     }
 //   }
 //   
 //   for(int i = 0; i < n_B.n_elem; i++){
 //     for(int j = 0; j < n_B(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
 //     }
 //   }
 //   for(int i = 0; i < n_AB.n_elem; i++){
 //     for(int j = 0; j < n_AB(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_AB(i,0).col(j))));
 //     }
 //   }
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -2663,12 +2701,12 @@ inline void calc_loglikelihood_AB_Marginal_Observation(const arma::vec X_AB,
 //   }
 //   
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
 //   
 //   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-//                                           Rcpp::Named("llpd", llpd),
+//                                           Rcpp::Named("lppd", lppd),
 //                                           Rcpp::Named("Effective_pars", pwaic),
 //                                           Rcpp::Named("llik_A", llik_A),
 //                                           Rcpp::Named("llik_B", llik_B),
@@ -2749,22 +2787,22 @@ inline double calc_Diff_LPPD_A_B(const arma::field<arma::vec> X_A,
   }
   
   // calculate log pointwise predictive density
-  double llpd_seperate = 0;
+  double lppd_seperate = 0;
   
   for(int i = 0; i < n_A.n_elem; i++){
-    llpd_seperate = llpd_seperate + calc_log_mean(llik_A_obs.col(i));
+    lppd_seperate = lppd_seperate + calc_log_mean(llik_A_obs.col(i));
   }
   for(int i = 0; i < n_B.n_elem; i++){
-    llpd_seperate = llpd_seperate + calc_log_mean(llik_B_obs.col(i));
+    lppd_seperate = lppd_seperate + calc_log_mean(llik_B_obs.col(i));
   }
  
   
-  double llpd_joint = 0;
+  double lppd_joint = 0;
   for(int i = 0; i < n_joint.n_elem; i++){
-    llpd_joint = llpd_joint + calc_log_mean(llik_joint_obs.col(i));
+    lppd_joint = lppd_joint + calc_log_mean(llik_joint_obs.col(i));
   }
-  double ratio_llpd = llpd_seperate - llpd_joint;
-  return ratio_llpd;
+  double ratio_lppd = lppd_seperate - lppd_joint;
+  return ratio_lppd;
 }
 
 inline Rcpp::List sim_IIGPP(const arma::vec theta,
@@ -2938,11 +2976,7 @@ inline Rcpp::List calc_chi_squared_IIGPP(const arma::field<arma::vec>& X,
   double p_val_var_spike_count = var_spike_count_extreme / (double) (D_obs.n_elem);
   Rcpp::List output = Rcpp::List::create(Rcpp::Named("p_val", p_val),
                                          Rcpp::Named("p_val_mean_SC", p_val_mean_spike_count),
-                                         Rcpp::Named("p_val_var_SC", p_val_var_spike_count),
-                                         Rcpp::Named("D_obs", D_obs),
-                                         Rcpp::Named("D_sim", D_sim),
-                                         Rcpp::Named("X_sim", X_sim_out),
-                                         Rcpp::Named("n_sim", n_sim_out));
+                                         Rcpp::Named("p_val_var_SC", p_val_var_spike_count));
   return output;
 }
 
@@ -2977,19 +3011,19 @@ inline Rcpp::List calc_chi_squared_IIGPP(const arma::field<arma::vec>& X,
 //   }
 //   
 //   // calculate log pointwise predictive density
-//   double llpd = 0;
+//   double lppd = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
 //     for(int j = 0; j < n_A(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_A(i,0).col(j))));
 //     }
 //   }
 //   for(int i = 0; i < n_B.n_elem; i++){
 //     for(int j = 0; j < n_B(i); j++){
-//       llpd = llpd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
+//       lppd = lppd + std::log(arma::mean(arma::exp(llik_B(i,0).col(j))));
 //     }
 //   }
 //   
-//   Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+//   Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
 //   
 //   double pwaic = 0;
 //   for(int i = 0; i < n_A.n_elem; i++){
@@ -3004,12 +3038,12 @@ inline Rcpp::List calc_chi_squared_IIGPP(const arma::field<arma::vec>& X,
 //   }
 // 
 //   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-//   double waic = -2 * (llpd - pwaic);
+//   double waic = -2 * (lppd - pwaic);
 //   
 //   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
 //   
 //   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-//                                           Rcpp::Named("llpd", llpd),
+//                                           Rcpp::Named("lppd", lppd),
 //                                           Rcpp::Named("Effective_pars", pwaic),
 //                                           Rcpp::Named("llik_A", llik_A),
 //                                           Rcpp::Named("llik_B", llik_B));
@@ -3065,15 +3099,15 @@ inline Rcpp::List calc_WAIC_IGP_WTA(const arma::field<arma::vec> X_A,
   }
   
   // calculate log pointwise predictive density
-  double llpd = 0;
+  double lppd = 0;
   for(int i = 0; i < n_A.n_elem; i++){
-      llpd = llpd + calc_log_mean(llik_A_obs.col(i));
+      lppd = lppd + calc_log_mean(llik_A_obs.col(i));
   }
   for(int i = 0; i < n_B.n_elem; i++){
-      llpd = llpd + calc_log_mean(llik_B_obs.col(i));
+      lppd = lppd + calc_log_mean(llik_B_obs.col(i));
   }
   
-  Rcpp::Rcout << "log pointwise predictive density = " << llpd << "\n";
+  Rcpp::Rcout << "log pointwise predictive density = " << lppd << "\n";
   
   double pwaic = 0;
   for(int i = 0; i < n_A.n_elem; i++){
@@ -3084,12 +3118,12 @@ inline Rcpp::List calc_WAIC_IGP_WTA(const arma::field<arma::vec> X_A,
   }
   
   Rcpp::Rcout << "Effective number of parameters = " << pwaic << "\n";
-  double waic = -2 * (llpd - pwaic);
+  double waic = -2 * (lppd - pwaic);
   
   Rcpp::Rcout << "WAIC (on deviance scale) = " << waic;
   
   Rcpp::List output1 = Rcpp::List::create(Rcpp::Named("WAIC", waic),
-                                          Rcpp::Named("llpd", llpd),
+                                          Rcpp::Named("lppd", lppd),
                                           Rcpp::Named("Effective_pars", pwaic),
                                           Rcpp::Named("llik_A", llik_A),
                                           Rcpp::Named("llik_B", llik_B));

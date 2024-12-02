@@ -1056,9 +1056,11 @@ inline void FFBS_ensemble_step1(arma::field<arma::vec>& Labels,
   for(int j = 0; j < M_proposal; j++){
     theta_j(4) = delta_ensemble(j);
     for(int i = 0; i < n_AB.n_elem; i++){
-      arma::field<arma::mat> output = forward_filtration_delta_int(theta_j, basis_coef_A, basis_coef_B, basis_funct_AB(i,0), X_AB(i, 0), end_time);
-      forward_filtrations_delta(j, i) = output(0, 0);
-      rel_probs(j) = rel_probs(j) +  arma::accu(output(1, 0)); 
+      if(n_AB(i) > 0){
+        arma::field<arma::mat> output = forward_filtration_delta_int(theta_j, basis_coef_A, basis_coef_B, basis_funct_AB(i,0), X_AB(i, 0), end_time);
+        forward_filtrations_delta(j, i) = output(0, 0);
+        rel_probs(j) = rel_probs(j) +  arma::accu(output(1, 0));
+      }
     }
     rel_probs(j) = rel_probs(j) + R::dgamma(delta_ensemble(j), delta_shape, (1 / delta_rate), true) - 
       log_prop_q(delta_ensemble(j), delta_proposal_mean, delta_proposal_sd, delta_shape, delta_rate, alpha);
@@ -1081,12 +1083,14 @@ inline void FFBS_ensemble_step1(arma::field<arma::vec>& Labels,
   theta_exp = arma::exp(theta);
   // Start sampling the labels
   for(int i = 0; i < n_AB.n_elem; i++){
-    arma::mat Prob_mat = forward_filtrations_delta(delta_index, i);
-    arma::vec proposed_labels = backward_sim_TI(Prob_mat, theta_exp, basis_coef_A, 
-                                                basis_coef_B, basis_funct_AB(i, 0), 
-                                                X_AB(i, 0), prob_propose, end_time);
-
-    Labels(i, iter) = proposed_labels;
+    if(n_AB(i) > 0){
+      arma::mat Prob_mat = forward_filtrations_delta(delta_index, i);
+      arma::vec proposed_labels = backward_sim_TI(Prob_mat, theta_exp, basis_coef_A, 
+                                                  basis_coef_B, basis_funct_AB(i, 0), 
+                                                  X_AB(i, 0), prob_propose, end_time);
+      
+      Labels(i, iter) = proposed_labels;
+    }
   }
 }
 

@@ -86,14 +86,20 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
         }
       }
     }
-    // probability of not observing a spike in the rest of the time
-    if(Labels(i,0)(n_AB(i) - 1) == 0){
-      l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
-        pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)));
+    if(n_AB(i) > 0){
+      // probability of not observing a spike in the rest of the time
+      if(Labels(i,0)(n_AB(i) - 1) == 0){
+        l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)) +
+          pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)));
+      }else{
+        l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+          pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)));
+      }
     }else{
-      l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
-        pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_A)))), std::pow((1 / theta(2)), 2.0)));
+      l_likelihood = l_likelihood + pinv_gauss(end_time, (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(0), basis_coef_B)))), std::pow((1 / theta(3)), 2.0)) +
+        pinv_gauss(end_time, (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(0), basis_coef_A)))), std::pow((1 / theta(2)), 2.0));
     }
+    
   }
   return l_likelihood;
 }
@@ -178,13 +184,19 @@ inline a_double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
         }
       }
     }
-    if(Labels(i,0)(n_AB(i) - 1) == 0){
-      l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2))) +
-        pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3))));
+    if(n_AB(i) > 0){
+      if(Labels(i,0)(n_AB(i) - 1) == 0){
+        l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2))) +
+          pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3))));
+      }else{
+        l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3))) +
+          pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2))));
+      }
     }else{
-      l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3))) +
-        pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(n_AB(i)), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2))));
+      l_likelihood = l_likelihood + pinv_gauss(end_time, (1 / (theta(1) * std::exp(arma::dot(basis_funct_AB(i,0).row(0), basis_coef_B)))), (1 / theta(3)) * (1 / theta(3))) +
+        pinv_gauss(end_time, (1 / (theta(0) * std::exp(arma::dot(basis_funct_AB(i,0).row(0), basis_coef_A)))), (1 / theta(2)) * (1 / theta(2)));
     }
+    
   }
   return l_likelihood;
 }
@@ -266,13 +278,19 @@ inline a_double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
         }
       }
     }
-    if(Labels(i,0)(n_AB(i) - 1) == 0){
-      l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(n_AB(i)), basis_coef, true)))), std::pow((1 / theta(2)), 2.0)) +
-        pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(n_AB(i)), basis_coef, false)))), std::pow((1 / theta(3)), 2.0)));
+    if(n_AB(i) > 0){
+      if(Labels(i,0)(n_AB(i) - 1) == 0){
+        l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(n_AB(i)), basis_coef, true)))), std::pow((1 / theta(2)), 2.0)) +
+          pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(n_AB(i)), basis_coef, false)))), std::pow((1 / theta(3)), 2.0)));
+      }else{
+        l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(n_AB(i)), basis_coef, false)))), std::pow((1 / theta(3)), 2.0)) +
+          pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(n_AB(i)), basis_coef, true)))), std::pow((1 / theta(2)), 2.0)));
+      }
     }else{
-      l_likelihood = l_likelihood + (pinv_gauss(end_time - arma::accu(X_AB(i,0)), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(n_AB(i)), basis_coef, false)))), std::pow((1 / theta(3)), 2.0)) +
-        pinv_gauss(end_time - arma::accu(X_AB(i,0)) - theta(4), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(n_AB(i)), basis_coef, true)))), std::pow((1 / theta(2)), 2.0)));
+      l_likelihood = l_likelihood + pinv_gauss(end_time, (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(0), basis_coef, false)))), std::pow((1 / theta(3)), 2.0)) +
+        pinv_gauss(end_time, (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_AB(i,0).row(0), basis_coef, true)))), std::pow((1 / theta(2)), 2.0));
     }
+    
   }
   return l_likelihood;
 }
