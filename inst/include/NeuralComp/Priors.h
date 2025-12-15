@@ -15,7 +15,7 @@ namespace NeuralComp {
 // theta: (I_A, I_B, sigma_A, sigma_B, delta)
 inline arma::vec transform_pars(arma::vec& theta){
   arma::vec trans_theta(theta.n_elem, arma::fill::zeros);
-  for(int i = 0; i < theta.n_elem; i++){
+  for(arma::uword i = 0; i < theta.n_elem; i++){
     trans_theta(i) = std::exp(theta(i));
   }
   return trans_theta;
@@ -25,7 +25,7 @@ inline arma::vec transform_pars(arma::vec& theta){
 // theta: (I_A, I_B, sigma_A, sigma_B, delta)
 inline arma::vec inv_transform_pars(arma::vec& theta){
   arma::vec invtrans_theta(theta.n_elem, arma::fill::zeros);
-  for(int i = 0; i < theta.n_elem; i++){
+  for(arma::uword i = 0; i < theta.n_elem; i++){
     invtrans_theta(i) = std::log(theta(i));
   }
   return invtrans_theta;
@@ -238,7 +238,7 @@ inline arma::vec rmutlinomial(const arma::vec& prob){
   arma::vec output = arma::zeros(prob.n_elem);
   int S = 1;
   double rho = 1;
-  for(int i = 0; i < (prob.n_elem - 1); i++){
+  for(arma::uword i = 0; i < (prob.n_elem - 1); i++){
     if(rho > 0){
       output(i) = R::rbinom(S, prob(i) / rho);
     }
@@ -301,7 +301,7 @@ inline a_double dot_AD(arma::rowvec basis_func,
                        a_vector basis_coef,
                        bool Indicator_A){
   a_double output = 0;
-  for(int i = 0; i < basis_func.n_elem; i++){
+  for(arma::uword i = 0; i < basis_func.n_elem; i++){
     if(Indicator_A == true){
       output = output + (basis_func(i) * basis_coef(i));
     }else{
@@ -314,7 +314,7 @@ inline a_double dot_AD(arma::rowvec basis_func,
 inline a_double dot_AD1(arma::rowvec basis_func,
                        a_vector basis_coef){
   a_double output = 0;
-  for(int i = 0; i < basis_func.n_elem; i++){
+  for(arma::uword i = 0; i < basis_func.n_elem; i++){
     output = output + (basis_func(i) * basis_coef(i));
   }
   return output;
@@ -323,7 +323,7 @@ inline a_double dot_AD1(arma::rowvec basis_func,
 inline a_double norm_AD(a_vector basis_coef,
                        bool Indicator_A){
   a_double output = 0;
-  for(int i = 0; i < (basis_coef.rows() / 2); i++){
+  for(arma::uword i = 0; i < (basis_coef.rows() / 2); i++){
     if(Indicator_A == true){
       output = output + (basis_coef(i) * basis_coef(i));
     }else{
@@ -351,7 +351,7 @@ inline a_double log_prior_FR(const double& I_A_sigma_sq,
 
 inline a_double norm_AD1(a_vector basis_coef){
   a_double output = 0;
-  for(int i = 0; i < basis_coef.rows(); i++){
+  for(arma::uword i = 0; i < basis_coef.rows(); i++){
       output = output + (basis_coef(i) * basis_coef(i));
   }
   return output;

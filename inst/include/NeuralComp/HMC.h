@@ -695,15 +695,15 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
                                     int Warm_block1,
                                     int Warm_block2){
   arma::field<arma::mat> basis_funct_A(n_A.n_elem, 1);
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     basis_funct_A(i,0) = arma::zeros(n_A(i) + 1, 1);
   }
   arma::field<arma::mat> basis_funct_B(n_B.n_elem, 1);
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     basis_funct_B(i,0) = arma::zeros(n_B(i) + 1, 1);
   }
   arma::field<arma::mat> basis_funct_AB(n_AB.n_elem, 1);
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     basis_funct_AB(i,0) = arma::zeros(n_AB(i) + 1, 1);
   }
   arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 5, arma::fill::ones);
@@ -719,7 +719,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   
   arma::vec init_position(5, arma::fill::ones);
   double ISI_A_mean = 0;
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     if(n_A(i) > 0){
       ISI_A_mean = ISI_A_mean + arma::accu(X_A(i,0));
     }else{
@@ -729,7 +729,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   ISI_A_mean = ISI_A_mean / arma::accu(n_A);
   init_position(0) = 1 / ISI_A_mean;
   double ISI_B_mean = 0;
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     if(n_B(i) > 0){
       ISI_B_mean = ISI_B_mean + arma::accu(X_B(i,0));
     }else{
@@ -740,7 +740,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   init_position(0) = 1 / ISI_A_mean;
   init_position(1) = 1 / ISI_B_mean;
   double ISI_A_var = 0;
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     if(n_A(i) > 1){
       ISI_A_var = ISI_A_var + (n_A(i) - 1) * arma::var(X_A(i,0));
     }else if(n_A(i) == 1){
@@ -752,7 +752,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   ISI_A_var = ISI_A_var / arma::accu(n_A);
   init_position(2) =   std::sqrt(ISI_A_var / std::pow(1/init_position(0), 3.0));
   double ISI_B_var = 0;
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     if(n_B(i) > 1){
       ISI_B_var = ISI_B_var + (n_B(i) - 1) * arma::var(X_B(i,0));
     }else if(n_B(i) == 1){
@@ -772,7 +772,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
   arma::field<arma::vec> Labels_iter(n_AB.n_elem, 1);
   
   // Use initial starting position
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     for(int j = 0; j < MCMC_iters + Warm_block1 + Warm_block2; j++){
       Labels(i, j) = arma::zeros(n_AB(i));
     }
@@ -804,7 +804,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
                         M_proposal, delta_shape, delta_rate, end_time);
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -827,7 +827,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     basis_coef_B.row(i) = basis_coef_B_ph.t();
     if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
       theta.row(i + 1) = theta.row(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -890,7 +890,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
                         M_proposal, delta_shape, delta_rate, end_time);
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -915,7 +915,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     // set labels for current MCMC iteration
     if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
       theta.row(i + 1) = theta.row(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -946,7 +946,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     basis_coef_A_ph = basis_coef_A.row(i).t();
     basis_coef_B_ph = basis_coef_B.row(i).t();
     theta_ph = theta.row(i).t();
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     FFBS_ensemble_step1(Labels, i, X_AB, n_AB, theta_ph, basis_coef_A_ph, 
@@ -955,7 +955,7 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
                         M_proposal, delta_shape, delta_rate, end_time);
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -977,14 +977,14 @@ inline Rcpp::List Mixed_sampler_int(const arma::field<arma::vec> X_A,
     theta.row(i) = theta_ph.t();
     if((i+1) < Warm_block1 + Warm_block2 + MCMC_iters){
       theta.row(i + 1) = theta.row(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
   }
   //convert labels
   arma::field<arma::mat> labels_out(1, n_AB.n_elem);
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     labels_out(0,i) = arma::zeros(Warm_block1 + Warm_block2 + MCMC_iters, n_AB(i));
     for(int j = 0; j < Warm_block1 + Warm_block2 + MCMC_iters; j++){
       for(int k = 0; k < n_AB(i); k++){
@@ -1057,7 +1057,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   
   arma::vec init_position(5, arma::fill::ones);
   double ISI_A_mean = 0;
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     if(n_A(i) > 0){
       ISI_A_mean = ISI_A_mean + arma::accu(X_A(i,0));
     }else{
@@ -1067,7 +1067,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   ISI_A_mean = ISI_A_mean / arma::accu(n_A);
   init_position(0) = 1 / ISI_A_mean;
   double ISI_B_mean = 0;
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     if(n_B(i) > 0){
       ISI_B_mean = ISI_B_mean + arma::accu(X_B(i,0));
     }else{
@@ -1078,7 +1078,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   init_position(0) = 1 / ISI_A_mean;
   init_position(1) = 1 / ISI_B_mean;
   double ISI_A_var = 0;
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     if(n_A(i) > 1){
       ISI_A_var = ISI_A_var + (n_A(i) - 1) * arma::var(X_A(i,0));
     }else if(n_A(i) == 1){
@@ -1090,7 +1090,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   ISI_A_var = ISI_A_var / arma::accu(n_A);
   init_position(2) =   std::sqrt(ISI_A_var / std::pow(1/init_position(0), 3.0));
   double ISI_B_var = 0;
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     if(n_B(i) > 1){
       ISI_B_var = ISI_B_var + (n_B(i) - 1) * arma::var(X_B(i,0));
     }else if(n_B(i) == 1){
@@ -1110,7 +1110,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   arma::field<arma::vec> Labels_iter(n_AB.n_elem, 1);
   
   // Use initial starting position
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     for(int j = 0; j < MCMC_iters + Warm_block1 + Warm_block2; j++){
       Labels(i, j) = arma::zeros(n_AB(i));
     }
@@ -1144,7 +1144,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
                         M_proposal, delta_shape, delta_rate, end_time);
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
 
@@ -1189,7 +1189,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
       omega_A(i + 1) = omega_A(i);
       omega_B(i + 1) = omega_B(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -1276,7 +1276,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
                         M_proposal, delta_shape, delta_rate, end_time);
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -1315,7 +1315,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
       omega_A(i + 1) = omega_A(i);
       omega_B(i + 1) = omega_B(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -1358,7 +1358,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
     basis_coef_A_ph = basis_coef_A.row(i).t();
     basis_coef_B_ph = basis_coef_B.row(i).t();
     theta_ph = theta.row(i).t();
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     FFBS_ensemble_step1(Labels, i, X_AB, n_AB, theta_ph, basis_coef_A_ph, 
@@ -1367,7 +1367,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
                         M_proposal, delta_shape, delta_rate, end_time);
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -1408,7 +1408,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
       omega_A(i + 1) = omega_A(i);
       omega_B(i + 1) = omega_B(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -1416,7 +1416,7 @@ inline Rcpp::List Mixed_sampler_int_TI(const arma::field<arma::mat>& basis_funct
   
   //convert labels
   arma::field<arma::mat> labels_out(n_AB.n_elem, 1);
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     labels_out(i,0) = arma::zeros(Warm_block1 + Warm_block2 + MCMC_iters, n_AB(i));
     for(int j = 0; j < Warm_block1 + Warm_block2 + MCMC_iters; j++){
       for(int k = 0; k < n_AB(i); k++){
@@ -1456,7 +1456,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
                                         int Warm_block1,
                                         int Warm_block2){
   arma::field<arma::mat> basis_funct(n.n_elem, 1);
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     basis_funct(i,0) = arma::zeros(n(i) + 1, 1);
   }
   arma::mat theta(MCMC_iters + Warm_block1 + Warm_block2, 2, arma::fill::ones);
@@ -1470,7 +1470,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
   
   arma::vec init_position(2, arma::fill::ones);
   double ISI_mean = 0;
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     if(n(i) > 0){
       ISI_mean = ISI_mean + arma::accu(X(i,0));
     }else{
@@ -1480,7 +1480,7 @@ inline Rcpp::List Mixed_sampler_IGP_int(const arma::field<arma::vec> X,
   ISI_mean = ISI_mean / arma::accu(n);
   init_position(0) = 1 / ISI_mean;
   double ISI_var = 0;
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     if(n(i) > 1){
       ISI_var = ISI_var + (n(i) - 1) * arma::var(X(i,0));
     }else if(n(i) == 1){
@@ -1654,7 +1654,7 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
   
   arma::vec init_position(2, arma::fill::ones);
   double ISI_mean = 0;
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     if(n(i) > 0){
       ISI_mean = ISI_mean + arma::accu(X(i,0));
     }else{
@@ -1664,7 +1664,7 @@ inline Rcpp::List Mixed_sampler_IGP_int_TI(const arma::field<arma::mat>& basis_f
   ISI_mean = ISI_mean / arma::accu(n);
   init_position(0) = 1 / ISI_mean;
   double ISI_var = 0;
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     if(n(i) > 1){
       ISI_var = ISI_var + (n(i) - 1) * arma::var(X(i,0));
     }else if(n(i) == 1){
@@ -1948,7 +1948,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
   arma::field<arma::vec> Labels_iter(n_AB.n_elem, 1);
   
   // Use initial starting position
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     for(int j = 0; j < MCMC_iters + Warm_block1 + Warm_block2; j++){
       Labels(i, j) = arma::zeros(n_AB(i));
     }
@@ -1961,8 +1961,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
   arma::vec vec_accept_theta(MCMC_iters + Warm_block1 + Warm_block2, arma::fill::zeros);
   arma::mat Mass_mat_theta = arma::diagmat(arma::ones(theta.n_cols-1));
   arma::mat Mass_mat_basis = arma::diagmat(arma::ones(basis_coef_A.n_cols + basis_coef_B.n_cols));
-  double prop_accept_10 = 0;
-  double prop_accept_10_theta = 0;
+
   
   for(int i = 1; i < Warm_block1; i++){
     if((i % 25) == 0){
@@ -1984,7 +1983,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
                         M_proposal, delta_shape, delta_rate, end_time);
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -1996,7 +1995,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
       theta.row(i + 1) = theta.row(i);
       basis_coef_A.row(i + 1) = basis_coef_A.row(i);
       basis_coef_B.row(i + 1) = basis_coef_B.row(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -2043,7 +2042,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
     
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -2055,7 +2054,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
       theta.row(i + 1) = theta.row(i);
       basis_coef_A.row(i + 1) = basis_coef_A.row(i);
       basis_coef_B.row(i + 1) = basis_coef_B.row(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -2082,7 +2081,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
     
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -2094,7 +2093,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
       theta.row(i + 1) = theta.row(i);
       basis_coef_A.row(i + 1) = basis_coef_A.row(i);
       basis_coef_B.row(i + 1) = basis_coef_B.row(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -2103,7 +2102,7 @@ inline Rcpp::List FFBS_only(const arma::field<arma::mat>& basis_funct_A,
   
   //convert labels
   arma::field<arma::mat> labels_out(n_AB.n_elem, 1);
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     labels_out(i,0) = arma::zeros(Warm_block1 + Warm_block2 + MCMC_iters, n_AB(i));
     for(int j = 0; j < Warm_block1 + Warm_block2 + MCMC_iters; j++){
       for(int k = 0; k < n_AB(i); k++){
@@ -2186,7 +2185,7 @@ inline Rcpp::List FR_only(const arma::field<arma::mat>& basis_funct_A,
   arma::field<arma::vec> Labels_iter(n_AB.n_elem, 1);
   
   // Use initial starting position
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     for(int j = 0; j < MCMC_iters + Warm_block1 + Warm_block2; j++){
       Labels(i, j) = labels(i,0);
     }
@@ -2216,7 +2215,7 @@ inline Rcpp::List FR_only(const arma::field<arma::mat>& basis_funct_A,
     basis_coef_B_ph = basis_coef_B.row(i).t();
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -2259,7 +2258,7 @@ inline Rcpp::List FR_only(const arma::field<arma::mat>& basis_funct_A,
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
       omega_A(i + 1) = omega_A(i);
       omega_B(i + 1) = omega_B(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -2334,7 +2333,7 @@ inline Rcpp::List FR_only(const arma::field<arma::mat>& basis_funct_A,
     basis_coef_B_ph = basis_coef_B.row(i).t();
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -2373,7 +2372,7 @@ inline Rcpp::List FR_only(const arma::field<arma::mat>& basis_funct_A,
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
       omega_A(i + 1) = omega_A(i);
       omega_B(i + 1) = omega_B(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -2418,7 +2417,7 @@ inline Rcpp::List FR_only(const arma::field<arma::mat>& basis_funct_A,
     theta_ph = theta.row(i).t();
     
     // set labels for current MCMC iteration
-    for(int j = 0; j < n_AB.n_elem; j++){
+    for(arma::uword j = 0; j < n_AB.n_elem; j++){
       Labels_iter(j,0) = Labels(j, i);
     }
     
@@ -2459,7 +2458,7 @@ inline Rcpp::List FR_only(const arma::field<arma::mat>& basis_funct_A,
       I_B_sigma_sq(i + 1) = I_B_sigma_sq(i);
       omega_A(i + 1) = omega_A(i);
       omega_B(i + 1) = omega_B(i);
-      for(int j = 0; j < n_AB.n_elem; j++){
+      for(arma::uword j = 0; j < n_AB.n_elem; j++){
         Labels(j, i + 1) = Labels(j, i);
       }
     }
@@ -2467,7 +2466,7 @@ inline Rcpp::List FR_only(const arma::field<arma::mat>& basis_funct_A,
   
   //convert labels
   arma::field<arma::mat> labels_out(n_AB.n_elem, 1);
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     labels_out(i,0) = arma::zeros(Warm_block1 + Warm_block2 + MCMC_iters, n_AB(i));
     for(int j = 0; j < Warm_block1 + Warm_block2 + MCMC_iters; j++){
       for(int k = 0; k < n_AB(i); k++){

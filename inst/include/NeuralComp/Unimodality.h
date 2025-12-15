@@ -14,7 +14,7 @@ inline arma::vec find_peaks(arma::vec x){
   arma::vec x_diff = arma::diff(x);
   arma::vec peaks = arma::zeros(1);
   int n_peaks = 1;
-  for(int i = 0; i < (x_diff.n_elem - 1); i++){
+  for(arma::uword i = 0; i < (x_diff.n_elem - 1); i++){
     if((x_diff(i) > 0) && (x_diff(i+1) < 0)){
       peaks.resize(n_peaks);
       peaks(n_peaks - 1) = i + 1;
@@ -28,7 +28,7 @@ inline arma::vec gaussian_KDE(const arma::vec& eval_grid,
                               const arma::vec& obs,
                               const double h){
   arma::vec density = arma::zeros(eval_grid.n_elem);
-  for(int j = 0; j < obs.n_elem; j++){
+  for(arma::uword j = 0; j < obs.n_elem; j++){
     density = density + arma::normpdf(eval_grid, obs(j), h);
   }
   density = density / (obs.n_elem * h);
@@ -45,7 +45,7 @@ inline int get_peaks_from_bw(const arma::vec eval_grid,
 
 inline arma::vec generate_bootstrap_dat(const arma::vec& dat,
                                         double h_crit){
-  double sigma_sq = arma::var(dat);
+  //double sigma_sq = arma::var(dat);
   double x_mean = arma::mean(dat);
   arma::vec prob = arma::ones(dat.n_elem) / dat.n_elem;
   arma::vec x = sample(dat, dat.n_elem, true, prob);
@@ -63,7 +63,7 @@ inline double bootstrap_test_unimodality(const arma::vec obs_dat,
   if(arma::var(obs_dat) > 0){
     double h_crit = 0.01;
     double peaks_i;
-    for(int i = h_grid.n_elem - 1; i >= 0; i--){
+    for(arma::uword i = h_grid.n_elem - 1; i >= 0; i--){
       peaks_i = get_peaks_from_bw(eval_grid, obs_dat, h_grid(i));
       if(peaks_i > 1){
         if((i + 2) > h_grid.n_elem){
@@ -107,7 +107,7 @@ inline double bootstrap_test_unimodality_ISI(const arma::vec obs_dat,
   if(arma::var(obs_dat) > 0){
     double h_crit = 0.01;
     double peaks_i;
-    for(int i = h_grid.n_elem - 1; i >= 0; i--){
+    for(arma::uword i = h_grid.n_elem - 1; i >= 0; i--){
       peaks_i = get_peaks_from_bw(eval_grid, obs_dat, h_grid(i));
       if(peaks_i > 1){
         if((i + 2) > h_grid.n_elem){

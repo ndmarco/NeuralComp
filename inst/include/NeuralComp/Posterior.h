@@ -27,7 +27,7 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
                                 const double& end_time){
   double l_likelihood = 0;
   // Calculate log-likelihood for A trials
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_A(i,0).row(j), basis_coef_A)))),
                                                std::pow((1 / theta(2)), 2.0));
@@ -38,7 +38,7 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
   }
  
   // Calculate log-likelihood for B trials
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_B(i,0).row(j), basis_coef_B)))),
                                                    std::pow((1 / theta(3)), 2.0));
@@ -49,7 +49,7 @@ inline double log_likelihood_TI(arma::field<arma::vec>& Labels,
   }
 
   // calculate log-likelihood for AB trials
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     for(int j = 0; j < n_AB(i); j++){
       if(Labels(i,0)(j) == 0){
         // label is A
@@ -125,7 +125,7 @@ inline a_double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
 
   a_double l_likelihood = 0;
   // Calculate log-likelihood for A trials
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct_A(i,0).row(j), basis_coef_A)))),
                                                (1 / theta(2)) * (1 / theta(2)));
@@ -136,7 +136,7 @@ inline a_double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
   }
   
   // Calculate log-likelihood for B trials
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / (theta(1) * std::exp(arma::dot(basis_funct_B(i,0).row(j), basis_coef_B)))),
                                                (1 / theta(3)) * (1 / theta(3)));
@@ -147,7 +147,7 @@ inline a_double log_likelihood_eigen_theta(arma::field<arma::vec>& Labels,
   }
   
   // calculate log-likelihood for AB trials
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     for(int j = 0; j < n_AB(i); j++){
       if(Labels(i,0)(j) == 0){
         // label is A
@@ -219,7 +219,7 @@ inline a_double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
   
   a_double l_likelihood = 0;
   // Calculate log-likelihood for A trials
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     for(int j = 0; j < n_A(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_A(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD(basis_funct_A(i,0).row(j), basis_coef, true)))),
                                                std::pow((1 / theta(2)), 2.0));
@@ -230,7 +230,7 @@ inline a_double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
   }
   
   // Calculate log-likelihood for B trials
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     for(int j = 0; j < n_B(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X_B(i,0)(j), (1 / (theta(1) * CppAD::exp(dot_AD(basis_funct_B(i,0).row(j), basis_coef, false)))),
                                                std::pow((1 / theta(3)), 2.0));
@@ -241,7 +241,7 @@ inline a_double log_likelihood_eigen_basis(arma::field<arma::vec>& Labels,
   }
   
   // calculate log-likelihood for AB trials
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     for(int j = 0; j < n_AB(i); j++){
       if(Labels(i,0)(j) == 0){
         // label is A
@@ -304,7 +304,7 @@ inline double log_likelihood_IGP_theta(arma::vec theta,
                                        const double& end_time){
   double l_likelihood = 0;
   // Calculate log-likelihood 
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct(i,0).row(j), basis_coef)))),
                                                std::pow((1 / theta(1)), 2.0));
@@ -326,7 +326,7 @@ inline a_double log_likelihood_eigen_IGP_theta(a_vector theta,
   
   a_double l_likelihood = 0;
   // Calculate log-likelihood for trials
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) * std::exp(arma::dot(basis_funct(i,0).row(j), basis_coef)))),
                                                (1 / theta(1)) * (1 / theta(1)));
@@ -348,7 +348,7 @@ inline a_double log_likelihood_eigen_IGP_basis(arma::vec theta,
   
   a_double l_likelihood = 0;
   // Calculate log-likelihood
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     for(int j = 0; j < n(i); j++){
       l_likelihood = l_likelihood + dinv_gauss(X(i,0)(j), (1 / (theta(0) * CppAD::exp(dot_AD1(basis_funct(i,0).row(j), basis_coef)))),
                                                std::pow((1 / theta(1)), 2.0));
@@ -614,7 +614,7 @@ inline a_double transformed_log_posterior_eigen_theta(arma::field<arma::vec>& La
                                                       const double& sigma_B_mean,
                                                       const double& sigma_B_shape,
                                                       const double& end_time){
-  for(int i = 0; i < theta.rows(); i++){
+  for(arma::uword i = 0; i < theta.rows(); i++){
     theta(i) = CppAD::exp(theta(i));
   }
   
@@ -679,7 +679,7 @@ inline a_double transformed_log_posterior_eigen_IGP_theta(a_vector theta,
                                                           const double& sigma_mean,
                                                           const double& sigma_shape,
                                                           const double& end_time){
-  for(int i = 0; i < theta.rows(); i++){
+  for(arma::uword i = 0; i < theta.rows(); i++){
     theta(i) = CppAD::exp(theta(i));
   }
   
@@ -747,7 +747,7 @@ inline arma::vec calc_gradient_eigen_theta(arma::field<arma::vec>& Labels,
   a_vector ax(theta.n_elem);
   a_vector y(1);
   
-  for (int i = 0; i < theta.n_elem; i++){
+  for (arma::uword i = 0; i < theta.n_elem; i++){
     x(i) = theta(i);
     ax(i) = x(i);
     
@@ -762,7 +762,7 @@ inline arma::vec calc_gradient_eigen_theta(arma::field<arma::vec>& Labels,
     sigma_A_shape,sigma_B_mean, sigma_B_shape, end_time);
   gr.Dependent(ax, y);
   Eigen::VectorXd res = gr.Jacobian(x);
-  for(int i = 0; i < res.rows(); i++){
+  for(arma::uword i = 0; i < res.rows(); i++){
     grad(i) = res(i);
   }
   return grad.subvec(0, grad.n_elem -2);
@@ -794,12 +794,12 @@ inline arma::vec calc_gradient_eigen_theta_update(arma::field<arma::vec>& Labels
   Eigen::VectorXd x(theta.n_elem);
   a_vector y(1);
   
-  for (int i = 0; i < theta.n_elem; i++){
+  for (arma::uword i = 0; i < theta.n_elem; i++){
     x(i) = theta(i);
   }
   
   Eigen::VectorXd res = gr.Jacobian(x);
-  for(int i = 0; i < res.rows(); i++){
+  for(arma::uword i = 0; i < res.rows(); i++){
     grad(i) = res(i);
   }
   return grad.subvec(0, grad.n_elem -2);
@@ -827,7 +827,7 @@ inline arma::vec calc_gradient_eigen_basis(arma::field<arma::vec>& Labels,
   a_vector ax(basis_coef_A.n_elem + basis_coef_B.n_elem);
   a_vector y(1);
   
-  for (int i = 0; i < basis_coef_A.n_elem + basis_coef_B.n_elem; i++){
+  for (arma::uword i = 0; i < basis_coef_A.n_elem + basis_coef_B.n_elem; i++){
     if(i < basis_coef_A.n_elem){
       x(i) = basis_coef_A(i);
       ax(i) = x(i);
@@ -844,7 +844,7 @@ inline arma::vec calc_gradient_eigen_basis(arma::field<arma::vec>& Labels,
     X_A, X_B, X_AB, n_A, n_B, n_AB, I_A_sigma_sq, I_B_sigma_sq, end_time);
   gr.Dependent(ax, y);
   Eigen::VectorXd res = gr.Jacobian(x);
-  for(int i = 0; i < res.rows(); i++){
+  for(arma::uword i = 0; i < res.rows(); i++){
     grad(i) = res(i);
   }
   return grad;
@@ -869,7 +869,7 @@ inline arma::vec calc_gradient_eigen_basis_update(arma::field<arma::vec>& Labels
   arma::vec grad((basis_coef_A.n_elem + basis_coef_B.n_elem), arma::fill::zeros);
   Eigen::VectorXd x(basis_coef_A.n_elem + basis_coef_B.n_elem);
   
-  for (int i = 0; i < basis_coef_A.n_elem + basis_coef_B.n_elem; i++){
+  for (arma::uword i = 0; i < basis_coef_A.n_elem + basis_coef_B.n_elem; i++){
     if(i < basis_coef_A.n_elem){
       x(i) = basis_coef_A(i);
     }else{
@@ -878,7 +878,7 @@ inline arma::vec calc_gradient_eigen_basis_update(arma::field<arma::vec>& Labels
   }
   
   Eigen::VectorXd res = gr.Jacobian(x);
-  for(int i = 0; i < res.rows(); i++){
+  for(arma::uword i = 0; i < res.rows(); i++){
     grad(i) = res(i);
   }
   return grad;
@@ -900,7 +900,7 @@ inline arma::vec calc_gradient_eigen_IGP_theta(arma::vec theta,
   a_vector ax(theta.n_elem);
   a_vector y(1);
   
-  for (int i = 0; i < theta.n_elem; i++){
+  for (arma::uword i = 0; i < theta.n_elem; i++){
     x(i) = theta(i);
     ax(i) = x(i);
     
@@ -912,7 +912,7 @@ inline arma::vec calc_gradient_eigen_IGP_theta(arma::vec theta,
     X, n, I_mean, I_shape, sigma_mean, sigma_shape, end_time);
   gr.Dependent(ax, y);
   Eigen::VectorXd res = gr.Jacobian(x);
-  for(int i = 0; i < res.rows(); i++){
+  for(arma::uword i = 0; i < res.rows(); i++){
     grad(i) = res(i);
   }
   return grad;
@@ -932,13 +932,13 @@ inline arma::vec calc_gradient_eigen_IGP_theta_update(arma::vec theta,
   Eigen::VectorXd x(theta.n_elem);
   a_vector y(1);
   
-  for (int i = 0; i < theta.n_elem; i++){
+  for (arma::uword i = 0; i < theta.n_elem; i++){
     x(i) = theta(i);
     
   }
   
   Eigen::VectorXd res = gr.Jacobian(x);
-  for(int i = 0; i < res.rows(); i++){
+  for(arma::uword i = 0; i < res.rows(); i++){
     grad(i) = res(i);
   }
   return grad;
@@ -957,7 +957,7 @@ inline arma::vec calc_gradient_eigen_IGP_basis(arma::vec theta,
   a_vector ax(basis_coef.n_elem);
   a_vector y(1);
   
-  for (int i = 0; i < basis_coef.n_elem; i++){
+  for (arma::uword i = 0; i < basis_coef.n_elem; i++){
     x(i) = basis_coef(i);
     ax(i) = x(i);
     
@@ -969,7 +969,7 @@ inline arma::vec calc_gradient_eigen_IGP_basis(arma::vec theta,
     X, n, I_sigma_sq, end_time);
   gr.Dependent(ax, y);
   Eigen::VectorXd res = gr.Jacobian(x);
-  for(int i = 0; i < res.rows(); i++){
+  for(arma::uword i = 0; i < res.rows(); i++){
     grad(i) = res(i);
   }
   return grad;
@@ -986,13 +986,13 @@ inline arma::vec calc_gradient_eigen_IGP_basis_update(arma::vec theta,
   Eigen::VectorXd x(basis_coef.n_elem);
   a_vector y(1);
   
-  for (int i = 0; i < basis_coef.n_elem; i++){
+  for (arma::uword i = 0; i < basis_coef.n_elem; i++){
     x(i) = basis_coef(i);
     
   }
   
   Eigen::VectorXd res = gr.Jacobian(x);
-  for(int i = 0; i < res.rows(); i++){
+  for(arma::uword i = 0; i < res.rows(); i++){
     grad(i) = res(i);
   }
   return grad;

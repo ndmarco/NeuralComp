@@ -37,7 +37,7 @@ arma::mat GetBSpline(const arma::vec time,
   if(basis_degree <  1){
     Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
   }
-  for(int i = 0; i < internal_knots.n_elem; i++){
+  for(arma::uword i = 0; i < internal_knots.n_elem; i++){
     if(boundary_knots(0) >= internal_knots(i)){
       Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
     }
@@ -274,17 +274,17 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
  if(gamma <= 0){
    Rcpp::stop("'gamma' must be greater than 0");
  }
- for(int i = 0; i < n_A.n_elem; i++){
+ for(arma::uword i = 0; i < n_A.n_elem; i++){
    if(arma::accu(X_A(i,0)) > end_time + arma::datum::eps){
      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train " + std::to_string(i + 1) + ")");
    }
  }
- for(int i = 0; i < n_B.n_elem; i++){
+ for(arma::uword i = 0; i < n_B.n_elem; i++){
    if(arma::accu(X_B(i,0)) > end_time + arma::datum::eps){
      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike train " + std::to_string(i + 1) + ")");
    }
  }
- for(int i = 0; i < n_AB.n_elem; i++){
+ for(arma::uword i = 0; i < n_AB.n_elem; i++){
    if(arma::accu(X_AB(i,0)) > end_time + arma::datum::eps){
      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See AB condition spike train " + std::to_string(i + 1) + ")");
    }
@@ -297,7 +297,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
    if(basis_degree <  1){
      Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
    }
-   for(int i = 0; i < internal_knots.n_elem; i++){
+   for(arma::uword i = 0; i < internal_knots.n_elem; i++){
      if(boundary_knots(0) >= internal_knots(i)){
        Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
      }
@@ -310,7 +310,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
    splines2::BSpline bspline;
    // Make spline basis for A functions
    arma::field<arma::mat> basis_funct_A(n_A.n_elem,1);
-   for(int i = 0; i < n_A.n_elem; i++){
+   for(arma::uword i = 0; i < n_A.n_elem; i++){
      arma::vec time = arma::zeros(n_A(i) + 1);
      for(int j = 1; j < (n_A(i) + 1); j++){
        time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
@@ -324,7 +324,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
    
    // Make spline basis for B functions
    arma::field<arma::mat> basis_funct_B(n_B.n_elem,1);
-   for(int i = 0; i < n_B.n_elem; i++){
+   for(arma::uword i = 0; i < n_B.n_elem; i++){
      arma::vec time = arma::zeros(n_B(i) + 1);
      for(int j = 1; j < (n_B(i) + 1); j++){
        time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
@@ -338,7 +338,7 @@ Rcpp::List Sampler_Competition(const arma::field<arma::vec> X_A,
    
    // Make spline basis for AB functions
    arma::field<arma::mat> basis_funct_AB(n_AB.n_elem,1);
-   for(int i = 0; i < n_AB.n_elem; i++){
+   for(arma::uword i = 0; i < n_AB.n_elem; i++){
      arma::vec time = arma::zeros(n_AB(i) + 1);
      for(int j = 1; j < (n_AB(i) + 1); j++){
        time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
@@ -527,7 +527,7 @@ Rcpp::List Sampler_IIGPP(const arma::field<arma::vec> X,
   if(gamma <= 0){
     Rcpp::stop("'gamma' must be greater than 0");
   }
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     if(arma::accu(X(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See spike train " + std::to_string(i + 1) + ")");
     }
@@ -539,7 +539,7 @@ Rcpp::List Sampler_IIGPP(const arma::field<arma::vec> X,
     if(basis_degree <  1){
       Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
     }
-    for(int i = 0; i < internal_knots.n_elem; i++){
+    for(arma::uword i = 0; i < internal_knots.n_elem; i++){
       if(boundary_knots(0) >= internal_knots(i)){
         Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
       }
@@ -552,7 +552,7 @@ Rcpp::List Sampler_IIGPP(const arma::field<arma::vec> X,
     splines2::BSpline bspline;
     // Make spline basis for A functions
     arma::field<arma::mat> basis_funct(n.n_elem,1);
-    for(int i = 0; i < n.n_elem; i++){
+    for(arma::uword i = 0; i < n.n_elem; i++){
       arma::vec time = arma::zeros(n(i) + 1);
       for(int j = 1; j < (n(i) + 1); j++){
         time(j) = arma::accu(X(i,0).subvec(0,j-1));
@@ -675,7 +675,7 @@ Rcpp::List FR_CI_IIGPP(const arma::vec time,
   if(basis_degree <  1){
     Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
   }
-  for(int i = 0; i < internal_knots.n_elem; i++){
+  for(arma::uword i = 0; i < internal_knots.n_elem; i++){
     if(boundary_knots(0) >= internal_knots(i)){
       Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
     }
@@ -703,7 +703,7 @@ Rcpp::List FR_CI_IIGPP(const arma::vec time,
   
   arma::vec p = {alpha/2, 0.5, 1 - (alpha/2)};
   arma::vec q = arma::zeros(3);
-  for(int i = 0; i < time.n_elem; i++){
+  for(arma::uword i = 0; i < time.n_elem; i++){
     q = arma::quantile(MCMC_FR.col(i), p);
     FR_CI(i,0) = q(0);
     FR_median(i) = q(1);
@@ -821,7 +821,7 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
   if(basis_degree <  1){
     Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
   }
-  for(int i = 0; i < internal_knots.n_elem; i++){
+  for(arma::uword i = 0; i < internal_knots.n_elem; i++){
     if(boundary_knots(0) >= internal_knots(i)){
       Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
     }
@@ -853,7 +853,7 @@ Rcpp::List FR_CI_Competition(const arma::vec time,
   
   arma::vec p = {alpha/2, 0.5, 1 - (alpha/2)};
   arma::vec q = arma::zeros(3);
-  for(int i = 0; i < time.n_elem; i++){
+  for(arma::uword i = 0; i < time.n_elem; i++){
     q = arma::quantile(MCMC_A_FR.col(i), p);
     A_FR_CI(i,0) = q(0);
     A_FR_median(i) = q(1);
@@ -1000,17 +1000,17 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
     Rcpp::stop("'burnin_prop' must be between 0 and 1");
   }
   
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     if(arma::accu(X_A(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train " + std::to_string(i + 1) + ")");
     }
   }
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     if(arma::accu(X_B(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike train " + std::to_string(i + 1) + ")");
     }
   }
-  for(int i = 0; i < n_AB.n_elem; i++){
+  for(arma::uword i = 0; i < n_AB.n_elem; i++){
     if(arma::accu(X_AB(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See AB condition spike train " + std::to_string(i + 1) + ")");
     }
@@ -1026,7 +1026,7 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
     if(basis_degree <  1){
       Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
     }
-    for(int i = 0; i < internal_knots.n_elem; i++){
+    for(arma::uword i = 0; i < internal_knots.n_elem; i++){
       if(boundary_knots(0) >= internal_knots(i)){
         Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
       }
@@ -1037,7 +1037,7 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
     
     //Create B-splines
     splines2::BSpline bspline;
-    for(int i = 0; i < n_A.n_elem; i++){
+    for(arma::uword i = 0; i < n_A.n_elem; i++){
       arma::vec time = arma::zeros(n_A(i) + 1);
       for(int j = 1; j < (n_A(i) + 1); j++){
         time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
@@ -1049,7 +1049,7 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
       basis_funct_A(i,0) = bspline_mat;
     }
     
-    for(int i = 0; i < n_B.n_elem; i++){
+    for(arma::uword i = 0; i < n_B.n_elem; i++){
       arma::vec time = arma::zeros(n_B(i) + 1);
       for(int j = 1; j < (n_B(i) + 1); j++){
         time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
@@ -1061,7 +1061,7 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
       basis_funct_B(i,0) = bspline_mat;
     }
     
-    for(int i = 0; i < n_AB.n_elem; i++){
+    for(arma::uword i = 0; i < n_AB.n_elem; i++){
       arma::vec time = arma::zeros(n_AB(i) + 1);
       for(int j = 1; j < (n_AB(i) + 1); j++){
         time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
@@ -1077,13 +1077,13 @@ Rcpp::List WAIC_Competition(const arma::field<arma::vec> X_A,
     arma::mat ph1 = Results["basis_coef_B"];
     basis_coef_B = ph1;
   }else{
-    for(int i = 0; i < n_A.n_elem; i++){
+    for(arma::uword i = 0; i < n_A.n_elem; i++){
       basis_funct_A(i, 0) = arma::zeros(n_A(i) + 1, 1);
     }
-    for(int i = 0; i < n_B.n_elem; i++){
+    for(arma::uword i = 0; i < n_B.n_elem; i++){
       basis_funct_B(i, 0) = arma::zeros(n_B(i) + 1, 1);
     }
-    for(int i = 0; i < n_AB.n_elem; i++){
+    for(arma::uword i = 0; i < n_AB.n_elem; i++){
       basis_funct_AB(i, 0) = arma::zeros(n_AB(i) + 1, 1);
     }
     basis_coef_A = arma::zeros(theta.n_rows,1);
@@ -1245,17 +1245,17 @@ Rcpp::List WAIC_IIGPP(const arma::field<arma::vec> X_A,
  }if(burnin_prop >= 1){
    Rcpp::stop("'burnin_prop' must be between 0 and 1");
  }
- for(int i = 0; i < n_A.n_elem; i++){
+ for(arma::uword i = 0; i < n_A.n_elem; i++){
    if(arma::accu(X_A(i,0)) > end_time + arma::datum::eps){
      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train " + std::to_string(i + 1) + ")");
    }
  }
- for(int i = 0; i < n_B.n_elem; i++){
+ for(arma::uword i = 0; i < n_B.n_elem; i++){
    if(arma::accu(X_B(i,0)) > end_time + arma::datum::eps){
      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike train " + std::to_string(i + 1) + ")");
    }
  }
- for(int i = 0; i < n_AB.n_elem; i++){
+ for(arma::uword i = 0; i < n_AB.n_elem; i++){
    if(arma::accu(X_AB(i,0)) > end_time + arma::datum::eps){
      Rcpp::stop("All spikes must be observed in [0,'end_time'] (See AB condition spike train " + std::to_string(i + 1) + ")");
    }
@@ -1274,7 +1274,7 @@ Rcpp::List WAIC_IIGPP(const arma::field<arma::vec> X_A,
    if(basis_degree <  1){
      Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
    }
-   for(int i = 0; i < internal_knots.n_elem; i++){
+   for(arma::uword i = 0; i < internal_knots.n_elem; i++){
      if(boundary_knots(0) >= internal_knots(i)){
        Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
      }
@@ -1285,7 +1285,7 @@ Rcpp::List WAIC_IIGPP(const arma::field<arma::vec> X_A,
    
    //Create B-splines
    splines2::BSpline bspline;
-   for(int i = 0; i < n_A.n_elem; i++){
+   for(arma::uword i = 0; i < n_A.n_elem; i++){
      arma::vec time = arma::zeros(n_A(i) + 1);
      for(int j = 1; j < (n_A(i) + 1); j++){
        time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
@@ -1297,7 +1297,7 @@ Rcpp::List WAIC_IIGPP(const arma::field<arma::vec> X_A,
      basis_funct_A(i,0) = bspline_mat;
    }
    
-   for(int i = 0; i < n_B.n_elem; i++){
+   for(arma::uword i = 0; i < n_B.n_elem; i++){
      arma::vec time = arma::zeros(n_B(i) + 1);
      for(int j = 1; j < (n_B(i) + 1); j++){
        time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
@@ -1309,7 +1309,7 @@ Rcpp::List WAIC_IIGPP(const arma::field<arma::vec> X_A,
      basis_funct_B(i,0) = bspline_mat;
    }
    
-   for(int i = 0; i < n_AB.n_elem; i++){
+   for(arma::uword i = 0; i < n_AB.n_elem; i++){
      arma::vec time = arma::zeros(n_AB(i) + 1);
      for(int j = 1; j < (n_AB(i) + 1); j++){
        time(j) = arma::accu(X_AB(i,0).subvec(0,j-1));
@@ -1327,13 +1327,13 @@ Rcpp::List WAIC_IIGPP(const arma::field<arma::vec> X_A,
    arma::mat ph2 = Results_AB["basis_coef"];
    basis_coef_AB = ph2;
  }else{
-   for(int i = 0; i < n_A.n_elem; i++){
+   for(arma::uword i = 0; i < n_A.n_elem; i++){
      basis_funct_A(i, 0) = arma::zeros(n_A(i) + 1, 1);
    }
-   for(int i = 0; i < n_B.n_elem; i++){
+   for(arma::uword i = 0; i < n_B.n_elem; i++){
      basis_funct_B(i, 0) = arma::zeros(n_B(i) + 1, 1);
    }
-   for(int i = 0; i < n_AB.n_elem; i++){
+   for(arma::uword i = 0; i < n_AB.n_elem; i++){
      basis_funct_AB(i, 0) = arma::zeros(n_AB(i) + 1, 1);
    }
    basis_coef_A = arma::zeros(theta_A.n_rows,1);
@@ -1496,12 +1496,12 @@ Rcpp::List WAIC_Winner_Take_All(const arma::field<arma::vec> X_A,
   }if(burnin_prop >= 1){
     Rcpp::stop("'burnin_prop' must be between 0 and 1");
   }
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     if(arma::accu(X_A(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train " + std::to_string(i + 1) + ")");
     }
   }
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     if(arma::accu(X_B(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike train " + std::to_string(i + 1) + ")");
     }
@@ -1518,7 +1518,7 @@ Rcpp::List WAIC_Winner_Take_All(const arma::field<arma::vec> X_A,
     if(basis_degree <  1){
       Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
     }
-    for(int i = 0; i < internal_knots.n_elem; i++){
+    for(arma::uword i = 0; i < internal_knots.n_elem; i++){
       if(boundary_knots(0) >= internal_knots(i)){
         Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
       }
@@ -1529,7 +1529,7 @@ Rcpp::List WAIC_Winner_Take_All(const arma::field<arma::vec> X_A,
     
     //Create B-splines
     splines2::BSpline bspline;
-    for(int i = 0; i < n_A.n_elem; i++){
+    for(arma::uword i = 0; i < n_A.n_elem; i++){
       arma::vec time = arma::zeros(n_A(i) + 1);
       for(int j = 1; j < (n_A(i) + 1); j++){
         time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
@@ -1541,7 +1541,7 @@ Rcpp::List WAIC_Winner_Take_All(const arma::field<arma::vec> X_A,
       basis_funct_A(i,0) = bspline_mat;
     }
     
-    for(int i = 0; i < n_B.n_elem; i++){
+    for(arma::uword i = 0; i < n_B.n_elem; i++){
       arma::vec time = arma::zeros(n_B(i) + 1);
       for(int j = 1; j < (n_B(i) + 1); j++){
         time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
@@ -1558,10 +1558,10 @@ Rcpp::List WAIC_Winner_Take_All(const arma::field<arma::vec> X_A,
     arma::mat ph1 = Results_B["basis_coef"];
     basis_coef_B = ph1;
   }else{
-    for(int i = 0; i < n_A.n_elem; i++){
+    for(arma::uword i = 0; i < n_A.n_elem; i++){
       basis_funct_A(i, 0) = arma::zeros(n_A(i) + 1, 1);
     }
-    for(int i = 0; i < n_B.n_elem; i++){
+    for(arma::uword i = 0; i < n_B.n_elem; i++){
       basis_funct_B(i, 0) = arma::zeros(n_B(i) + 1, 1);
     }
     basis_coef_A = arma::zeros(theta_A.n_rows,1);
@@ -1709,7 +1709,7 @@ Rcpp::List Competition_Posterior_Predictive(const double end_time,
     if(basis_degree <  1){
       Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
     }
-    for(int i = 0; i < internal_knots.n_elem; i++){
+    for(arma::uword i = 0; i < internal_knots.n_elem; i++){
       if(boundary_knots(0) >= internal_knots(i)){
         Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
       }
@@ -1887,12 +1887,12 @@ double Diff_LPPD(const arma::field<arma::vec> X_A,
                  const double end_time,
                  const bool time_inhomogeneous = true,
                  const double burnin_prop = 0.2){
-  for(int i = 0; i < n_A.n_elem; i++){
+  for(arma::uword i = 0; i < n_A.n_elem; i++){
     if(arma::accu(X_A(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See A condition spike train " + std::to_string(i + 1) + ")");
     }
   }
-  for(int i = 0; i < n_B.n_elem; i++){
+  for(arma::uword i = 0; i < n_B.n_elem; i++){
     if(arma::accu(X_B(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See B condition spike train " + std::to_string(i + 1) + ")");
     }
@@ -1904,7 +1904,7 @@ double Diff_LPPD(const arma::field<arma::vec> X_A,
   }
   arma::vec n_joint = arma::join_cols(n_A, n_B);
   arma::field<arma::vec> X_joint(n_joint.n_elem, 1);
-  for(int i = 0; i < n_joint.n_elem; i++){
+  for(arma::uword i = 0; i < n_joint.n_elem; i++){
     if(i < n_A.n_elem){
       X_joint(i,0) = X_A(i,0);
     }else{
@@ -1925,7 +1925,7 @@ double Diff_LPPD(const arma::field<arma::vec> X_A,
     if(basis_degree <  1){
       Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
     }
-    for(int i = 0; i < internal_knots.n_elem; i++){
+    for(arma::uword i = 0; i < internal_knots.n_elem; i++){
       if(boundary_knots(0) >= internal_knots(i)){
         Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
       }
@@ -1936,7 +1936,7 @@ double Diff_LPPD(const arma::field<arma::vec> X_A,
     
     //Create B-splines
     splines2::BSpline bspline;
-    for(int i = 0; i < n_A.n_elem; i++){
+    for(arma::uword i = 0; i < n_A.n_elem; i++){
       arma::vec time = arma::zeros(n_A(i) + 1);
       for(int j = 1; j < (n_A(i) + 1); j++){
         time(j) = arma::accu(X_A(i,0).subvec(0,j-1));
@@ -1949,7 +1949,7 @@ double Diff_LPPD(const arma::field<arma::vec> X_A,
       basis_funct_joint(i,0) = bspline_mat;
     }
     
-    for(int i = 0; i < n_B.n_elem; i++){
+    for(arma::uword i = 0; i < n_B.n_elem; i++){
       arma::vec time = arma::zeros(n_B(i) + 1);
       for(int j = 1; j < (n_B(i) + 1); j++){
         time(j) = arma::accu(X_B(i,0).subvec(0,j-1));
@@ -1968,13 +1968,13 @@ double Diff_LPPD(const arma::field<arma::vec> X_A,
     arma::mat ph2 = Results_joint["basis_coef"];
     basis_coef_joint = ph2;
   }else{
-    for(int i = 0; i < n_A.n_elem; i++){
+    for(arma::uword i = 0; i < n_A.n_elem; i++){
       basis_funct_A(i, 0) = arma::zeros(n_A(i) + 1, 1);
     }
-    for(int i = 0; i < n_B.n_elem; i++){
+    for(arma::uword i = 0; i < n_B.n_elem; i++){
       basis_funct_B(i, 0) = arma::zeros(n_B(i) + 1, 1);
     }
-    for(int i = 0; i < n_joint.n_elem; i++){
+    for(arma::uword i = 0; i < n_joint.n_elem; i++){
       basis_funct_joint(i, 0) = arma::zeros(n_joint(i) + 1, 1);
     }
     basis_coef_A = arma::zeros(theta_A.n_rows,1);
@@ -2095,7 +2095,7 @@ Rcpp::List Test_IIGPP_Fit(const arma::field<arma::vec> X,
   arma::mat theta = Results["theta"];
   arma::field<arma::mat> basis_funct(n.n_elem,1);
   arma::mat basis_coef;
-  for(int i = 0; i < n.n_elem; i++){
+  for(arma::uword i = 0; i < n.n_elem; i++){
     if(arma::accu(X(i,0)) > end_time + arma::datum::eps){
       Rcpp::stop("All spikes must be observed in [0,'end_time'] (See spike train" + std::to_string(i + 1) + ")");
     }
@@ -2106,7 +2106,7 @@ Rcpp::List Test_IIGPP_Fit(const arma::field<arma::vec> X,
     if(basis_degree <  1){
       Rcpp::stop("'basis_degree' must be an integer greater than or equal to 1");
     }
-    for(int i = 0; i < internal_knots.n_elem; i++){
+    for(arma::uword i = 0; i < internal_knots.n_elem; i++){
       if(boundary_knots(0) >= internal_knots(i)){
         Rcpp::stop("at least one element in 'internal_knots' is less than or equal to first boundary knot");
       }
@@ -2117,7 +2117,7 @@ Rcpp::List Test_IIGPP_Fit(const arma::field<arma::vec> X,
     
     //Create B-splines
     splines2::BSpline bspline;
-    for(int i = 0; i < n.n_elem; i++){
+    for(arma::uword i = 0; i < n.n_elem; i++){
       arma::vec time = arma::zeros(n(i) + 1);
       for(int j = 1; j < (n(i) + 1); j++){
         time(j) = arma::accu(X(i,0).subvec(0,j-1));
@@ -2132,7 +2132,7 @@ Rcpp::List Test_IIGPP_Fit(const arma::field<arma::vec> X,
     arma::mat ph = Results["basis_coef"];
     basis_coef = ph;
   }else{
-    for(int i = 0; i < n.n_elem; i++){
+    for(arma::uword i = 0; i < n.n_elem; i++){
       basis_funct(i, 0) = arma::zeros(n(i) + 1, 1);
     }
     basis_coef = arma::zeros(theta.n_rows,1);
